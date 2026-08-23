@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 640" width="820" height="640" font-family="Helvetica, Arial, sans-serif">
+  <rect width="820" height="640" fill="#ffffff"/>
+
+  <text x="410" y="32" font-size="18" font-weight="bold" text-anchor="middle" fill="#333">Conexion completa: mando -&gt; ESP32</text>
+
+  <!-- ===== MANDO ===== -->
+  <rect x="25" y="80" width="120" height="330" rx="10" fill="#f7f7f7" stroke="#444" stroke-width="3"/>
+  <text x="85" y="68" font-size="15" font-weight="bold" text-anchor="middle" fill="#333">MANDO</text>
+  <text x="85" y="428" font-size="11" text-anchor="middle" fill="#888">conector de 4 pines</text>
+
+  <circle cx="145" cy="120" r="7" fill="#d33"/>
+  <text x="112" y="125" font-size="13" text-anchor="end" fill="#333">ROJO</text>
+  <circle cx="145" cy="200" r="7" fill="#1a9e5e"/>
+  <text x="112" y="205" font-size="13" text-anchor="end" fill="#333">VERDE</text>
+  <circle cx="145" cy="290" r="7" fill="#e0b000"/>
+  <text x="112" y="295" font-size="13" text-anchor="end" fill="#333">AMARILLO</text>
+  <circle cx="145" cy="375" r="7" fill="#2255cc"/>
+  <text x="112" y="380" font-size="13" text-anchor="end" fill="#333">AZUL</text>
+
+  <!-- ===== ROJO: no se conecta ===== -->
+  <line x1="152" y1="120" x2="215" y2="120" stroke="#d33" stroke-width="5"/>
+  <line x1="222" y1="112" x2="238" y2="128" stroke="#d33" stroke-width="4"/>
+  <line x1="238" y1="112" x2="222" y2="128" stroke="#d33" stroke-width="4"/>
+  <text x="252" y="125" font-size="13" fill="#d33">no se conecta (es VCC)</text>
+
+  <!-- ===== VERDE: divisor 2 -> P4 ===== -->
+  <line x1="152" y1="200" x2="250" y2="200" stroke="#1a9e5e" stroke-width="6"/>
+  <rect x="250" y="178" width="72" height="44" rx="5" fill="#f3f3f3" stroke="#333" stroke-width="3"/>
+  <text x="286" y="198" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">800 O</text>
+  <text x="286" y="214" font-size="10" text-anchor="middle" fill="#777">gris-rojo-cafe</text>
+
+  <line x1="322" y1="200" x2="600" y2="200" stroke="#1a9e5e" stroke-width="4"/>
+  <circle cx="400" cy="200" r="8" fill="#1a9e5e"/>
+  <text x="400" y="176" font-size="11" font-weight="bold" text-anchor="middle" fill="#1a9e5e">NODO 2</text>
+  <polygon points="600,193 616,200 600,207" fill="#1a9e5e"/>
+
+  <line x1="400" y1="200" x2="400" y2="238" stroke="#333" stroke-width="4"/>
+  <rect x="364" y="238" width="72" height="44" rx="5" fill="#f3f3f3" stroke="#333" stroke-width="3"/>
+  <text x="400" y="258" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">1.72 k</text>
+  <text x="400" y="274" font-size="10" text-anchor="middle" fill="#777">cafe-gris-rojo</text>
+  <line x1="400" y1="282" x2="400" y2="490" stroke="#333" stroke-width="4"/>
+
+  <!-- ===== AMARILLO: divisor 1 -> P16 ===== -->
+  <line x1="152" y1="290" x2="250" y2="290" stroke="#e0b000" stroke-width="6"/>
+  <rect x="250" y="268" width="72" height="44" rx="5" fill="#f3f3f3" stroke="#333" stroke-width="3"/>
+  <text x="286" y="288" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">800 O</text>
+  <text x="286" y="304" font-size="10" text-anchor="middle" fill="#777">gris-rojo-cafe</text>
+
+  <line x1="322" y1="290" x2="600" y2="290" stroke="#e0b000" stroke-width="4"/>
+  <circle cx="490" cy="290" r="8" fill="#0aa"/>
+  <text x="490" y="266" font-size="11" font-weight="bold" text-anchor="middle" fill="#0aa">NODO 1</text>
+  <polygon points="600,283 616,290 600,297" fill="#e0b000"/>
+
+  <line x1="490" y1="290" x2="490" y2="330" stroke="#333" stroke-width="4"/>
+  <rect x="454" y="330" width="72" height="44" rx="5" fill="#f3f3f3" stroke="#333" stroke-width="3"/>
+  <text x="490" y="350" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">1.72 k</text>
+  <text x="490" y="366" font-size="10" text-anchor="middle" fill="#777">cafe-gris-rojo</text>
+  <line x1="490" y1="374" x2="490" y2="490" stroke="#333" stroke-width="4"/>
+
+  <!-- ===== AZUL / GND comun ===== -->
+  <line x1="152" y1="375" x2="200" y2="375" stroke="#2255cc" stroke-width="6"/>
+  <line x1="200" y1="375" x2="200" y2="490" stroke="#2255cc" stroke-width="6"/>
+  <line x1="200" y1="490" x2="620" y2="490" stroke="#2255cc" stroke-width="6"/>
+  <circle cx="400" cy="490" r="8" fill="#2255cc"/>
+  <circle cx="490" cy="490" r="8" fill="#2255cc"/>
+  <text x="250" y="512" font-size="12" fill="#2255cc">todo el GND en la misma linea</text>
+
+  <!-- ===== PLACA ESP32 ===== -->
+  <rect x="646" y="70" width="140" height="500" rx="8" fill="#1e1e1e" stroke="#444" stroke-width="2"/>
+  <text x="716" y="58" font-size="14" font-weight="bold" text-anchor="middle" fill="#333">ESP32 - bornera derecha</text>
+
+  <g font-size="12" fill="#999" text-anchor="start">
+    <text x="692" y="122">P23</text>
+    <text x="692" y="146">P22</text>
+    <text x="692" y="170">TX</text>
+    <text x="692" y="194">RX</text>
+    <text x="692" y="218">P21</text>
+    <text x="692" y="242">GND</text>
+    <text x="692" y="266">P19</text>
+    <text x="692" y="290">P18</text>
+    <text x="692" y="314">P5</text>
+    <text x="692" y="338">P17</text>
+    <text x="692" y="410">P0</text>
+    <text x="692" y="434">P2</text>
+    <text x="692" y="458">P15</text>
+    <text x="692" y="482">SD1</text>
+    <text x="692" y="506">SD0</text>
+    <text x="692" y="530">CLK</text>
+  </g>
+
+  <!-- GND destacado -->
+  <rect x="658" y="82" width="120" height="22" rx="4" fill="#2255cc"/>
+  <text x="692" y="98" font-size="13" font-weight="bold" fill="#fff">GND</text>
+  <text x="740" y="98" font-size="10" fill="#cde">azul</text>
+
+  <!-- P16 destacado -->
+  <rect x="658" y="348" width="120" height="22" rx="4" fill="#0aa"/>
+  <text x="692" y="364" font-size="13" font-weight="bold" fill="#fff">P16</text>
+  <text x="740" y="364" font-size="10" fill="#cff">nodo 1</text>
+
+  <!-- P4 destacado -->
+  <rect x="658" y="372" width="120" height="22" rx="4" fill="#1a9e5e"/>
+  <text x="692" y="388" font-size="13" font-weight="bold" fill="#fff">P4</text>
+  <text x="740" y="388" font-size="10" fill="#dfd">nodo 2</text>
+
+  <!-- ruteo hacia los bornes -->
+  <line x1="616" y1="290" x2="636" y2="290" stroke="#e0b000" stroke-width="4"/>
+  <line x1="636" y1="290" x2="636" y2="359" stroke="#e0b000" stroke-width="4"/>
+  <line x1="636" y1="359" x2="658" y2="359" stroke="#e0b000" stroke-width="4"/>
+
+  <line x1="616" y1="200" x2="628" y2="200" stroke="#1a9e5e" stroke-width="4"/>
+  <line x1="628" y1="200" x2="628" y2="383" stroke="#1a9e5e" stroke-width="4"/>
+  <line x1="628" y1="383" x2="658" y2="383" stroke="#1a9e5e" stroke-width="4"/>
+
+  <line x1="620" y1="490" x2="620" y2="93" stroke="#2255cc" stroke-width="6"/>
+  <line x1="620" y1="93" x2="658" y2="93" stroke="#2255cc" stroke-width="6"/>
+
+  <text x="716" y="592" font-size="12" text-anchor="middle" fill="#666">alimentar por USB al Mac</text>
+
+  <!-- resumen -->
+  <rect x="25" y="540" width="580" height="82" rx="8" fill="#f4f9f9" stroke="#0aa" stroke-width="2"/>
+  <text x="42" y="562" font-size="13" fill="#0a7">ROJO ....... no se conecta</text>
+  <text x="42" y="582" font-size="13" fill="#0a7">VERDE ..... 800 O -&gt; NODO 2 -&gt; P4 ......... y del nodo, 1.72 k a GND</text>
+  <text x="42" y="602" font-size="13" fill="#0a7">AMARILLO .. 800 O -&gt; NODO 1 -&gt; P16 ....... y del nodo, 1.72 k a GND</text>
+  <text x="42" y="617" font-size="13" fill="#0a7">AZUL ....... directo a GND</text>
+
+  <!-- ===== sello anadido 2026-08-03: este plano no debe montarse ===== -->
+  <!-- El dibujo original queda intacto debajo. Solo se superpone el aviso, -->
+  <!-- porque conviven dos planos con nombres parecidos y montar este       -->
+  <!-- rompe el mando: valores descartados por ADR-005, y el divisor va al  -->
+  <!-- hilo AMARILLO, que la medicion del 2026-08-02 demostro que son 5 V.  -->
+  <rect x="0" y="0" width="820" height="640" fill="#ffffff" opacity="0.72"/>
+  <g transform="rotate(-24 410 320)">
+    <rect x="55" y="238" width="710" height="164" rx="10" fill="#fff" stroke="#c62828" stroke-width="6"/>
+    <text x="410" y="292" font-size="52" font-weight="bold" text-anchor="middle" fill="#c62828">NO MONTAR</text>
+    <text x="410" y="326" font-size="17" text-anchor="middle" fill="#111">Diseno descartado por ADR-005. Ademas el divisor va al hilo</text>
+    <text x="410" y="349" font-size="17" text-anchor="middle" fill="#111">AMARILLO, que son 5 V: quemaria el GPIO.</text>
+    <text x="410" y="382" font-size="19" font-weight="bold" text-anchor="middle" fill="#111">El plano vigente es plano_sonda_v2.svg</text>
+  </g>
+</svg>

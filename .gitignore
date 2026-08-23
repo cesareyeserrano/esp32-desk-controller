@@ -1,0 +1,20 @@
+# --- Credenciales -------------------------------------------------------
+# WiFi y MQTT. La plantilla versionada es firmware/desk_sniffer/secrets.h.example
+secrets.h
+
+# --- Copias de trabajo --------------------------------------------------
+# Git es el historial; estas copias son andamiaje local.
+firmware/backups/
+
+# --- Material de terceros ----------------------------------------------
+# Fotos tomadas de anuncios de tienda: contenido ajeno, fuera de un repo
+# público. Los datos que se leyeron de ellas están en docs/HARDWARE.md.
+docs/hardware/fotografias/*.jpg
+docs/hardware/fotografias/*.jpeg
+docs/hardware/fotografias/*.png
+
+# --- Ruido ---------------------------------------------------------------
+__pycache__/
+*.pyc
+.DS_Store
+build/

@@ -1,0 +1,325 @@
+# ⚠️ ENGANOSA — anotado el 2026-08-21 20:45, sin tocar el contenido.
+# Aqui parece que el canal 2 no acciona. ES FALSO: el canal funcionaba. El
+# firmware esperaba el pulso en un bucle VACIO, sin capturar, asi que estaba
+# ciego justo mientras la tecla estaba pulsada. Cuando volvia a mirar el bus,
+# la tecla ya estaba suelta. Corregido el mismo dia; con la correccion el
+# mismo canal responde 0x57 a la primera:
+# docs/capturas/2026-08-21-canal2-verificado-0x57.log
+# Fecha: 2026-08-21 19:50
+# Altura en pantalla: display APAGADO por inactividad
+# Estado: escritorio conectado. Los dos cables del pulsador de BAJAR se han
+#         INTERCAMBIADO entre las patas 3 y 4 del PC817 del canal 2, para
+#         descartar la polaridad del fototransistor.
+# Montaje: sonda 9.1k/27k en P18 (rojo, CLK) y P4 (verde, DIO), ESP32 por USB.
+#          Canal 2 = PC817 en GPIO26. Canales 1, 3 y 4 con la salida suelta.
+# Firmware: desk_sniffer a 115200 (ADR-026), con eco de cada byte recibido.
+# Comprobacion previa: se mando 'h' y el sketch respondio. El puerto RECIBE.
+# Que se esperaba: si el fallo era la polaridad, ahora deberia salir 0x57.
+# QUE PASO: NO. El byte llega ([RX 0x32 '2']), el canal se dispara
+#           ([channel 2 -> GPIO26 pulsed 300 ms]), y las 50 lecturas de teclado
+#           siguen siendo 4F 17 (reposo). DESCARTADA la polaridad.
+#
+# Dato aportado por quien lo soldo, el mismo dia: si se UNEN los dos cables
+# directamente (cortocircuito), el escritorio SI responde como si se pulsara
+# el boton. Es decir: el par de cables es el correcto y un cierre limpio
+# acciona. El problema esta en que el PC817 no cierra lo suficiente.
+[enviado '2' a los 3.0 s]
+et\D,�^�c_drv:0x00
+mode:DIO, clock div:1
+load:0x3fff0030,len:4876
+ho 0 tail 12 room 4
+load:0x40078000,len:16532
+load:0x40080400,len:3500
+entry 0x400805b4
+
+=== desk_sniffer — AiP650E passive bus sniffer ===
+CLK=GPIO18 (red)  DIO=GPIO4 (green)  CPU=240 MHz
+Burst sampling at 4 MHz, 8000 samples per burst (2 ms).
+Read-only. This firmware never drives the bus.
+
+  r  toggle raw transaction dump
+  s  print statistics
+  c  reset statistics
+  l  re-run the line identification check
+  h  this help
+
+  1 2 3 4   pulse that actuation channel for 300 ms
+            and report which key the control box saw
+
+Identifying lines (recording up to 2 s of traffic)...
+  GPIO18 (expected CLK, red)  : 227 edges
+  GPIO4 (expected DIO, green): 45 edges
+  OK: both lines active, edge counts match the expected wiring.
+
+Listening. Format:
+  [time] S <byte><ack> <byte><ack> P | interpretation
+  ack: 'a' = acknowledged (low), '-' = line high
+  On key reads a '-' on the second byte is normal, not a fault.
+
+[     0.000314] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.000314] >>> DISPLAY: " "
+[     0.000631] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.000631] >>> DISPLAY: "  "
+[     0.000948] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     0.000948] >>> DISPLAY: "   "
+[     0.001246] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     0.001246] >>> DISPLAY: "    "
+[     0.001562] S 4Fa 17a P  | KEY released/idle
+[     0.001562] >>> KEY released/idle
+[     0.200129] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.200445] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.200763] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     0.201061] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     0.201377] S 4Fa 17a P  | KEY released/idle
+[     0.399863] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.400179] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.400478] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     0.400794] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     0.401110] S 4Fa 17a P  | KEY released/idle
+[     0.599602] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.599918] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.600236] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     0.600552] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     0.600869] S 4Fa 17a P  | KEY released/idle
+[     0.799375] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.799692] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.800010] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     0.800326] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     0.800624] S 4Fa 17a P  | KEY released/idle
+[     0.999129] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     0.999445] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     0.999763] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.000080] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.000377] S 4Fa 17a P  | KEY released/idle
+[     1.198931] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     1.199225] S P  | MALFORMED: 0 byte(s), expected 2
+[     1.199247] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     1.199546] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.199863] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.200179] S 4Fa 17a P  | KEY released/idle
+[     1.398720] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     1.399036] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     1.399354] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.399670] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.399967] S 4Fa 17a P  | KEY released/idle
+[     1.598496] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     1.598794] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     1.599112] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.599428] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.599744] S 4Fa 17a P  | KEY released/idle
+[     1.798251] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     1.798568] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     1.798866] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.799182] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.799499] S 4Fa 17a P  | KEY released/idle
+[     1.998049] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     1.998347] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     1.998664] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     1.998981] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     1.999297] S 4Fa 17a P  | KEY released/idle
+[     2.197812] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     2.198128] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     2.198427] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     2.198744] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     2.199060] S 4Fa 17a P  | KEY released/idle
+[     2.397578] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     2.397894] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     2.398212] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     2.398529] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     2.398826] S 4Fa 17a P  | KEY released/idle
+
+[RX 0x32 '2']
+
+[channel 2 -> GPIO26 pulsed 300 ms; watching the bus]
+[     2.797167] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     2.797483] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     2.797801] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     2.798098] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     2.798415] S 4Fa 17a P  | KEY released/idle
+[     2.996949] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     2.997265] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     2.997583] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     2.997900] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     2.998216] S 4Fa 17a P  | KEY released/idle
+[     3.196760] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     3.197076] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     3.197394] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     3.197710] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     3.198007] S 4Fa 17a P  | KEY released/idle
+[     3.396538] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     3.396855] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     3.397173] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     3.397489] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     3.397786] S 4Fa 17a P  | KEY released/idle
+[     3.596353] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     3.596670] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     3.596968] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     3.597285] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     3.597601] S 4Fa 17a P  | KEY released/idle
+[     3.796122] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     3.796439] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     3.796757] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     3.797073] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     3.797367] S P  | MALFORMED: 0 byte(s), expected 2
+[     3.797389] S 4Fa 17a P  | KEY released/idle
+[     3.995903] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     3.996200] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     3.996518] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     3.996834] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     3.997150] S 4Fa 17a P  | KEY released/idle
+[     4.195657] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     4.195973] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     4.196272] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     4.196589] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     4.196905] S 4Fa 17a P  | KEY released/idle
+[     4.395468] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     4.395784] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     4.396083] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     4.396399] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     4.396716] S 4Fa 17a P  | KEY released/idle
+[     4.595215] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     4.595532] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     4.595831] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     4.596147] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     4.596464] S 4Fa 17a P  | KEY released/idle
+[     4.794973] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     4.795290] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     4.795608] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     4.795925] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     4.796222] S 4Fa 17a P  | KEY released/idle
+[     4.994758] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     4.995074] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     4.995392] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     4.995709] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     4.996006] S 4Fa 17a P  | KEY released/idle
+[     5.194471] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     5.194787] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     5.195105] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     5.195403] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     5.195719] S 4Fa 17a P  | KEY released/idle
+[     5.394232] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     5.394529] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     5.394847] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     5.395163] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     5.395480] S 4Fa 17a P  | KEY released/idle
+[     5.593979] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     5.594296] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     5.594614] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     5.594930] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     5.595228] S 4Fa 17a P  | KEY released/idle
+[     5.793433] S 48a 21a P  | CTRL display=ON sleep=no seg=8 brightness=2
+[     5.793730] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     5.794047] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     5.794365] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     5.794681] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     5.794997] S 4Fa 17a P  | KEY released/idle
+[     5.993471] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     5.993787] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     5.994086] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     5.994402] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     5.994718] S 4Fa 17a P  | KEY released/idle
+[     6.193208] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     6.193524] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     6.193842] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     6.194158] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     6.194474] S 4Fa 17a P  | KEY released/idle
+[     6.392927] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     6.393243] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     6.393542] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     6.393858] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     6.394175] S 4Fa 17a P  | KEY released/idle
+[     6.592660] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     6.592977] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     6.593294] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     6.593591] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     6.593908] S 4Fa 17a P  | KEY released/idle
+[     6.792432] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     6.792748] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     6.793047] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     6.793364] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     6.793680] S 4Fa 17a P  | KEY released/idle
+[     6.992167] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     6.992483] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     6.992782] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     6.993099] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     6.993414] S 4Fa 17a P  | KEY released/idle
+[     7.191894] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     7.192210] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     7.192528] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     7.192844] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     7.193160] S 4Fa 17a P  | KEY released/idle
+[     7.391679] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     7.391996] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     7.392313] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     7.392630] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     7.392927] S 4Fa 17a P  | KEY released/idle
+[     7.591391] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     7.591708] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     7.592025] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     7.592342] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     7.592639] S 4Fa 17a P  | KEY released/idle
+[     7.791151] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     7.791448] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     7.791766] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     7.792082] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     7.792398] S 4Fa 17a P  | KEY released/idle
+[     7.990895] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     7.991211] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     7.991529] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     7.991845] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     7.992142] S 4Fa 17a P  | KEY released/idle
+[     8.190620] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     8.190936] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     8.191254] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     8.191570] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     8.191887] S 4Fa 17a P  | KEY released/idle
+[     8.390358] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     8.390675] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     8.390974] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     8.391290] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     8.391606] S 4Fa 17a P  | KEY released/idle
+[     8.590100] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     8.590398] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     8.590715] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     8.591032] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     8.591348] S 4Fa 17a P  | KEY released/idle
+[     8.789841] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     8.790158] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     8.790456] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     8.790773] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     8.791089] S 4Fa 17a P  | KEY released/idle
+[     8.989558] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     8.989874] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     8.990192] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     8.990489] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     8.990805] S 4Fa 17a P  | KEY released/idle
+[     9.189335] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     9.189652] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     9.189969] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     9.190267] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     9.190583] S 4Fa 17a P  | KEY released/idle
+[     9.389059] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     9.389375] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     9.389674] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     9.389990] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     9.390306] S 4Fa 17a P  | KEY released/idle
+[     9.588797] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     9.589114] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     9.589431] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     9.589748] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     9.590064] S 4Fa 17a P  | KEY released/idle
+[     9.788578] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     9.788895] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     9.789213] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     9.789529] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     9.789826] S 4Fa 17a P  | KEY released/idle
+[     9.988297] S 68a 00a P  | DIG1 seg=0x00 ' '
+[     9.988613] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[     9.988931] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[     9.989247] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[     9.989544] S 4Fa 17a P  | KEY released/idle
+[    10.188067] S 68a 00a P  | DIG1 seg=0x00 ' '
+[    10.188384] S 6Aa 00a P  | DIG2 seg=0x00 ' '
+[    10.188683] S 6Ca 00a P  | DIG3 seg=0x00 ' '
+[    10.188999] S 6Ea 00a P  | DIG4 seg=0x00 ' '
+[    10.189315] S 4Fa 17

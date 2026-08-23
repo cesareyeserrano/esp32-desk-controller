@@ -1,0 +1,56 @@
+# Fecha: 2026-08-06
+# Altura en pantalla: 080 al empezar, display apagado por inactividad.
+# Estado: escritorio ENCENDIDO y QUIETO durante 15 minutos. Nadie lo toca.
+# Montaje: sonda 9.1k+7.4k / 27k (ADR-022) en P18 (CLK) y P4 (DIO).
+# Firmware: desk_sniffer por rafagas, 4 MHz, 8000 muestras, con la resiembra
+#   del decodificador ya incluida.
+#
+# Metodo: volcado crudo APAGADO con el comando 'r', contadores a cero con 'c',
+#   15 minutos de espera, y estadisticas con 's'. Los comandos los manda el
+#   propio script por el puerto. Todo bajo `caffeinate -i` para impedir que el
+#   Mac se duerma.
+#
+# Por que asi: un primer intento (2026-08-06-reposo-largo.log) salio inservible.
+#   Mostraba un hueco de 100 s sin trafico que parecia el hallazgo buscado, pero
+#   el Mac se habia dormido: al dejar de leer el proceso, el buffer del driver
+#   USB se desbordo y se perdio lo recibido. Lo delataron las lineas partidas en
+#   la costura del hueco y un 1.4% de corrupcion repartido. Los tiempos del
+#   ESP32 seguian siendo coherentes — el que se ausento fue el ordenador.
+#   Con el volcado apagado casi no se imprime nada, asi que no hay nada que
+#   perder por el puerto.
+#
+# Que se esperaba: que `bursts armed on a quiet bus` diga si el bus llega a
+#   callarse. Si sube, ADR-012 es un problema real. Si sigue en cero tras 15
+#   minutos, el bus nunca duerme y ese riesgo se cae del proyecto.
+# ---- resultado a partir de aqui ----
+
+--- stats ---
+  bursts         : 4505 recorded, 0 armed on a quiet bus
+  edges captured : 1232609
+  late samples   : 0
+  transactions   : 22731 (175 malformed, 0 ended by repeated START)
+  cut by burst   : 0   (ours, not the bus)
+  digit writes   : 18020
+  key reads      : 4505
+  ctrl writes    : 31
+  fastest clock  : 7250 ns period (~137 kHz)
+  display now    : "    "
+  edge intervals (us):
+    < 0.25 :        0  ( 0%)
+    < 0.5  :        0  ( 0%)
+    < 1    :    26199  ( 2%)
+    < 2    :    47068  ( 3%)
+    < 5    :   713954  (57%)
+    < 10   :   297664  (24%)
+    >= 10  :   147723  (11%)
+  >> Interval distribution is clean: no double-counted edges.
+     The clock rate above can be trusted.
+-------------
+
+LECTURA DEL RESULTADO:
+  bursts armed on a quiet bus = 0 tras 4505 intentos en 15 minutos.
+  EL BUS NUNCA SE CALLA con el escritorio quieto.
+  Integridad: 18020 digit writes / 4 = 4505 ciclos = 4505 key reads.
+  Exacto. Ningun ciclo incompleto, ninguno perdido.
+  Las 175 malformadas son transacciones DE MAS (S P sin bytes), no
+  ciclos corrompidos. Ver bitacora del 2026-08-06.

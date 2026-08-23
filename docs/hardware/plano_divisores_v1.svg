@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 400" width="820" height="400" font-family="Helvetica, Arial, sans-serif">
+
+  <!-- ==================================================================
+       Este archivo es solo un redirector.
+       El plano original se renombro el 2026-08-03 a
+         plano_divisores_v1_NO_MONTAR.svg
+       porque convivia con el plano vigente bajo un nombre parecido y
+       alguien a punto de montar podia abrir el equivocado.
+       El nombre viejo se conserva ocupado porque ADR-005 enlaza este
+       plano por nombre, y los ADR no se editan: borrarlo dejaria un
+       enlace roto en un documento inmutable.
+       ================================================================== -->
+
+  <rect width="820" height="400" fill="#ffffff"/>
+  <rect x="20" y="20" width="780" height="360" rx="12" fill="#fff5f5" stroke="#c62828" stroke-width="5"/>
+
+  <text x="410" y="96" font-size="44" font-weight="bold" text-anchor="middle" fill="#c62828">NO MONTAR</text>
+
+  <text x="410" y="140" font-size="16" text-anchor="middle" fill="#111">Este plano quedo descartado. Se conserva solo como historia.</text>
+
+  <text x="410" y="186" font-size="15" text-anchor="middle" fill="#333">El dibujo original esta en:</text>
+  <text x="410" y="212" font-size="17" font-weight="bold" text-anchor="middle" fill="#111">plano_divisores_v1_NO_MONTAR.svg</text>
+
+  <line x1="120" y1="240" x2="700" y2="240" stroke="#e0c0c0" stroke-width="1.5"/>
+
+  <text x="410" y="272" font-size="15" text-anchor="middle" fill="#333">Por que no se monta, y son dos motivos independientes:</text>
+  <text x="410" y="298" font-size="14" text-anchor="middle" fill="#333">1. Los valores 800 O / 1.72 kO cargan el bus y lo hunden — ADR-005.</text>
+  <text x="410" y="320" font-size="14" text-anchor="middle" fill="#333">2. Manda el divisor al hilo AMARILLO, que son 5 V, y deja el reloj sin conectar.</text>
+
+  <text x="410" y="358" font-size="18" font-weight="bold" text-anchor="middle" fill="#2e7d32">El plano vigente es plano_sonda_v2.svg</text>
+</svg>
