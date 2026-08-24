@@ -32,6 +32,22 @@ Tercera condición añadida, que es la cortesía del sistema: **no mueve si se t
 el mando en los últimos 5 minutos** (`uso_manual`, el sensor que salió de la
 cesión al mando manual). Si acabas de ponerlo donde quieres, no te lo cambia.
 
+**Y una tercera corrección, también del propietario:**
+
+> *"creo que tiene como dos minutos, podría creer que aún estoy y levantar"*
+
+**Cierto, y era un agujero de seguridad.** El sensor tiene **90 s de retardo
+ocupado→desocupado**: en esa ventana informa "presente" con la silla ya vacía, y
+la automatización habría movido el escritorio sin nadie delante — exactamente lo
+que [SEGURIDAD.md](SEGURIDAD.md) prohíbe.
+
+**Bajar el retardo del sensor no era la salida**: acortarlo hace que cada ida a
+por agua reinicie el contador de postura y los avisos no lleguen nunca.
+
+**La secuencia ahora es**: avisar → **esperar 110 s, más que el retardo del
+sensor** → **volver a comprobar presencia** → mover. Si te levantaste, para
+entonces el sensor ya lo sabe y la secuencia se detiene sin hacer nada.
+
 > *"eso que la refresque, ¿es que va a enviar un toque cada rato?"*
 
 Sí, y era mala idea. Se había puesto que el resumen despertara el display cada

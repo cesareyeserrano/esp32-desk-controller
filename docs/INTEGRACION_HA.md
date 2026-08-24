@@ -268,10 +268,20 @@ No es la lista de deseos: es lo que sale directamente del catálogo de arriba.
 **Solo avisan si estás delante.** Sensor de presencia `SNZB-06P` (mmWave: detecta
 aunque estés quieto, no solo movimiento).
 
-| Automatización | Dispara | Acción |
+| Automatización | Dispara | Secuencia |
 |---|---|---|
-| Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | **Sube a 117** y avisa, con botón *"Déjalo en 80"* para deshacer |
-| Llevas mucho de pie | **30 min** de pie, mismas condiciones | **Baja a 80** y avisa, con botón *"Déjalo en 117"* |
+| Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | Avisa → espera 110 s → **vuelve a comprobar presencia** → sube a 117 → botón *"Déjalo en 80"* |
+| Llevas mucho de pie | **30 min** de pie, mismas condiciones | Igual, hacia 80 |
+
+⚠️ **La espera de 110 s no es cortesía: es seguridad.** El sensor tarda **90 s**
+en admitir que te fuiste, así que en esa ventana diría "presente" con la silla
+ya vacía — y movería el escritorio solo, que es justo lo que
+[SEGURIDAD.md](SEGURIDAD.md) prohíbe. Esperando **más que ese retardo** y
+comprobando **otra vez** antes de mover, si te levantaste el sensor ya lo sabe y
+la secuencia se detiene sin hacer nada.
+
+Lo detectó el propietario: *"creo que tiene como dos minutos, podría creer que
+aún estoy y levantar"*.
 
 **Mueven el escritorio.** La primera versión solo notificaba con un botón, y el
 propietario señaló lo evidente: *"si solo avisa para moverse, ¿qué sentido tiene
