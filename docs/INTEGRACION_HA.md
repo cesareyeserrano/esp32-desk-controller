@@ -300,6 +300,29 @@ sesión de cambios, donde puede parecer que nunca dispara.
 **Verificado el 2026-08-24** bajando el umbral a 60 s y dejando solo la
 notificación: llegó al móvil.
 
+### El contador mide TU postura, no la altura del escritorio
+
+Planteado por el propietario como caso de uso: *"me voy al baño y no estoy, no
+sube. Cuando vuelva, ¿vuelve a contar de cero o entiende que recién volví? ¿Y si
+vuelvo en una hora?"*
+
+**El diseño inicial lo hacía mal.** El contador era *"cuánto lleva el escritorio
+a esta altura"*, así que irse una hora no cambiaba nada: al volver te decía
+"llevas hora y media sentado" y subía la mesa **justo cuando acababas de
+sentarte**. Estaba midiendo el mueble, no a la persona.
+
+**Ahora hay un `input_datetime` que marca el inicio del periodo de postura**, y
+lo mueven dos cosas:
+
+| Situación | Qué pasa |
+|---|---|
+| **Cambias de postura** | Periodo nuevo. Obvio |
+| **Ausencia < 15 min** (baño, café) | **No lo toca.** No perdiste la postura de verdad |
+| **Ausencia ≥ 15 min** (comida, reunión) | **Reinicia** y te avisa: estuviste de pie, eso cuenta como pausa |
+
+El umbral de 15 minutos separa un recado de un descanso real. Se cambia en la
+automatización `escritorio_periodo_vuelta_larga`.
+
 ### Tres capas contra "se fue justo entonces"
 
 El sensor no sabe al instante que te has ido, así que **ninguna comprobación

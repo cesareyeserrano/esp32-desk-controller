@@ -6,6 +6,37 @@
 
 ---
 
+## 2026-08-24 (tarde) — El contador medía el mueble, no a la persona
+
+Caso de uso planteado por el propietario:
+
+> *"me voy al baño y no estoy, no sube. Cuando vuelva, ¿vuelve a contar de cero
+> o entiende que recién volví? ¿y si vuelvo en una hora?"*
+
+**El diseño lo hacía mal, y de una forma que no se ve hasta que se piensa el
+caso.** El contador era `postura.last_changed`, o sea **"cuánto lleva el
+escritorio a esta altura"**. Irse una hora no lo cambiaba: al volver el sistema
+afirmaba "llevas hora y media sentado" y subía la mesa **justo cuando acababas
+de sentarte**.
+
+**Medía el mueble en vez de a la persona**, y las dos cosas coinciden solo
+mientras nadie se levanta.
+
+**Arreglado con un `input_datetime` que marca el inicio del periodo**, movido por
+dos automatizaciones nuevas:
+
+| Situación | Comportamiento |
+|---|---|
+| Cambio de postura | Periodo nuevo |
+| **Ausencia < 15 min** | **No reinicia** — un baño no es un descanso |
+| **Ausencia ≥ 15 min** | **Reinicia** y avisa cuántos minutos estuviste fuera |
+
+**Los 15 minutos separan un recado de una pausa real.** Es un número elegido, no
+medido: se ajusta en `escritorio_periodo_vuelta_larga` si la experiencia dice
+otra cosa.
+
+---
+
 ## 2026-08-24 — Los recordatorios no disparaban: dos fallos, ninguno visible
 
 > *"hasta ahora no veo que la automatizacion funcione, si quedó activa?"*
