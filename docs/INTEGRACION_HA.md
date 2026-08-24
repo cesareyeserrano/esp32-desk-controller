@@ -270,12 +270,20 @@ aunque estés quieto, no solo movimiento).
 
 | Automatización | Dispara | Acción |
 |---|---|---|
-| Llevas mucho sentado | **45 min** con postura `sentado` **y presencia** | Notificación con botón *"Subir a 117"* |
-| Llevas mucho de pie | **30 min** con postura `de pie` **y presencia** | Notificación con botón *"Bajar a 80"* |
+| Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | **Sube a 117** y avisa, con botón *"Déjalo en 80"* para deshacer |
+| Llevas mucho de pie | **30 min** de pie, mismas condiciones | **Baja a 80** y avisa, con botón *"Déjalo en 117"* |
 
-⚠️ **No mueven el escritorio por su cuenta**: ofrecen hacerlo y esperan a que lo
-pulses. Es lo que exige [SEGURIDAD.md](SEGURIDAD.md) —ningún movimiento
-automático sin confirmación— y además evita que se mueva mientras trabajas.
+**Mueven el escritorio.** La primera versión solo notificaba con un botón, y el
+propietario señaló lo evidente: *"si solo avisa para moverse, ¿qué sentido tiene
+el ESP32?"* — ninguno; eso lo hace una alarma.
+
+**Y cumple [SEGURIDAD.md](SEGURIDAD.md)**, que pide *"confirmación de que hay
+alguien delante"*: **el sensor de presencia ES esa confirmación**. Exigir además
+una pulsación era una precaución de más que vaciaba el sistema de su utilidad.
+
+Tres condiciones, y la tercera es la cortesía: **no mueve si tocaste el mando en
+los últimos 5 minutos** (`uso_manual`). Si acabas de ponerlo donde quieres, no te
+lo cambia.
 
 ### El sensor derivado que hizo falta, y por qué
 
@@ -288,6 +296,11 @@ Por eso hay dos sensores derivados en `configuration.yaml`:
 - **`sensor.escritorio_altura_estable`** — conserva la última altura real
 - **`sensor.escritorio_postura`** — `sentado` / `de pie`, con el **umbral en
   95 cm**. Es el número a tocar si no encaja con tu postura
+
+⚠️ **Y no se refresca dando toques periódicos.** Se probó a que el resumen
+despertara el display cada 30 min: es desgaste del pulsador y luz encendida para
+leer un número que casi nunca cambia. **No hace falta**: cuando alguien mueve el
+escritorio, el display se enciende solo y el sensor se actualiza.
 
 **Las alturas de trabajo son 80 (sentado) y 117 (de pie)**, indicadas por el
 propietario. El umbral de 95 las separa con holgura por los dos lados.

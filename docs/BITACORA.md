@@ -17,9 +17,28 @@ quieto).
 | Mucho sentado | **45 min** sentado **+ presencia** | Aviso con botón *"Subir a 117"* |
 | Mucho de pie | **30 min** de pie **+ presencia** | Aviso con botón *"Bajar a 80"* |
 
-⚠️ **No mueven el escritorio solos**: lo ofrecen y esperan la pulsación. Lo
-exige [SEGURIDAD.md](SEGURIDAD.md) —ningún movimiento automático sin
-confirmación— y evita que se mueva mientras se trabaja.
+**Corregido el mismo día, y por dos preguntas del propietario que dieron en el
+clavo:**
+
+> *"si solo avisa para moverse, ¿qué sentido tiene el ESP?"*
+
+Ninguno: eso lo hace una alarma. La primera versión solo notificaba con un botón
+—precaución mía de más— y **vaciaba el sistema de su única utilidad**. Al releer
+[SEGURIDAD.md](SEGURIDAD.md), lo que pide es *"confirmación de que hay alguien
+delante"*, **y el sensor de presencia ES esa confirmación**. Ahora **mueven el
+escritorio** y avisan, con un botón para deshacer.
+
+Tercera condición añadida, que es la cortesía del sistema: **no mueve si se tocó
+el mando en los últimos 5 minutos** (`uso_manual`, el sensor que salió de la
+cesión al mando manual). Si acabas de ponerlo donde quieres, no te lo cambia.
+
+> *"eso que la refresque, ¿es que va a enviar un toque cada rato?"*
+
+Sí, y era mala idea. Se había puesto que el resumen despertara el display cada
+30 min para dar una altura fresca: **desgaste del pulsador y luz encendida para
+leer un número que casi nunca cambia**. Retirado. No hace falta — cuando alguien
+mueve el escritorio, el display se enciende solo y el sensor estable se
+actualiza.
 
 **Alturas de trabajo: 80 sentado, 117 de pie**, indicadas por el propietario.
 Umbral de postura en 95 cm.
