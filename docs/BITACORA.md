@@ -6,6 +6,39 @@
 
 ---
 
+## 2026-08-24 — Los recordatorios no disparaban: dos fallos, ninguno visible
+
+> *"hasta ahora no veo que la automatizacion funcione, si quedó activa?"*
+
+Estaban activas y **no habían disparado nunca**. Dos fallos independientes, los
+dos míos, y **ninguno dejaba rastro en el log**:
+
+**1. El disparador esperaba una transición que no ocurre.** Escrito como *"cuando
+la postura CAMBIE a sentado y siga 45 min"*. Si el escritorio ya estaba a 80 cm
+desde el día anterior, la postura **ya era** `sentado`: no hay cambio que
+capturar y no salta jamás. Corregido: se revisa **cada 5 min cuánto lleva** en la
+postura, que es lo que se quería medir.
+
+**2. Una condición contra un sensor inexistente.** La cortesía *"no muevas si se
+tocó el mando en 5 min"* usa `uso_manual` — **que el firmware solo publica
+después de que alguien toque el mando por primera vez**. Como no se había tocado
+desde el último flasheo, el sensor no existía, la condición no podía evaluarse, y
+**bloqueaba la automatización entera**.
+
+**El segundo es el patrón que más vale registrar:** una condición de seguridad
+que, al no poder evaluarse, **impide funcionar en vez de dejar pasar**. Es el
+mismo error de forma que el ADR-019 —una salvaguarda razonando sobre un caso y
+callando en otro— y aquí volvió disfrazado de plantilla YAML.
+
+**Verificado**: se bajó el umbral a 60 s dejando solo la notificación (sin mover
+el escritorio), llegó al móvil, y se restauraron 45/30 min con el movimiento.
+
+**Anotado**: `last_changed` se reinicia con cada reinicio de HA, así que el
+contador de postura vuelve a cero. Irrelevante en operación normal, pero durante
+una sesión de cambios da la impresión de que nunca dispara.
+
+---
+
 ## 2026-08-23 (final) — Recordatorios de postura con presencia
 
 Lo primero del proyecto que da una utilidad que una alarma no da: **avisa solo

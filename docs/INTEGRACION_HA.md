@@ -273,6 +273,33 @@ aunque estés quieto, no solo movimiento).
 | Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | Avisa → espera 110 s → **vuelve a comprobar presencia** → sube a 117 → botón *"Déjalo en 80"* |
 | Llevas mucho de pie | **30 min** de pie, mismas condiciones | Igual, hacia 80 |
 
+⚠️ **Dos fallos que impedían que dispararan, corregidos el 2026-08-24** — los
+detectó el propietario al ver que no saltaba nunca:
+
+**1. El disparador esperaba un cambio que no ocurre.** Estaba como *"cuando la
+postura CAMBIE a sentado y siga 45 min"*. Si el escritorio ya estaba a 80 desde
+el día anterior, la postura **ya era** `sentado`: no hay transición que capturar
+y no salta jamás. Ahora se revisa **cada 5 min cuánto tiempo lleva** en esa
+postura (`last_changed`), que es lo que se quería medir desde el principio.
+
+**2. Una condición contra un sensor que no existía.** La cortesía *"no muevas si
+tocó el mando en 5 min"* usaba `uso_manual`, **que el firmware solo publica
+después de que alguien toque el mando por primera vez**. Sin haberlo tocado, el
+sensor no existe, la condición no se puede evaluar y **bloqueaba la
+automatización entera en silencio**. Ahora, si el sensor no existe se interpreta
+por lo que significa —nunca se usó el mando— y deja pasar.
+
+**El segundo es el patrón traicionero**: una condición de seguridad que, al no
+poder evaluarse, impide funcionar en vez de dejar pasar. Y no deja rastro en el
+log: la automatización simplemente no salta.
+
+⚠️ **`last_changed` se reinicia con cada reinicio de HA**, así que el contador de
+postura vuelve a cero. Irrelevante en operación normal; relevante durante una
+sesión de cambios, donde puede parecer que nunca dispara.
+
+**Verificado el 2026-08-24** bajando el umbral a 60 s y dejando solo la
+notificación: llegó al móvil.
+
 ### Tres capas contra "se fue justo entonces"
 
 El sensor no sabe al instante que te has ido, así que **ninguna comprobación
