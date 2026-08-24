@@ -60,7 +60,26 @@ static inline uint32_t IRAM_ATTR cycleCount() {
 // baseline. See docs/capturas/2026-08-22-wifi-impacto.log.
 #include <WiFi.h>
 #include <PubSubClient.h>
+#include <ArduinoOTA.h>
 #include "secrets.h"
+
+// --------------------------------------------------------------------- OTA ---
+//
+// Firmware updates over the network. The board lives on a wall charger, so
+// without this every fix means unplugging the desk, moving the USB to the Mac
+// and back -- and that dance is itself the ADR-019 hazard (ESP32 unpowered with
+// the probe on a live bus).
+//
+// DANGER, and it is specific to this project: applying an update REBOOTS the
+// chip. Reset puts the GPIOs back to input, which OPENS the channels -- and
+// opening a contact does NOT stop continuous travel (measured: 6 cm in 6.6 s
+// after release). An update mid-travel would leave the desk running to its end
+// stop with nobody supervising. So OTA is REFUSED while the desk moves.
+//
+// The update itself is safe against interruption: the ESP32 writes to the
+// inactive partition and only switches the boot target once the whole image is
+// verified. A failed transfer leaves the running firmware untouched.
+static bool g_otaBusy = false;
 
 static WiFiClient g_net;
 static PubSubClient g_mqtt(g_net);
@@ -1047,6 +1066,7 @@ static void publishDiscovery() {
   publishOne("sensor", "bus_malformadas", "Bus malformadas", "bus_malformadas", "%", NULL, "1", "diag");
   publishOne("sensor", "bus_transacciones", "Bus transacciones", "bus_transacciones", NULL, NULL, "1", "diag");
   publishOne("sensor", "rssi", "WiFi RSSI", "rssi", "dBm", "signal_strength", "1", "diag");
+  publishOne("sensor", "ip", "IP", "ip", NULL, NULL, NULL, "diag");
   publishOne("sensor", "uptime", "Uptime", "uptime", "s", "duration", "1", "diag");
 
   publishButton("subir",  "Subir",      "subir",  "mdi:arrow-up-bold");
@@ -1140,6 +1160,8 @@ static void publishState() {
 
   snprintf(b, sizeof(b), "%d", (int)WiFi.RSSI());
   g_mqtt.publish(topic("rssi").c_str(), b, true);
+
+  g_mqtt.publish(topic("ip").c_str(), WiFi.localIP().toString().c_str(), true);
 
   snprintf(b, sizeof(b), "%lu", (unsigned long)(millis() / 1000));
   g_mqtt.publish(topic("uptime").c_str(), b, true);
@@ -1501,6 +1523,25 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.setSleep(false);          // sleep adds latency and buys nothing on USB
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  ArduinoOTA.setHostname(DEVICE_ID);
+  ArduinoOTA.setPassword(OTA_PASSWORD);
+  ArduinoOTA.onStart([]() {
+    // Refuse mid-travel: see the DANGER note on g_otaBusy.
+    if (g_motion != MOTION_IDLE) {
+      Serial.println("\n[OTA RECHAZADA: el escritorio esta en movimiento]");
+      ESP.restart();   // abort before a single byte is written
+    }
+    g_otaBusy = true;
+    allChannelsOff();  // belt and braces: no contact closed during an update
+    Serial.println("\n[OTA: recibiendo firmware nuevo]");
+  });
+  ArduinoOTA.onEnd([]() { Serial.println("\n[OTA: completa, reiniciando]"); });
+  ArduinoOTA.onError([](ota_error_t e) {
+    g_otaBusy = false;
+    Serial.printf("\n[OTA ERROR %u: el firmware anterior sigue intacto]\n", e);
+  });
+  ArduinoOTA.begin();
+
   g_mqtt.setServer(MQTT_HOST, MQTT_PORT);
   g_mqtt.setBufferSize(1024);    // discovery payloads do not fit in the default 256
   g_mqtt.setCallback(onMqttMessage);
@@ -1548,6 +1589,9 @@ void loop() {
   // never steal time from the sampling — which was the first thing suspected of
   // breaking the interrupt version, and turned out not to be, but is designed
   // out here anyway.
+  ArduinoOTA.handle();
+  if (g_otaBusy) return;   // an update is streaming: nothing else matters
+
   uint32_t n = captureBurst(250);
   if (n) {
     decodeBurst(n);

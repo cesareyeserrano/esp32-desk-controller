@@ -170,6 +170,29 @@ bus de hasta ~125 kHz. Esta familia de chips suele correr muy por debajo.
 simuladas (`-fsyntax-only -Wall -Wextra`, cero avisos), que descartaba erratas y
 errores de tipo pero no desajustes con las firmas reales del core.*
 
+### Actualizar por red (OTA) — desde el 2026-08-23
+
+**El ESP32 vive en un cargador de pared: no hace falta el cable.** La IP está
+publicada como entidad `IP` en Home Assistant (a día de hoy `192.168.1.23`), y
+la contraseña, en `secrets.h`.
+
+```
+CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
+"$CLI" upload -p 192.168.1.23 --fqbn esp32:esp32:esp32 \
+  --upload-field password=<OTA_PASSWORD> firmware/desk_sniffer
+```
+
+⚠️ **La actualización se rechaza si el escritorio está en movimiento**
+([ADR-034](../docs/DECISIONS.md)): reiniciar abre los canales, y abrir un
+contacto no detiene el movimiento continuo.
+
+Un `[WARNING]: Unexpected response from device: '256'` al final es cosmético del
+script de subida; si se vio `100% Done`, la actualización se aplicó — se
+confirma mirando que el `uptime` en HA vuelve a empezar.
+
+**El cable sigue haciendo falta para:** el primer flasheo de una placa nueva, y
+para leer el puerto serie.
+
 ### Monitor serie
 
 **115200 baudios.** *(Corregido dos veces el 2026-08-21: decía 921600, pasó a

@@ -1876,3 +1876,56 @@ razonar sobre el silicio.
 
 Es la segunda vez en la misma sesión: el 2026-08-21 un canal "muerto" resultó
 ser un fallo del propio sniffer.
+
+---
+
+## ADR-034 — Actualización de firmware por red (OTA), rechazada durante el movimiento
+
+**Fecha:** 2026-08-23
+**Estado:** Aceptado
+
+### Contexto
+
+Desde que el ESP32 pasó a un cargador de pared, cada corrección exigía
+desenchufar el escritorio, llevar el USB al Mac y devolverlo. **Ese baile es en
+sí mismo el peligro del [ADR-019](DECISIONS.md)**: cada tránsito deja momentos
+con el ESP32 sin alimentar y la sonda sobre un bus vivo, la condición que ya
+causó dos días de diagnósticos falsos.
+
+O sea: el procedimiento para arreglar el firmware era más arriesgado que casi
+cualquier fallo del firmware.
+
+### Decisión
+
+**Se implementa OTA con `ArduinoOTA`**, protegido por contraseña
+(`OTA_PASSWORD` en `secrets.h`, no versionada), y **se publica la IP del
+dispositivo** como entidad de diagnóstico — sin ella no se sabe a dónde
+actualizar.
+
+⚠️ **Y se RECHAZA la actualización si el escritorio está en movimiento.**
+
+Esa guarda no es celo: aplicar una actualización **reinicia el chip**, el
+reinicio deja los GPIO como entradas y **abre los canales** — y abrir un
+contacto **no detiene el movimiento continuo** (medido: 6 cm en 6.6 s tras
+soltar). Una actualización a mitad de viaje dejaría el escritorio corriendo
+hasta su tope sin nadie supervisando. Si llega una petición con `g_motion`
+distinto de `MOTION_IDLE`, se aborta antes de escribir un solo byte.
+
+### Por qué es seguro contra interrupciones
+
+El ESP32 escribe la imagen en la **partición inactiva** y solo cambia el destino
+de arranque cuando la imagen está completa y verificada. **Una transferencia
+cortada deja intacto el firmware que corre.** No hay estado intermedio en el que
+el aparato quede inservible.
+
+### Qué se gana y qué se paga
+
+**Se gana** eliminar la manipulación física recurrente — la fuente de riesgo
+número uno de este proyecto, con dos incidentes documentados.
+
+**Se paga:** el programa sube del 69% al 74% de la flash, y **se abre un puerto
+en la red local**. Mitigado con contraseña; la red es doméstica y el peor caso
+de un atacante con acceso a ella y a la contraseña es mover un escritorio.
+
+**Verificado el 2026-08-23**: actualización completa por red a `192.168.1.23`,
+autenticada, con el ESP32 reconectando solo al broker tras reiniciar.

@@ -6,6 +6,42 @@
 
 ---
 
+## 2026-08-23 (cierre) — Publicado en GitHub y actualizaciones por red
+
+**Repositorio público:** https://github.com/cesareyeserrano/esp32-desk-controller
+
+Auditoría antes de publicar: sin credenciales en nada versionado (`secrets.h`
+ignorado, con plantilla `.example`), sin material de terceros —tres fotos de un
+anuncio de tienda quedaron fuera; el datasheet se conserva porque el original ya
+devuelve 403—, `.gitignore` completo y licencia MIT.
+
+**README reescrito**: el que había era de julio y describía la fase 2 con
+valores de resistencia ya corregidos por [ADR-022](DECISIONS.md). El viejo quedó
+en [historia/](historia/).
+
+### OTA: se acabó el cable
+
+Se implementó actualización por red ([ADR-034](DECISIONS.md)), y la razón de
+fondo importa: **el procedimiento de flasheo era más peligroso que casi
+cualquier fallo del firmware.** Cada corrección obligaba a mover el USB entre el
+cargador y el Mac, y cada tránsito reproduce la condición del
+[ADR-019](DECISIONS.md) —ESP32 sin alimentar con la sonda sobre un bus vivo—,
+que ya costó dos días de diagnósticos falsos.
+
+⚠️ **La actualización se rechaza si el escritorio está en movimiento.** Aplicarla
+reinicia el chip, el reinicio abre los canales, y **abrir un contacto no detiene
+el movimiento continuo**: una actualización a mitad de viaje dejaría el
+escritorio corriendo hasta el tope sin supervisión.
+
+**Verificado el mismo día**: actualización completa por red a `192.168.1.23`,
+autenticada, con el ESP32 reconectando solo al broker. También se publica ahora
+la IP como entidad, sin la cual no se sabe a dónde actualizar.
+
+Coste: la flash pasa del 69% al 74%. El cable solo hace falta ya para el primer
+flasheo de una placa nueva y para leer el puerto serie.
+
+---
+
 ## 2026-08-23 (madrugada) — Segunda ronda adversarial, sobre todo el sistema
 
 Antes de publicar en GitHub se pidió una última revisión adversarial, esta vez
