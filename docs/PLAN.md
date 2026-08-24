@@ -14,6 +14,11 @@ pantalla del mando.
 
 ## Siguiente acción concreta
 
+✅ **Los recordatorios de postura funcionan de punta a punta** (verificado el
+2026-08-24: 45 min sentado → aviso → margen → re-verificación de presencia →
+el escritorio sube solo a 117 → botón para deshacer). Es lo primero que el
+sistema hace útil por su cuenta.
+
 **El sistema está estable y en periodo de observación (decisión del
 propietario, 2026-08-23).** Todo lo esencial de la fase 4 funciona: 21
 entidades en HA, viajes con límites y freno verificado, cesión al mando manual,

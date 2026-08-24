@@ -35,7 +35,26 @@ el escritorio), llegó al móvil, y se restauraron 45/30 min con el movimiento.
 
 **Anotado**: `last_changed` se reinicia con cada reinicio de HA, así que el
 contador de postura vuelve a cero. Irrelevante en operación normal, pero durante
-una sesión de cambios da la impresión de que nunca dispara.
+una sesión de cambios da la impresión de que nunca dispara — y eso fue
+exactamente lo que pasó: al revisarlo, a la automatización **le faltaba un
+minuto**, no estaba rota.
+
+### ✅ VERIFICADO DE PUNTA A PUNTA — 2026-08-24
+
+**La cadena completa funcionó sola, sin intervención:**
+
+```
+45 min sentado  ->  aviso al movil  ->  2 min de margen
+                ->  re-verifica presencia  ->  SUBE A 117
+                ->  aviso con boton "Dejalo en 80"
+```
+
+Es el primer momento en que el sistema hace algo **útil por su cuenta**: mide la
+postura leyendo el bus, comprueba que hay alguien delante, espera por si te
+vas, mueve el escritorio y ofrece deshacerlo. Ninguna de esas cosas la da una
+alarma.
+
+**Fase 4 cerrada en la práctica.**
 
 ---
 
