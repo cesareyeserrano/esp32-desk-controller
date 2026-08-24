@@ -28,9 +28,14 @@ monitoreo con alertas al móvil, OTA, y el repositorio público en GitHub.
 
 1. **Presets con nombre** ("de pie", "sentado") — el alcance ya está decidido
    en la sección de fase 4; es configuración sobre lo que ya funciona
-2. **La capa 2 de protección de la sonda** (buffer alimentado del bus,
-   [ADR-031](DECISIONS.md)) — aparcada a petición del propietario hasta querer
-   tocar hardware; la capa 1 (misma regleta) sigue pendiente y es gratis
+2. **Fabricar la placa definitiva** — especificación completa y esquema listos
+   en [hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md) y
+   [hardware/plano_pcb_v1.svg](hardware/plano_pcb_v1.svg). **Incluye el buffer
+   de aislamiento** ([ADR-031](DECISIONS.md)), que es la razón principal de
+   rehacerla: la protoboard fue el eslabón frágil del proyecto entero.
+
+   ⚠️ **Antes de encargarla, montar el buffer en protoboard y probarlo**: es la
+   única parte del diseño que nunca se ha probado
 3. **Estadísticas de uso en HA** (tiempo de pie/sentado — falta decidir el
    umbral en cm) e InfluxDB para histórico largo
 4. Cabos sueltos menores: los cinco bytes de reposo sin identificar, y las
