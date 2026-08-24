@@ -30,6 +30,14 @@ está fuera de alcance.
 afirmación técnica como verificada, supuesta o descartada. Un supuesto que se
 escribe como hecho es cómo se conecta 5 V a un GPIO.
 
+**Toda implementación pasa revisión adversarial antes de darse por terminada.**
+Regla fijada por el propietario el 2026-08-23, tras dos rondas en las que la
+revisión encontró: un limitador de seguridad prometido que nunca se implementó,
+tres botones que no funcionaban, y regresiones introducidas por los propios
+arreglos de la ronda anterior. Los hallazgos se verifican contra el código antes
+de aceptarlos, y lo que se decide no arreglar se anota como aceptado, no se
+omite.
+
 **Nada de correcciones silenciosas.** Si algo documentado estaba mal, se corrige
 y se registra que estaba mal.
 

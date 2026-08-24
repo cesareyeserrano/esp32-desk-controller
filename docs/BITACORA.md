@@ -6,6 +6,57 @@
 
 ---
 
+## 2026-08-23 (último) — El ESP32 cede el paso al mando, y la regla nueva
+
+**Regla fijada por el propietario, ya en el CLAUDE.md: toda implementación pasa
+revisión adversarial antes de darse por terminada.** Esta entrada es la primera
+bajo esa regla, y la revisión volvió a pagar.
+
+### La cesión al mando manual
+
+El sniffer ve todas las teclas del bus, propias y humanas. Ahora, si durante un
+viaje nuestro aparece **una tecla que el ESP32 no ordenó**, cede el paso: suelta
+su objetivo, no frena (la pulsación humana ya frenó), no persigue. Antes tardaba
+9 s en concluir "no avanza" y metía un toque que nadie pidió.
+
+Sensor nuevo: **`uso_manual`** — segundos desde la última vez que una persona
+tocó el mando, para que las automatizaciones no se peleen con ella.
+
+**Verificado en vivo**: viaje continuo bajando, pulsación humana, y el resultado
+publicado fue `ultimo_freno: mando manual`, `quieto`, `uso_manual: 10`.
+
+**Verificado de regalo**: en un intento anterior el viaje corrió completo sin
+observador y **el límite de software frenó solo en el tope** (`limite superior`).
+
+### La revisión de esta implementación encontró seis cosas — dos graves
+
+1. ⚠️ **El "rechazo" del OTA en movimiento era el peligro que decía evitar**:
+   reiniciar abre los canales y abrir no frena. Ahora **frena primero** (un toque
+   real) y deja pasar la actualización sobre un escritorio parándose
+2. ⚠️ **Una tecla manual decodificada justo antes de lanzar un viaje** lo habría
+   desarmado sin frenarlo (la pulsación era anterior al pulso). Se absorbe al
+   lanzar
+3. `parar` recibido durante el frenado podía dejar que un reobjetivo pendiente
+   arrancara viaje después del stop — el stop va primero ahora
+4. La ventana de "frenado confirmado" (1.5 s) era menor que el periodo de
+   actualización del display en movimiento (~1.47 s/cm): podía confirmar un
+   freno sobre un escritorio a plena marcha. Subida a 3 s
+5. Una atribución de tecla nuestra que no llegara a capturarse dejaba 1.5 s en
+   los que una pulsación humana se atribuía a nuestro canal. Ventana acortada
+6. `uso_manual` con `millis()` habría dicho "usado hace segundos" cada 49.7
+   días. Pasado a reloj de 64 bits
+
+**Aceptado sin arreglar** (anotado): el mismo desbordamiento en `altura_edad` es
+cosmético — sus consumos reales son ventanas de segundos, inmunes al envolvido.
+
+### Panel
+
+Añadidas a la sección **Estudio** del panel Casa dos tarjetas: el campo **Ir a
+altura** (muestra y fija, en cm) y el **indicador de movimiento**. Nada más, a
+propósito: el resto vive en la página del dispositivo.
+
+---
+
 ## 2026-08-23 (cierre) — Publicado en GitHub y actualizaciones por red
 
 **Repositorio público:** https://github.com/cesareyeserrano/esp32-desk-controller

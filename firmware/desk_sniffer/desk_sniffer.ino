@@ -195,6 +195,18 @@ static const uint8_t WAKE_CH = 1;  // channel 2, down. Never 3 or 4.
 // watch the bus for the key byte the control box reports, and print it next to
 // the channel that caused it. That is how a freshly soldered channel is checked
 // against PROTOCOLO.md without guessing: press it, read which button answered.
+// A key pressed on the BUS that we did not cause. The sniffer sees every key
+// the control box reads, ours and the human's alike, so "a pressed key nobody
+// is claiming" means somebody is using the handset. Set from the decoder,
+// consumed by the main loop.
+static volatile bool    g_manualKey = false;
+static volatile uint8_t g_manualKeyByte = 0;
+// 64-bit uptime for long-lived ages: millis() wraps at ~49.7 days, and the
+// "seconds since last manual use" sensor is meant to be trusted by automations
+// for exactly that kind of timescale (review 2026-08-23).
+static inline uint64_t uptimeMs64() { return (uint64_t)(esp_timer_get_time() / 1000ULL); }
+static uint64_t         g_lastManualMs = 0;   // when the handset was last used
+
 static int8_t g_lastPulsedCh = -1;
 static uint32_t g_watchKeyUntilMs = 0;
 
@@ -271,6 +283,11 @@ static void pulseChannelFor(uint8_t idx, uint32_t widthMs) {
   uint32_t achievedMs = millis() - t0;
 
   if (lastN) decodeBurst(lastN);      // printing may block freely now
+
+  // If our own key read was not in that burst, shrink the attribution window:
+  // with the full 1.5 s open, a HUMAN press right after our tap would be
+  // claimed as "CHANNEL n answered" and the give-way path skipped.
+  if (g_lastPulsedCh >= 0) g_watchKeyUntilMs = millis() + 400;
 
   // The width is a safety bound, not a wish: measure it, and say so loudly if
   // it was exceeded. 2.2 s starts continuous travel; 3.0 s overwrites a preset.
@@ -659,6 +676,14 @@ static void emitTransaction(bool repeatedStart) {
                      (unsigned)(g_lastPulsedCh + 1), dat);
             Serial.print(b2);
             g_lastPulsedCh = -1;
+          } else if (dat & 0x40) {
+            // A pressed key with nobody claiming it: the person is using the
+            // handset. Their press has already braked whatever we had running,
+            // so insisting would be fighting the human -- and we would only
+            // notice 9 s later through the stall brake, adding a tap nobody
+            // asked for. Give way instead.
+            g_manualKey = true;
+            g_manualKeyByte = dat;
           }
           Serial.println();
         }
@@ -968,6 +993,7 @@ static char     g_pendingCmd[24] = {0};   // must hold "continuo_subir" (14) -- 
 // harmless, a lost one is not.
 static volatile bool g_stopReq = false;
 
+
 // Round-2 review: a retarget during travel must SURVIVE the braking phase.
 // stopTravel leaves MOTION_BRAKING, so calling startTravel right after it is
 // refused -- the first fix silently dropped the new target (C3, again). The
@@ -1067,6 +1093,9 @@ static void publishDiscovery() {
   publishOne("sensor", "bus_transacciones", "Bus transacciones", "bus_transacciones", NULL, NULL, "1", "diag");
   publishOne("sensor", "rssi", "WiFi RSSI", "rssi", "dBm", "signal_strength", "1", "diag");
   publishOne("sensor", "ip", "IP", "ip", NULL, NULL, NULL, "diag");
+  // Seconds since somebody last touched the handset. Lets an automation stay
+  // out of the way ("do not move if it was used in the last hour").
+  publishOne("sensor", "uso_manual", "Uso manual hace", "uso_manual", "s", "duration", "1", NULL);
   publishOne("sensor", "uptime", "Uptime", "uptime", "s", "duration", "1", "diag");
 
   publishButton("subir",  "Subir",      "subir",  "mdi:arrow-up-bold");
@@ -1162,6 +1191,12 @@ static void publishState() {
   g_mqtt.publish(topic("rssi").c_str(), b, true);
 
   g_mqtt.publish(topic("ip").c_str(), WiFi.localIP().toString().c_str(), true);
+
+  if (g_lastManualMs) {
+    snprintf(b, sizeof(b), "%llu",
+             (unsigned long long)((uptimeMs64() - g_lastManualMs) / 1000ULL));
+    g_mqtt.publish(topic("uso_manual").c_str(), b, true);
+  }
 
   snprintf(b, sizeof(b), "%lu", (unsigned long)(millis() / 1000));
   g_mqtt.publish(topic("uptime").c_str(), b, true);
@@ -1314,6 +1349,11 @@ static bool startTravel(bool up, int32_t target) {
   g_startH      = g_heightCm;
   g_progressMs  = millis();
   g_stopReason[0] = 0;
+  // A manual key decoded BEFORE this launch predates the travel and therefore
+  // did not stop it; consuming it later would disarm supervision over a live
+  // travel with no brake. Absorb it here (keeping the usage timestamp).
+  if (g_manualKey) { g_manualKey = false; g_lastManualMs = uptimeMs64(); }
+
   Serial.printf("\n[VIAJE %s desde %ld cm, objetivo %s]\n",
                 up ? "subiendo" : "bajando", (long)g_heightCm,
                 target >= 0 ? String(target).c_str() : "el limite");
@@ -1358,7 +1398,10 @@ static void superviseTravel() {
           g_motion = MOTION_IDLE;        // nothing more this code can do
         }
       }
-    } else if ((uint32_t)(millis() - g_progressMs) > 1500) {
+    } else if ((uint32_t)(millis() - g_progressMs) > 3000) {
+      // 3000, not 1500: at travel speed the display crosses a centimetre every
+      // ~1470 ms, so a 1.5 s window could declare "settled" between two cm
+      // updates of a desk still moving at full speed (review 2026-08-23).
       g_motion = MOTION_IDLE;            // settled: brake confirmed
     }
     return;
@@ -1526,11 +1569,18 @@ void setup() {
   ArduinoOTA.setHostname(DEVICE_ID);
   ArduinoOTA.setPassword(OTA_PASSWORD);
   ArduinoOTA.onStart([]() {
-    // Refuse mid-travel: see the DANGER note on g_otaBusy.
+    // Review 2026-08-23: the first version "refused" mid-travel with
+    // ESP.restart() -- which IS the runaway it claimed to prevent: reset opens
+    // the channels, opening does not stop continuous travel, and the reboot
+    // wakes with no travel state so nothing ever brakes. The safe move is the
+    // opposite: BRAKE FIRST (a real tap, which is what stops travel), then let
+    // the update proceed over a desk that is stopping.
     if (g_motion != MOTION_IDLE) {
-      Serial.println("\n[OTA RECHAZADA: el escritorio esta en movimiento]");
-      ESP.restart();   // abort before a single byte is written
+      Serial.println("\n[OTA: frenando el escritorio antes de actualizar]");
+      stopTravel("OTA");
     }
+    g_retargetCm = -1;
+    g_fineTarget = -1;
     g_otaBusy = true;
     allChannelsOff();  // belt and braces: no contact closed during an update
     Serial.println("\n[OTA: recibiendo firmware nuevo]");
@@ -1615,14 +1665,25 @@ void loop() {
   } else if (g_mqtt.connected()) {
     g_mqtt.loop();   // cheap: keepalive + receive "parar"; no publishes
   }
-  superviseTravel();   // every branch of it ends in a brake
-
-  // Pending retarget: fire once the brake has settled.
-  if (g_retargetCm >= 0 && g_motion == MOTION_IDLE) {
-    int32_t t = g_retargetCm;
-    g_retargetCm = -1;
-    startTravel(true, t);
+  // Somebody touched the handset: give way. Their press already stopped any
+  // travel of ours physically; here we drop OUR intent so we do not chase,
+  // brake or fine-adjust against them.
+  if (g_manualKey) {
+    g_manualKey = false;
+    uint8_t k = g_manualKeyByte;
+    if (g_motion != MOTION_IDLE || g_fineTarget >= 0 || g_retargetCm >= 0) {
+      Serial.printf("\n[mando manual (0x%02X): cedo el paso]\n", (unsigned)k);
+      g_motion     = MOTION_IDLE;   // no brake tap: the person already stopped it
+      g_target     = -1;
+      g_fineTarget = -1;
+      g_retargetCm = -1;
+      g_pendingCmd[0] = 0;
+      snprintf(g_stopReason, sizeof(g_stopReason), "mando manual");
+    }
+    g_lastManualMs = uptimeMs64();
   }
+
+  superviseTravel();   // every branch of it ends in a brake
 
   if (g_stopReq) {     // C4: stop outranks everything and cannot be overwritten
     g_stopReq = false;
@@ -1632,6 +1693,14 @@ void loop() {
     if (g_motion != MOTION_IDLE) stopTravel("parado a mano");
     else                         pulseChannelFor(WAKE_CH, WAKE_MS);  // brakes box travel, moves nothing
   }
+
+  // Pending retarget: fire once the brake has settled.
+  if (g_retargetCm >= 0 && g_motion == MOTION_IDLE) {
+    int32_t t = g_retargetCm;
+    g_retargetCm = -1;
+    startTravel(true, t);
+  }
+
   adjustFine();
   runPendingCmd();
 
