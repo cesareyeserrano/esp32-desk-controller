@@ -41,12 +41,27 @@ ocupado→desocupado**: en esa ventana informa "presente" con la silla ya vacía
 la automatización habría movido el escritorio sin nadie delante — exactamente lo
 que [SEGURIDAD.md](SEGURIDAD.md) prohíbe.
 
-**Bajar el retardo del sensor no era la salida**: acortarlo hace que cada ida a
-por agua reinicie el contador de postura y los avisos no lleguen nunca.
+Se añadió una re-verificación tras 110 s. **Y el propietario volvió a tener
+razón:**
 
-**La secuencia ahora es**: avisar → **esperar 110 s, más que el retardo del
-sensor** → **volver a comprobar presencia** → mover. Si te levantaste, para
-entonces el sensor ya lo sabe y la secuencia se detiene sin hacer nada.
+> *"da igual, por que me puedo ir justo en la confirmacion"*
+
+**Cierto: una comprobación puntual reduce la ventana, no la cierra.** Quedaron
+tres capas:
+
+| Capa | Qué hace |
+|---|---|
+| **1. Retardo del sensor: 90 s → 30 s** | Admite la ausencia tres veces antes |
+| **2. Re-verificar tras 110 s** | Avisa, espera más que el retardo, vuelve a preguntar |
+| **3. Parar si la presencia cae DURANTE el movimiento** | Vigilancia continua, no predicción |
+
+**La capa 3 es la que cierra el caso.** Las otras dos adivinan; esta reacciona.
+
+⚠️ **Y un error mío que hay que registrar:** dije que bajar el retardo del sensor
+rompería el contador de postura. **Es falso.** El contador mide la **altura**
+(`sensor.escritorio_postura`), no la presencia — la presencia solo se consulta
+en el instante del disparo. Bajarlo no rompía nada, y estuve a punto de
+descartar por ese razonamiento equivocado la mejora más simple de las tres.
 
 > *"eso que la refresque, ¿es que va a enviar un toque cada rato?"*
 

@@ -273,15 +273,27 @@ aunque estés quieto, no solo movimiento).
 | Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | Avisa → espera 110 s → **vuelve a comprobar presencia** → sube a 117 → botón *"Déjalo en 80"* |
 | Llevas mucho de pie | **30 min** de pie, mismas condiciones | Igual, hacia 80 |
 
-⚠️ **La espera de 110 s no es cortesía: es seguridad.** El sensor tarda **90 s**
-en admitir que te fuiste, así que en esa ventana diría "presente" con la silla
-ya vacía — y movería el escritorio solo, que es justo lo que
-[SEGURIDAD.md](SEGURIDAD.md) prohíbe. Esperando **más que ese retardo** y
-comprobando **otra vez** antes de mover, si te levantaste el sensor ya lo sabe y
-la secuencia se detiene sin hacer nada.
+### Tres capas contra "se fue justo entonces"
 
-Lo detectó el propietario: *"creo que tiene como dos minutos, podría creer que
-aún estoy y levantar"*.
+El sensor no sabe al instante que te has ido, así que **ninguna comprobación
+puntual basta**. Lo señaló el propietario dos veces —*"podría creer que aún
+estoy"* y, cuando añadí la re-verificación, *"da igual, me puedo ir justo en la
+confirmación"*—. Tenía razón las dos veces: una comprobación reduce la ventana,
+no la cierra.
+
+| Capa | Qué hace |
+|---|---|
+| **1. Retardo del sensor a 30 s** | Era 90. Ahora el sensor admite la ausencia tres veces antes |
+| **2. Re-verificar tras 110 s** | Avisa, espera más que el retardo, y **vuelve a preguntar** antes de mover |
+| **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa |
+
+**La capa 3 es la que cierra el caso** que las otras dos no pueden: no predice,
+reacciona.
+
+⚠️ **Corrección de un error mío:** dije que bajar el retardo del sensor rompería
+el contador de postura. **Es falso** — el contador mide la ALTURA
+(`sensor.escritorio_postura`), no la presencia; la presencia solo se consulta en
+el instante del disparo. Bajarlo no rompe nada y mejora todo lo demás.
 
 **Mueven el escritorio.** La primera versión solo notificaba con un botón, y el
 propietario señaló lo evidente: *"si solo avisa para moverse, ¿qué sentido tiene
