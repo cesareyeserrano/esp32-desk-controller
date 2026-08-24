@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="50" y="55" font-family="Helvetica,Arial,sans-serif" font-size="24" fill="#111" text-anchor="start" font-weight="bold">LÁMINA 1 / 3 — Cómo se conecta todo</text>
+<text x="50" y="84" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#666" text-anchor="start" font-weight="normal">La placa se intercala en el cable que ya existe entre la caja y el mando.</text>
+<rect x="70" y="150" width="260" height="110" fill="#fff" stroke="#2c6fb5" stroke-width="3" rx="10"/>
+<text x="200.0" y="200" font-family="Helvetica,Arial,sans-serif" font-size="17" fill="#2c6fb5" text-anchor="middle" font-weight="bold">CAJA DE CONTROL</text>
+<text x="200.0" y="226" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="middle" font-weight="normal">(bajo el escritorio)</text>
+<rect x="470" y="150" width="260" height="110" fill="#fff" stroke="#c47b1e" stroke-width="3" rx="10"/>
+<text x="600.0" y="200" font-family="Helvetica,Arial,sans-serif" font-size="17" fill="#c47b1e" text-anchor="middle" font-weight="bold">ESTA PLACA</text>
+<text x="600.0" y="226" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="middle" font-weight="normal">ESP32 + electrónica</text>
+<rect x="870" y="150" width="260" height="110" fill="#fff" stroke="#2c6fb5" stroke-width="3" rx="10"/>
+<text x="1000.0" y="200" font-family="Helvetica,Arial,sans-serif" font-size="17" fill="#2c6fb5" text-anchor="middle" font-weight="bold">MANDO</text>
+<text x="1000.0" y="226" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="middle" font-weight="normal">JK-CH506</text>
+<line x1="330" y1="190" x2="470" y2="190" stroke="#2c6fb5" stroke-width="5" stroke-linecap="round"/>
+<text x="400" y="178" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#2c6fb5" text-anchor="middle" font-weight="bold">4 hilos</text>
+<text x="400" y="225" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#666" text-anchor="middle" font-weight="normal">CLK · DIO · GND · +5V</text>
+<line x1="730" y1="190" x2="870" y2="190" stroke="#2c6fb5" stroke-width="5" stroke-linecap="round"/>
+<text x="800" y="178" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#2c6fb5" text-anchor="middle" font-weight="bold">4 hilos</text>
+<text x="800" y="225" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#666" text-anchor="middle" font-weight="normal">paso directo</text>
+<line x1="870" y1="240" x2="800" y2="240" stroke="#7a5195" stroke-width="5" stroke-linecap="round"/>
+<line x1="800" y1="240" x2="800" y2="300" stroke="#7a5195" stroke-width="5" stroke-linecap="round"/>
+<line x1="800" y1="300" x2="660" y2="300" stroke="#7a5195" stroke-width="5" stroke-linecap="round"/>
+<line x1="660" y1="300" x2="660" y2="260" stroke="#7a5195" stroke-width="5" stroke-linecap="round"/>
+<text x="730" y="320" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#7a5195" text-anchor="middle" font-weight="bold">8 hilos · los cuatro pulsadores</text>
+<rect x="70" y="380" width="1060" height="140" fill="#f8fbff" stroke="#2c6fb5" stroke-width="2" rx="10"/>
+<text x="95" y="412" font-family="Helvetica,Arial,sans-serif" font-size="15" fill="#2c6fb5" text-anchor="start" font-weight="bold">Por qué intercalada y no derivando del mando</text>
+<text x="95" y="442" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">Quita las TRES soldaduras del bus dentro del mando — las que causaron el cortocircuito del 23 de agosto.</text>
+<text x="95" y="468" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">Dentro del mando quedan solo los ocho de los pulsadores, que no hay forma de evitar.</text>
+<text x="95" y="498" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#c0392b" text-anchor="start" font-weight="bold">A cambio: si la placa falla, el mando se queda sin señal. Ten un cable puente para saltártela.</text>
+</svg>

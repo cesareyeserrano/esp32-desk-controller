@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="760" viewBox="0 0 1200 760">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="50" y="55" font-family="Helvetica,Arial,sans-serif" font-size="24" fill="#111" text-anchor="start" font-weight="bold">LÁMINA 3 / 3 — Accionamiento de los pulsadores</text>
+<text x="50" y="84" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#666" text-anchor="start" font-weight="normal">Cuatro canales idénticos. Cada uno cierra un pulsador del mando sin contacto eléctrico entre ambos lados.</text>
+<rect x="70" y="130" width="1060" height="180" fill="#fafaff" stroke="#7a5195" stroke-width="3" rx="10"/>
+<text x="95" y="162" font-family="Helvetica,Arial,sans-serif" font-size="15" fill="#7a5195" text-anchor="start" font-weight="bold">UN CANAL — así son los cuatro</text>
+<text x="190" y="215" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="middle" font-weight="bold">GPIO</text>
+<line x1="230" y1="215" x2="290" y2="215" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+<rect x="298" y="204" width="64" height="22" fill="#fff" stroke="#333" stroke-width="2" rx="3"/>
+<text x="330" y="220" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111" text-anchor="middle" font-weight="bold">330 Ω</text>
+<line x1="370" y1="215" x2="430" y2="215" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+<rect x="430" y="175" width="200" height="90" fill="#fff" stroke="#7a5195" stroke-width="3" rx="6"/>
+<text x="530" y="168" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#7a5195" text-anchor="middle" font-weight="bold">PC817</text>
+<text x="530" y="200" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111" text-anchor="middle" font-weight="normal">1  ▸LED▸  2</text>
+<line x1="450" y1="212" x2="610" y2="212" stroke="#7a5195" stroke-width="2" stroke-linecap="round"/>
+<text x="530" y="240" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#111" text-anchor="middle" font-weight="normal">3  ▸interruptor▸  4</text>
+<line x1="630" y1="200" x2="680" y2="200" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+<text x="700" y="205" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#2c6fb5" text-anchor="start" font-weight="bold">GND</text>
+<line x1="630" y1="240" x2="760" y2="240" stroke="#7a5195" stroke-width="3" stroke-linecap="round"/>
+<rect x="760" y="215" width="220" height="50" fill="#f7f2fb" stroke="#7a5195" stroke-width="2" rx="6"/>
+<text x="870" y="246" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#7a5195" text-anchor="middle" font-weight="bold">al pulsador del mando</text>
+<text x="95" y="290" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#c0392b" text-anchor="start" font-weight="bold">Las patas 1-2 son el lado del ESP32. Las 3-4, el lado del mando. Nunca se tocan: ahí está el aislamiento.</text>
+<rect x="70" y="350" width="1060" height="290" fill="#fff" stroke="#7a5195" stroke-width="2" rx="10"/>
+<text x="95" y="385" font-family="Helvetica,Arial,sans-serif" font-size="15" fill="#7a5195" text-anchor="start" font-weight="bold">LOS CUATRO CANALES</text>
+<text x="120" y="420" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="bold">CANAL</text>
+<text x="280" y="420" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="bold">GPIO</text>
+<text x="440" y="420" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="bold">BOTÓN</text>
+<text x="640" y="420" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="bold">CHIP</text>
+<text x="830" y="420" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="bold">CONECTOR</text>
+<line x1="95" y1="432" x2="1105" y2="432" stroke="#ddd" stroke-width="2" stroke-linecap="round"/>
+<text x="120" y="470" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#7a5195" text-anchor="start" font-weight="bold">1</text>
+<text x="280" y="470" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">GPIO 27</text>
+<text x="440" y="470" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Subir</text>
+<text x="640" y="470" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">U3</text>
+<text x="830" y="470" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#7a5195" text-anchor="start" font-weight="normal">J3  pines 1-2</text>
+<line x1="95" y1="484" x2="1105" y2="484" stroke="#f0f0f0" stroke-width="1" stroke-linecap="round"/>
+<text x="120" y="512" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#7a5195" text-anchor="start" font-weight="bold">2</text>
+<text x="280" y="512" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">GPIO 26</text>
+<text x="440" y="512" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Bajar</text>
+<text x="640" y="512" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">U4</text>
+<text x="830" y="512" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#7a5195" text-anchor="start" font-weight="normal">J3  pines 3-4</text>
+<line x1="95" y1="526" x2="1105" y2="526" stroke="#f0f0f0" stroke-width="1" stroke-linecap="round"/>
+<text x="120" y="554" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#7a5195" text-anchor="start" font-weight="bold">3</text>
+<text x="280" y="554" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">GPIO 25</text>
+<text x="440" y="554" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Memoria 1</text>
+<text x="640" y="554" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">U5</text>
+<text x="830" y="554" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#7a5195" text-anchor="start" font-weight="normal">J4  pines 1-2</text>
+<line x1="95" y1="568" x2="1105" y2="568" stroke="#f0f0f0" stroke-width="1" stroke-linecap="round"/>
+<text x="120" y="596" font-family="Helvetica,Arial,sans-serif" font-size="14" fill="#7a5195" text-anchor="start" font-weight="bold">4</text>
+<text x="280" y="596" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">GPIO 33</text>
+<text x="440" y="596" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="bold">Memoria 2</text>
+<text x="640" y="596" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#111" text-anchor="start" font-weight="normal">U6</text>
+<text x="830" y="596" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#7a5195" text-anchor="start" font-weight="normal">J4  pines 3-4</text>
+<text x="95" y="620" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#666" text-anchor="start" font-weight="normal">Cada resistencia de 330 Ω da 6.2 mA al LED del optoacoplador. Los pares de pulsador no tienen polaridad.</text>
+<rect x="70" y="670" width="1060" height="70" fill="#fffdf5" stroke="#c9a227" stroke-width="2" rx="10"/>
+<text x="95" y="700" font-family="Helvetica,Arial,sans-serif" font-size="13" fill="#8a6d1a" text-anchor="start" font-weight="bold">Separar en la placa ≥2 mm las pistas de J3/J4 respecto a todo lo del ESP32.</text>
+<text x="95" y="724" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#8a6d1a" text-anchor="start" font-weight="normal">Son los dos lados de un aislamiento galvánico: si se acercan, deja de servir para lo que está puesto.</text>
+</svg>

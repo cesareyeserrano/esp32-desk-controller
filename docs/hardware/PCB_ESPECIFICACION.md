@@ -67,8 +67,17 @@ sigue vigente para el ESP32; esta excepción es para el buffer y solo para él.
 
 ---
 
-**Esquema dibujado: [plano_pcb_v1.svg](plano_pcb_v1.svg)** — es el fichero que
-hay que enviar al fabricante junto con este documento.
+**Esquema dibujado, en tres láminas** — se envían al fabricante junto con este
+documento:
+
+| Lámina | Qué muestra |
+|---|---|
+| [1 · Sistema](plano_pcb_1_sistema.svg) | Cómo se intercala la placa entre la caja y el mando |
+| [2 · Bus](plano_pcb_2_bus.svg) | Paso de los 4 hilos y derivación al buffer |
+| [3 · Canales](plano_pcb_3_canales.svg) | Los cuatro optoacopladores y su conexión |
+
+*(Un primer intento metía las tres cosas en una sola lámina y resultó
+ilegible. Un esquema que hay que descifrar no sirve para fabricar.)*
 
 ## Esquema eléctrico
 

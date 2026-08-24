@@ -30,7 +30,7 @@ monitoreo con alertas al móvil, OTA, y el repositorio público en GitHub.
    en la sección de fase 4; es configuración sobre lo que ya funciona
 2. **Fabricar la placa definitiva** — especificación completa y esquema listos
    en [hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md) y
-   [hardware/plano_pcb_v1.svg](hardware/plano_pcb_v1.svg). **Incluye el buffer
+   los planos en [hardware/](hardware/) (tres láminas `plano_pcb_*.svg`). **Incluye el buffer
    de aislamiento** ([ADR-031](DECISIONS.md)), que es la razón principal de
    rehacerla: la protoboard fue el eslabón frágil del proyecto entero.
 
