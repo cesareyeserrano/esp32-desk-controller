@@ -136,15 +136,48 @@ flash. Ver [ADR-020](../DECISIONS.md).
 
 ## Conectores
 
-**Tres JST-XH de 4 vías, paso 2.54 mm**, todos iguales para simplificar el
-cableado. **Serigrafiar el nombre junto a cada uno** — son intercambiables
-físicamente y confundirlos es fácil.
+**La placa se intercala en el cable del mando**, decidido con el propietario el
+2026-08-24:
+
+```
+[caja de control] ──4 hilos──> [PLACA] ──4 hilos──> [mando]
+                                  ^                    │
+                                  └───8 hilos──────────┘
+                                    (pulsadores)
+```
+
+**Por qué así, y no como derivación:** elimina **las tres soldaduras del bus
+dentro del mando**, que son exactamente las que produjeron el cortocircuito
+verde–amarillo del 2026-08-23 y dos días de diagnóstico. Dentro del mando solo
+quedan los ocho de los pulsadores, que no hay forma de evitar: los contactos
+están ahí.
+
+⚠️ **Contrapartida, y hay que tenerla presente: la placa pasa a estar EN SERIE.**
+Como derivación, si la placa fallaba el mando seguía funcionando. Intercalada,
+**una pista rota o un conector flojo dejan el escritorio sin mando**. Se mitiga:
+
+- Trazar los cuatro hilos de paso como **pistas directas y anchas** (≥ 0.5 mm),
+  sin pasar por componentes
+- Tener a mano un **cable puente** que una directamente `BUS-IN` con `BUS-OUT`
+  para saltarse la placa si algún día falla
+
+**Cinco conectores, todos de 4 vías, paso 2.54 mm:**
 
 | Ref | Nombre | 1 | 2 | 3 | 4 |
 |---|---|---|---|---|---|
-| **JST1** | `BUS` | CLK (rojo) | DIO (verde) | GND (azul) | **+5V (amarillo)** |
-| **JST2** | `SUBIR/BAJAR` | Subir a | Subir b | Bajar a | Bajar b |
-| **JST3** | `MEM 1/2` | M1 a | M1 b | M2 a | M2 b |
+| **J1** | `BUS-IN` (de la caja) | CLK (rojo) | DIO (verde) | GND (azul) | +5V (amarillo) |
+| **J2** | `BUS-OUT` (al mando) | CLK | DIO | GND | +5V |
+| **J3** | `SUBIR/BAJAR` | Subir a | Subir b | Bajar a | Bajar b |
+| **J4** | `MEM 1/2` | M1 a | M1 b | M2 a | M2 b |
+
+**J1 y J2 van unidos pin a pin por pistas de paso.** De esas pistas salen las
+derivaciones hacia el buffer (CLK, DIO) y la alimentación de U2 (+5V, GND).
+**El bus no se interrumpe ni se conmuta: solo se observa.**
+
+⚠️ **El tipo de conector de J1 y J2 depende del que use el cable original.** El
+cable de fábrica tiene conector en los dos extremos, así que **no hay que cortar
+nada**: se fabrican dos latiguillos cortos, o se monta en la placa el mismo tipo
+de conector. **Pendiente de identificar** — ver la nota al final.
 
 **Los pares de pulsador no tienen polaridad**: son los dos extremos de un
 contacto seco. Da igual el orden dentro de cada par.
@@ -165,7 +198,8 @@ ESP32: solo alimenta U2. Trazarlo separado del resto.
 | R2, R4 | 18 kΩ ¼ W | 2 | Divisor, rama baja |
 | R5-R8 | 330 Ω ¼ W | 4 | LED de los optoacopladores |
 | C1 | 100 nF cerámico | 1 | Desacoplo de U2 |
-| JST1-3 | JST-XH 4 vías, macho recto | 3 | Más sus conectores hembra y contactos |
+| J1, J2 | Conector 4 vías para el bus | 2 | **Tipo pendiente**: debe encajar con el cable original |
+| J3, J4 | JST-XH 4 vías, macho recto | 2 | Más conectores hembra y contactos |
 
 ---
 
@@ -207,3 +241,17 @@ protoboard** y comprobar dos cosas antes de gastar dinero en una PCB:
    referencia medida: **0.67% de transacciones malformadas**
 2. Que **desconectando el ESP32, el mando sigue funcionando** — que es
    literalmente para lo que se añade
+
+### Dato pendiente: el conector del cable original
+
+Para especificar J1 y J2 hace falta identificar el conector del cable de 4 hilos
+que va de la caja al mando. Lo que hay que mirar:
+
+- **Distancia entre pines** (paso): 2.0 mm y 2.54 mm son los habituales
+- **Forma del cuerpo**: si lleva pestaña de retención y de qué lado
+- **Marca en el plástico**, si la hay: `XH`, `PH`, `ZH`, `SM`...
+
+Con eso se pide el conector correcto. Si resulta ser un JST-XH de 2.54 mm —lo
+más probable en este tipo de mandos— **los cuatro conectores de la placa serían
+del mismo tipo**, y basta con un cable de 4 hilos con conector hembra en ambos
+extremos para el tramo placa→mando.
