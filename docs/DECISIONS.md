@@ -1929,3 +1929,10 @@ de un atacante con acceso a ella y a la contraseña es mover un escritorio.
 
 **Verificado el 2026-08-23**: actualización completa por red a `192.168.1.23`,
 autenticada, con el ESP32 reconectando solo al broker tras reiniciar.
+
+**Corrección del mismo día (revisión adversarial de la implementación):** el
+mecanismo de rechazo original era `ESP.restart()` al detectar movimiento — es
+decir, **el rechazo ejecutaba exactamente la fuga que decía evitar**: reiniciar
+abre los canales y abrir no frena. Desde la corrección, una OTA durante un viaje
+**frena primero** (un toque real, el mismo del `parar`) y deja pasar la
+actualización sobre un escritorio que ya se está deteniendo.

@@ -138,7 +138,8 @@ eso abre automatizaciones que de otro modo no existen.
 | Evento | Cuándo | Para qué sirve |
 |---|---|---|
 | `boton_pulsado` | Cualquier tecla en el bus, con su código | Distinguir persona de automatización |
-| `movimiento_no_pedido` | El escritorio se mueve sin que el ESP32 lo pidiera | Alguien está usando el mando: **no interrumpirle** |
+| **`uso_manual`** ✅ | Segundos desde la última tecla humana en el mando | **Implementado 2026-08-23.** La automatización que no quiere pelearse con la persona consulta esto |
+| `movimiento_no_pedido` ✅ | El escritorio se mueve sin que el ESP32 lo pidiera | **Implementado 2026-08-23 como cesión automática**: una tecla no ordenada por el ESP32 cancela su viaje sin frenar (la persona ya frenó). Verificado en vivo: `ultimo_freno: mando manual` |
 | `preset_recuperado` | `0x67` o `0x6F` en el bus | Saber a qué altura se va antes de llegar |
 | `tope_alcanzado` | La altura deja de cambiar en 73 o 118 | Fin de recorrido |
 
@@ -261,6 +262,12 @@ No es la lista de deseos: es lo que sale directamente del catálogo de arriba.
   y no en un juguete.
 
 ---
+
+## Panel
+
+En la sección **Estudio** del panel `Casa`: el campo **Ir a altura** (cm) y el
+**indicador de movimiento**. Solo eso, a propósito — el resto de entidades vive
+en la página del dispositivo, sin meter ruido en el panel diario.
 
 ## Decisiones pendientes
 

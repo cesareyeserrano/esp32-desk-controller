@@ -14,6 +14,23 @@ pantalla del mando.
 
 ## Siguiente acción concreta
 
+**El sistema está estable y en periodo de observación (decisión del
+propietario, 2026-08-23).** Todo lo esencial de la fase 4 funciona: 21
+entidades en HA, viajes con límites y freno verificado, cesión al mando manual,
+monitoreo con alertas al móvil, OTA, y el repositorio público en GitHub.
+
+**Al retomar, por orden de valor:**
+
+1. **Presets con nombre** ("de pie", "sentado") — el alcance ya está decidido
+   en la sección de fase 4; es configuración sobre lo que ya funciona
+2. **La capa 2 de protección de la sonda** (buffer alimentado del bus,
+   [ADR-031](DECISIONS.md)) — aparcada a petición del propietario hasta querer
+   tocar hardware; la capa 1 (misma regleta) sigue pendiente y es gratis
+3. **Estadísticas de uso en HA** (tiempo de pie/sentado — falta decidir el
+   umbral en cm) e InfluxDB para histórico largo
+4. Cabos sueltos menores: los cinco bytes de reposo sin identificar, y las
+   fotografías del chip pendientes de archivar
+
 ✅ **Revisión adversarial del 2026-08-23: 16 hallazgos, 16 arreglados y
 verificados en vivo** ([REVISION_FIRMWARE_2026-08-23.md](REVISION_FIRMWARE_2026-08-23.md)).
 Entre ellos: el watchdog de [ADR-024](DECISIONS.md) que nunca se había
