@@ -35,10 +35,27 @@ supervisadas.
 **Auditoría de publicación limpia**: sin secretos en el repo, `secrets.h`
 ignorado con plantilla, `.gitignore` completo.
 
-⚠️ **El firmware corregido está compilado pero SIN FLASHEAR**: el ESP32 corre en
-su cargador y flashear requiere el Mac. **El que corre tiene las regresiones de
-la ronda 1, que son seguras** — hacen que el escritorio se pare de más, nunca
-que se mueva de más. Se flashea en la próxima conexión al Mac.
+✅ **Flasheado y verificado en vivo el mismo día.** El reobjetivo, que era la
+regresión principal, quedó comprobado de punta a punta:
+
+```
+[VIAJE subiendo desde 80 cm, objetivo 95]
+[MQTT cmd: ir:88]                       <- llega a mitad de camino
+[FRENO: reobjetivo] altura 90 cm
+[VIAJE corto a 88 cm: por toques]       <- el objetivo SOBREVIVE al freno
+[ajuste: 88 cm alcanzados]
+```
+
+Antes habría frenado en 90 y descartado el 88 en silencio mientras HA lo mostraba
+como aceptado. De paso se ve encadenado el arreglo A3: 90→88 son 2 cm, así que
+fue por toques en vez de otro pulso continuo.
+
+También verificado: un comando durante un viaje frena (`[FRENO: parado a mano]`)
+usando el canal de 300 ms medido, y el viaje normal sigue clavando el objetivo
+(92→80 exactos).
+
+Corregido además un texto de ayuda que seguía anunciando los dígitos como pulsos
+de 800 ms cuando ya son toques de 300.
 
 ---
 

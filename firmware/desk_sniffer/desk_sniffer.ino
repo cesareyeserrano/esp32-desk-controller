@@ -920,8 +920,8 @@ static void printHelp() {
   Serial.println("  l  re-run the line identification check");
   Serial.println("  h  this help");
   Serial.println();
-  Serial.println("  1 2 3 4   tap that actuation channel (800 ms) and report");
-  Serial.println("            which key the control box saw");
+  Serial.println("  1 2 3 4   tap that channel (300 ms: registers, does NOT move)");
+  Serial.println("            and report which key the control box saw");
   Serial.println("  A / B     supervised continuous travel up/down (limits,");
   Serial.println("            stall and stale-height brakes apply)");
   Serial.println("  w         wake the display to refresh the height,");
