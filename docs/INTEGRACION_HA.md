@@ -263,6 +263,40 @@ No es la lista de deseos: es lo que sale directamente del catálogo de arriba.
 
 ---
 
+## Recordatorios de postura — instalado el 2026-08-23
+
+**Solo avisan si estás delante.** Sensor de presencia `SNZB-06P` (mmWave: detecta
+aunque estés quieto, no solo movimiento).
+
+| Automatización | Dispara | Acción |
+|---|---|---|
+| Llevas mucho sentado | **45 min** con postura `sentado` **y presencia** | Notificación con botón *"Subir a 117"* |
+| Llevas mucho de pie | **30 min** con postura `de pie` **y presencia** | Notificación con botón *"Bajar a 80"* |
+
+⚠️ **No mueven el escritorio por su cuenta**: ofrecen hacerlo y esperan a que lo
+pulses. Es lo que exige [SEGURIDAD.md](SEGURIDAD.md) —ningún movimiento
+automático sin confirmación— y además evita que se mueva mientras trabajas.
+
+### El sensor derivado que hizo falta, y por qué
+
+`sensor.escritorio_jiecang_altura` publica **`unknown` cuando el display duerme**
+(con el display apagado, la altura no está en el bus). Medir "cuánto llevo en
+esta postura" con él es imposible: el dato desaparece cada pocos minutos.
+
+Por eso hay dos sensores derivados en `configuration.yaml`:
+
+- **`sensor.escritorio_altura_estable`** — conserva la última altura real
+- **`sensor.escritorio_postura`** — `sentado` / `de pie`, con el **umbral en
+  95 cm**. Es el número a tocar si no encaja con tu postura
+
+**Las alturas de trabajo son 80 (sentado) y 117 (de pie)**, indicadas por el
+propietario. El umbral de 95 las separa con holgura por los dos lados.
+
+⚠️ **Trampa que costó un rato:** el disparador del template escrito con la
+sintaxis nueva (`- trigger: state`) dentro de la clave antigua (`trigger:`)
+**pasa la validación de HA y no dispara nunca**. Los sensores se quedan en
+`unknown` sin un solo error en el log. Hay que usar `- platform: state`.
+
 ## Panel
 
 En la sección **Estudio** del panel `Casa`: el campo **Ir a altura** (cm) y el

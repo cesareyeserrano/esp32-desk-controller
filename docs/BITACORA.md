@@ -6,6 +6,48 @@
 
 ---
 
+## 2026-08-23 (final) — Recordatorios de postura con presencia
+
+Lo primero del proyecto que da una utilidad que una alarma no da: **avisa solo
+si estás delante**. Sensor `SNZB-06P` (mmWave, detecta presencia aunque estés
+quieto).
+
+| Automatización | Dispara | Acción |
+|---|---|---|
+| Mucho sentado | **45 min** sentado **+ presencia** | Aviso con botón *"Subir a 117"* |
+| Mucho de pie | **30 min** de pie **+ presencia** | Aviso con botón *"Bajar a 80"* |
+
+⚠️ **No mueven el escritorio solos**: lo ofrecen y esperan la pulsación. Lo
+exige [SEGURIDAD.md](SEGURIDAD.md) —ningún movimiento automático sin
+confirmación— y evita que se mueva mientras se trabaja.
+
+**Alturas de trabajo: 80 sentado, 117 de pie**, indicadas por el propietario.
+Umbral de postura en 95 cm.
+
+### Hizo falta un sensor derivado, y la razón importa
+
+`altura` publica **`unknown` cuando el display duerme** —con el display apagado
+la altura no está en el bus—, así que **no sirve para medir tiempo en una
+postura**: el dato desaparece cada pocos minutos. Se añadieron dos sensores
+plantilla en `configuration.yaml`: `escritorio_altura_estable` (conserva la
+última lectura real) y `escritorio_postura`.
+
+⚠️ **Trampa que costó un rato, y vale para todo el proyecto:** el disparador del
+template escrito con la sintaxis nueva (`- trigger: state`) dentro de la clave
+antigua (`trigger:`) **pasa la validación de HA y no dispara nunca**. Los
+sensores se quedaron en `unknown` **sin un solo error en el log**. La validación
+que pasa no demuestra que funcione — solo la comprobación en vivo lo hizo.
+
+### Calibración del sensor de presencia: sin tocar, y con motivo
+
+El retardo ocupado→desocupado está en **90 s**, y **conviene dejarlo así para
+esto**: si se acorta, cada ida a por agua marca ausencia y el contador de
+"tiempo sentado" vuelve a cero — los avisos no llegarían nunca. Si 90 s resulta
+largo para otra cosa (luces), lo correcto es que cada automatización ponga su
+propia espera, no bajar el retardo del sensor.
+
+---
+
 ## 2026-08-23 (cierre real) — El LED, y una pregunta que merece quedar escrita
 
 ### El LED no se puede apagar, y la entidad se retiró
