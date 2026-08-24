@@ -111,6 +111,20 @@ static_assert(PIN_CLK < 32 && PIN_DIO < 32, "pins must be in GPIO0..31");
 // Verified on the bench 2026-08-20 with test_output_channels: all four read 0
 // at boot, open at rest, ~150 ohm while pulsing, 300 ms every time.
 
+// On-board LED. GPIO2 on this DevKit; it is a strapping pin, which is why the
+// bus and the channels avoid it -- but driving it AFTER boot is harmless, and
+// nothing of the desk is wired to it.
+//
+// Default OFF: a board that lives on a shelf does not need to glow all night.
+// When enabled it BLINKS briefly instead of staying lit -- a heartbeat says
+// "alive" at a glance and costs almost no light.
+static const int LED_PIN = 2;
+static const uint32_t LED_BLINK_EVERY_MS = 5000;
+static const uint32_t LED_BLINK_MS = 40;
+static bool     g_ledOn = false;        // heartbeat enabled?
+static uint32_t g_ledNextMs = 0;
+static bool     g_ledLit = false;
+
 static const uint8_t CH_PIN[4] = {27, 26, 25, 33};
 static const uint32_t PULSE_MS = 800;  // ADR-027: 300 ms does not move the desk
 
@@ -1147,6 +1161,22 @@ static void publishDiscovery() {
     g_mqtt.publish(t.c_str(), cfg, true);
   }
 
+  {
+    char cfg[620];
+    snprintf(cfg, sizeof(cfg),
+      "{\"name\":\"LED\",\"unique_id\":\"%s_led\","
+      "\"command_topic\":\"%s/cmd\",\"state_topic\":\"%s/led\","
+      "\"payload_on\":\"led_on\",\"payload_off\":\"led_off\","
+      "\"state_on\":\"ON\",\"state_off\":\"OFF\","
+      "\"availability_topic\":\"%s/disponible\","
+      "\"icon\":\"mdi:led-on\",\"entity_category\":\"config\","
+      "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\","
+      "\"manufacturer\":\"Jiecang\",\"model\":\"JK-CH506 + ESP32\"}}",
+      DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_NAME);
+    String t = String("homeassistant/switch/") + DEVICE_ID + "_led/config";
+    g_mqtt.publish(t.c_str(), cfg, true);
+  }
+
   publishOne("sensor", "movimiento", "Movimiento", "movimiento", NULL, NULL, NULL, NULL);
   // Why the last travel ended. Turns "it stopped" into something diagnosable.
   publishOne("sensor", "ultimo_freno", "Motivo del ultimo freno", "ultimo_freno", NULL, NULL, NULL, "diag");
@@ -1191,6 +1221,7 @@ static void publishState() {
   g_mqtt.publish(topic("rssi").c_str(), b, true);
 
   g_mqtt.publish(topic("ip").c_str(), WiFi.localIP().toString().c_str(), true);
+  g_mqtt.publish(topic("led").c_str(), g_ledOn ? "ON" : "OFF", true);
 
   if (g_lastManualMs) {
     snprintf(b, sizeof(b), "%llu",
@@ -1499,6 +1530,8 @@ static void runPendingCmd() {
   else if (!strcmp(cmd, "m2"))    pulseChannel(3);
   // "parar" never reaches the queue: it travels on g_stopReq (review C4).
   else if (!strcmp(cmd, "refrescar")) wakeDisplay();
+  else if (!strcmp(cmd, "led_on"))  { g_ledOn = true;  g_ledNextMs = millis(); }
+  else if (!strcmp(cmd, "led_off")) { g_ledOn = false; }
   else if (!strcmp(cmd, "continuo_subir")) startTravel(true,  -1);
   else if (!strcmp(cmd, "continuo_bajar")) startTravel(false, -1);
   else if (!strncmp(cmd, "ir:", 3))        startTravel(true, atoi(cmd + 3));
@@ -1554,6 +1587,8 @@ void setup() {
     pinMode(CH_PIN[i], OUTPUT);
     digitalWrite(CH_PIN[i], LOW);
   }
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);   // off until somebody asks for it
 
 #if defined(ARDUINO_ARCH_ESP32)
   Serial.setTxBufferSize(4096);  // must come before begin(); absorbs bursts
@@ -1681,6 +1716,18 @@ void loop() {
       snprintf(g_stopReason, sizeof(g_stopReason), "mando manual");
     }
     g_lastManualMs = uptimeMs64();
+  }
+
+  // Heartbeat: a short blink, never a steady glow.
+  if (g_ledOn) {
+    uint32_t now = millis();
+    if (!g_ledLit && (int32_t)(now - g_ledNextMs) >= 0) {
+      digitalWrite(LED_PIN, HIGH); g_ledLit = true; g_ledNextMs = now + LED_BLINK_MS;
+    } else if (g_ledLit && (int32_t)(now - g_ledNextMs) >= 0) {
+      digitalWrite(LED_PIN, LOW);  g_ledLit = false; g_ledNextMs = now + LED_BLINK_EVERY_MS;
+    }
+  } else if (g_ledLit) {
+    digitalWrite(LED_PIN, LOW); g_ledLit = false;
   }
 
   superviseTravel();   // every branch of it ends in a brake

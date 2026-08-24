@@ -6,6 +6,50 @@
 
 ---
 
+## 2026-08-23 (cierre real) — El LED, y una pregunta que merece quedar escrita
+
+**LED de la placa apagado por defecto**, con interruptor en HA. Encendido no
+queda fijo: **parpadea 40 ms cada 5 s**. Un latido dice "estoy vivo" de un
+vistazo y no ilumina la habitación de noche. GPIO2 — es pin de strapping, por
+eso el bus y los canales lo evitan, pero manejarlo tras el arranque es inocuo y
+no hay nada del escritorio conectado ahí. Desplegado por OTA.
+
+### La pregunta del propietario al cerrar
+
+> *"no se para que hice esto si el boton lo tengo a 30 centimetros de alcance,
+> pude solo crear una alarma en HA y no arriesgarlo asi"*
+
+**Y tiene razón.** Queda escrito porque es la valoración más honesta del
+proyecto que hay en toda esta bitácora:
+
+- Para **subir y bajar** un escritorio con el mando al alcance, nada de esto
+  hacía falta
+- Para **recordar cambiar de postura**, una alarma en HA son cinco minutos y
+  cero riesgo
+- El coste real fueron tres días, y **estuvo a punto de costar el mando**
+
+Lo que sí aporta y una alarma no: **saber** —no preguntar— si se está de pie o
+sentado, **actuar** cediendo el paso a la persona, y tener histórico. Son
+mejoras marginales sobre un recordatorio, y ninguna justifica por sí sola el
+riesgo que se corrió.
+
+**Donde estuvo el valor de verdad:** descifrar un protocolo propietario sin
+osciloscopio, con el ESP32 haciendo de instrumento. Eso no es automatizar un
+escritorio, es ingeniería inversa de hardware — y queda publicada de forma que a
+otra persona con el mismo escritorio le ahorra semanas.
+
+**Y una cosa más, incómoda pero útil:** este repositorio documenta sus errores.
+Un ADR que declaró "no hay daño" tras evaluar una sola vía de daño. Dos
+diagnósticos elaborados que resultaron ser un puente de estaño y un chip flojo
+en la protoboard. Un limitador de seguridad prometido durante semanas que nunca
+se implementó. Todo con su fecha y su porqué, sin corrección silenciosa.
+
+**Si se repitiera:** el buffer de protección de la sonda ([ADR-031](DECISIONS.md))
+iría montado **antes** de soldar nada al mando, no anotado como mejora futura.
+Esa es la lección que costó los tres días.
+
+---
+
 ## 2026-08-23 (último) — El ESP32 cede el paso al mando, y la regla nueva
 
 **Regla fijada por el propietario, ya en el CLAUDE.md: toda implementación pasa
