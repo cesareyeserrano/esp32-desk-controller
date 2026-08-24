@@ -111,13 +111,19 @@ static_assert(PIN_CLK < 32 && PIN_DIO < 32, "pins must be in GPIO0..31");
 // Verified on the bench 2026-08-20 with test_output_channels: all four read 0
 // at boot, open at rest, ~150 ohm while pulsing, 300 ms every time.
 
-// On-board LED. GPIO2 on this DevKit; it is a strapping pin, which is why the
-// bus and the channels avoid it -- but driving it AFTER boot is harmless, and
-// nothing of the desk is wired to it.
+// On-board LED heartbeat on GPIO2.
 //
-// Default OFF: a board that lives on a shelf does not need to glow all night.
-// When enabled it BLINKS briefly instead of staying lit -- a heartbeat says
-// "alive" at a glance and costs almost no light.
+// ⚠️ THIS BOARD HAS NO CONTROLLABLE LED. Verified 2026-08-23: its only light is
+// a RED POWER LED wired straight to the 3.3 V rail -- no GPIO reaches it, so no
+// firmware can switch it off. Tape or a desoldering iron are the only options.
+//
+// The code stays because it is correct and costs nothing: any DevKit with the
+// usual blue LED on GPIO2 gets a heartbeat with the serial 'L' key. The HA
+// entity was REMOVED -- a switch that visibly does nothing is worse than no
+// switch at all.
+//
+// GPIO2 is a strapping pin (which is why the bus and the channels avoid it),
+// but driving it after boot is harmless and nothing of the desk is wired to it.
 static const int LED_PIN = 2;
 static const uint32_t LED_BLINK_EVERY_MS = 5000;
 static const uint32_t LED_BLINK_MS = 40;
@@ -1161,22 +1167,6 @@ static void publishDiscovery() {
     g_mqtt.publish(t.c_str(), cfg, true);
   }
 
-  {
-    char cfg[620];
-    snprintf(cfg, sizeof(cfg),
-      "{\"name\":\"LED\",\"unique_id\":\"%s_led\","
-      "\"command_topic\":\"%s/cmd\",\"state_topic\":\"%s/led\","
-      "\"payload_on\":\"led_on\",\"payload_off\":\"led_off\","
-      "\"state_on\":\"ON\",\"state_off\":\"OFF\","
-      "\"availability_topic\":\"%s/disponible\","
-      "\"icon\":\"mdi:led-on\",\"entity_category\":\"config\","
-      "\"device\":{\"identifiers\":[\"%s\"],\"name\":\"%s\","
-      "\"manufacturer\":\"Jiecang\",\"model\":\"JK-CH506 + ESP32\"}}",
-      DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_ID, DEVICE_NAME);
-    String t = String("homeassistant/switch/") + DEVICE_ID + "_led/config";
-    g_mqtt.publish(t.c_str(), cfg, true);
-  }
-
   publishOne("sensor", "movimiento", "Movimiento", "movimiento", NULL, NULL, NULL, NULL);
   // Why the last travel ended. Turns "it stopped" into something diagnosable.
   publishOne("sensor", "ultimo_freno", "Motivo del ultimo freno", "ultimo_freno", NULL, NULL, NULL, "diag");
@@ -1221,7 +1211,6 @@ static void publishState() {
   g_mqtt.publish(topic("rssi").c_str(), b, true);
 
   g_mqtt.publish(topic("ip").c_str(), WiFi.localIP().toString().c_str(), true);
-  g_mqtt.publish(topic("led").c_str(), g_ledOn ? "ON" : "OFF", true);
 
   if (g_lastManualMs) {
     snprintf(b, sizeof(b), "%llu",
@@ -1530,8 +1519,6 @@ static void runPendingCmd() {
   else if (!strcmp(cmd, "m2"))    pulseChannel(3);
   // "parar" never reaches the queue: it travels on g_stopReq (review C4).
   else if (!strcmp(cmd, "refrescar")) wakeDisplay();
-  else if (!strcmp(cmd, "led_on"))  { g_ledOn = true;  g_ledNextMs = millis(); }
-  else if (!strcmp(cmd, "led_off")) { g_ledOn = false; }
   else if (!strcmp(cmd, "continuo_subir")) startTravel(true,  -1);
   else if (!strcmp(cmd, "continuo_bajar")) startTravel(false, -1);
   else if (!strncmp(cmd, "ir:", 3))        startTravel(true, atoi(cmd + 3));
@@ -1807,6 +1794,9 @@ void loop() {
         if (g_mqtt.connected()) { Serial.println("\n[republicando discovery]"); publishDiscovery(); }
         else Serial.println("\n[MQTT no conectado]");
         break;
+      case 'L': g_ledOn = !g_ledOn; g_ledNextMs = millis();
+                Serial.println(g_ledOn ? "\n[latido del LED ON (no visible en esta placa)]"
+                                       : "\n[latido del LED OFF]"); break;
       case 'w': wakeDisplay(); break;
       case 'l': checkLines(); break;
       case 'h': printHelp(); break;

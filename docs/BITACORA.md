@@ -8,11 +8,25 @@
 
 ## 2026-08-23 (cierre real) — El LED, y una pregunta que merece quedar escrita
 
-**LED de la placa apagado por defecto**, con interruptor en HA. Encendido no
-queda fijo: **parpadea 40 ms cada 5 s**. Un latido dice "estoy vivo" de un
-vistazo y no ilumina la habitación de noche. GPIO2 — es pin de strapping, por
-eso el bus y los canales lo evitan, pero manejarlo tras el arranque es inocuo y
-no hay nada del escritorio conectado ahí. Desplegado por OTA.
+### El LED no se puede apagar, y la entidad se retiró
+
+Se implementó un latido en GPIO2 con interruptor en HA. **No funcionó, y la
+causa no tiene arreglo por software: la única luz de esta placa es un LED ROJO
+DE ALIMENTACIÓN**, cableado directo a la línea de 3.3 V. **Ningún GPIO llega
+hasta él.** Verificado: el firmware aceptaba el comando y publicaba `ON`
+mientras la luz seguía igual.
+
+**Se retiró la entidad de HA** —un interruptor que visiblemente no hace nada es
+peor que no tenerlo— y se limpiaron sus mensajes retenidos del broker. El código
+del latido se queda, correcto y sin coste, accesible con la tecla `L` por serie:
+cualquier DevKit con el LED azul habitual en GPIO2 sí lo tendría.
+
+**Para apagarlo de verdad:** cinta aislante, o desoldarlo. Con el historial de
+soldaduras de esta semana, la cinta.
+
+**Hallazgo lateral:** la entidad salió como `switch.escritorio_led_2` porque ya
+existía un `switch.escritorio_led` **de TP-Link** en la instalación. No era un
+duplicado nuestro.
 
 ### La pregunta del propietario al cerrar
 
