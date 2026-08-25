@@ -335,7 +335,7 @@ no la cierra.
 |---|---|
 | **1. Retardo del sensor a 30 s** | Era 90. Ahora el sensor admite la ausencia tres veces antes |
 | **2. Re-verificar tras 110 s** | Avisa, espera más que el retardo, y **vuelve a preguntar** antes de mover |
-| **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa |
+| **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa. **Depende del sensor `movimiento`** — estuvo inoperante hasta el 2026-08-24 porque ese sensor no se actualizaba durante el viaje |
 
 **La capa 3 es la que cierra el caso** que las otras dos no pueden: no predice,
 reacciona.

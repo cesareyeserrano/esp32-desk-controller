@@ -1174,6 +1174,27 @@ static void publishDiscovery() {
   g_discoverySent = true;
 }
 
+// Publishes ONLY the motion state, immediately, whenever it changes.
+//
+// Why this exists: publishState() is skipped while the desk travels, so the
+// radio never delays a brake decision. Correct -- but the motion state lived
+// inside publishState, so Home Assistant never saw "subiendo"/"bajando", only
+// "quieto" before and after. That broke the motion sensor AND, far worse, the
+// automation that stops the desk if presence disappears mid-travel: it checks
+// this very topic, so it could never fire.
+//
+// One small publish per transition costs nothing and keeps both working.
+static Motion g_lastPublishedMotion = (Motion)255;
+static void publishMotion() {
+  if (!g_mqtt.connected()) return;
+  if (g_motion == g_lastPublishedMotion) return;
+  g_lastPublishedMotion = g_motion;
+  g_mqtt.publish(topic("movimiento").c_str(),
+                 g_motion == MOTION_UP      ? "subiendo" :
+                 g_motion == MOTION_DOWN    ? "bajando"  :
+                 g_motion == MOTION_BRAKING ? "frenando" : "quieto", true);
+}
+
 static void publishState() {
   char b[24];
 
@@ -1221,10 +1242,8 @@ static void publishState() {
   snprintf(b, sizeof(b), "%lu", (unsigned long)(millis() / 1000));
   g_mqtt.publish(topic("uptime").c_str(), b, true);
 
-  g_mqtt.publish(topic("movimiento").c_str(),
-                 g_motion == MOTION_UP      ? "subiendo" :
-                 g_motion == MOTION_DOWN    ? "bajando"  :
-                 g_motion == MOTION_BRAKING ? "frenando" : "quieto", true);
+  g_lastPublishedMotion = (Motion)255;   // force it out on the periodic tick
+  publishMotion();
   g_mqtt.publish(topic("ultimo_freno").c_str(),
                  g_stopReason[0] ? g_stopReason : "-", true);
   // C6 continued: the target box no longer echoes a possibly-stale height.
@@ -1685,7 +1704,8 @@ void loop() {
       }
     }
   } else if (g_mqtt.connected()) {
-    g_mqtt.loop();   // cheap: keepalive + receive "parar"; no publishes
+    g_mqtt.loop();     // cheap: keepalive + receive "parar"
+    publishMotion();   // one small publish per transition, so HA sees the travel
   }
   // Somebody touched the handset: give way. Their press already stopped any
   // travel of ours physically; here we drop OUR intent so we do not chase,

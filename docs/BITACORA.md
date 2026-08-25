@@ -6,6 +6,44 @@
 
 ---
 
+## 2026-08-24 (noche) — El sensor de movimiento estaba muerto, y con él una protección
+
+> *"la entidad que indica si está quieto o en movimiento, no funciona"*
+
+**Cierto, y era una regresión mía de la segunda ronda adversarial.**
+
+Para que la radio no se pusiera nunca delante de una decisión de freno, hice que
+**durante el movimiento no se publicara nada** por MQTT (hallazgo F7). Correcto
+en su intención — pero el estado de movimiento se publicaba **dentro** de esa
+función, así que Home Assistant nunca llegaba a ver `subiendo` ni `bajando`:
+solo `quieto`, antes y después.
+
+⚠️ **Y lo grave no era el sensor.** La automatización *"parar si desaparece la
+presencia mientras se mueve"* —la **capa 3**, la que cierra el caso de "me puedo
+ir justo en la confirmación"— **comprueba ese mismo sensor**. Como nunca decía
+`subiendo`, **esa protección no podía dispararse jamás desde que se creó.**
+
+**Arreglado**: el estado de movimiento se publica **en cuanto cambia**, no en el
+ciclo periódico. Una publicación pequeña por transición, que no compite con el
+freno.
+
+**Verificado en un viaje real**, secuencia vista por HA:
+
+```
+quieto → subiendo → frenando → quieto
+```
+
+### Lo que enseña
+
+Un arreglo de seguridad —no publicar durante el viaje— **desactivó otra medida
+de seguridad** que dependía de esos mismos datos. Ninguna de las dos rondas de
+revisión lo vio, porque cada una miró el firmware y las automatizaciones por
+separado: **el fallo vivía en la costura entre ambos.**
+
+Lo encontró el propietario usando el sistema.
+
+---
+
 ## 2026-08-24 (tarde) — El contador medía el mueble, no a la persona
 
 Caso de uso planteado por el propietario:
