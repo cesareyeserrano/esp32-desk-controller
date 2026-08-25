@@ -33,6 +33,32 @@ freno.
 quieto → subiendo → frenando → quieto
 ```
 
+### Y una segunda mitad, también señalada por el propietario
+
+> *"si le pulso el mando no lee eso"*
+
+Cierto: `g_motion` solo refleja **los viajes que ordena el ESP32**. Con el mando,
+la caja mueve el escritorio y el firmware no tenía ningún estado que cambiar —
+aunque **sí ve la altura cambiar en el bus**.
+
+**Ahora se deduce:** si la altura cambia mientras el ESP32 está en reposo, es que
+alguien lo está moviendo. El sensor publica **`subiendo (mando)` / `bajando
+(mando)`**, distinguiendo quién mueve el escritorio. Vuelve a `quieto` a los 4 s
+sin cambios de altura.
+
+**Verificado en vivo**, con el mando en la mano:
+
+```
+altura 86 → subiendo (mando)
+altura 90 → subiendo (mando)
+altura 80 → bajando (mando)
+altura 80 → quieto
+```
+
+**Beneficio de seguridad**: la automatización que para el escritorio si
+desaparece la presencia ahora cubre también **un movimiento continuo arrancado a
+mano y dejado corriendo**, que antes le era invisible.
+
 ### Lo que enseña
 
 Un arreglo de seguridad —no publicar durante el viaje— **desactivó otra medida
@@ -40,7 +66,11 @@ de seguridad** que dependía de esos mismos datos. Ninguna de las dos rondas de
 revisión lo vio, porque cada una miró el firmware y las automatizaciones por
 separado: **el fallo vivía en la costura entre ambos.**
 
-Lo encontró el propietario usando el sistema.
+Y la segunda mitad —el mando invisible— llevaba ahí **desde que se creó el
+sensor**, sin que ninguna revisión la señalara: el firmware reportaba
+correctamente lo que sabía, y lo que no sabía no se lo preguntó nadie.
+
+**Las dos las encontró el propietario usando el sistema.**
 
 ---
 

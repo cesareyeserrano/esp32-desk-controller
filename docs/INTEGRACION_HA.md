@@ -300,6 +300,26 @@ sesión de cambios, donde puede parecer que nunca dispara.
 **Verificado el 2026-08-24** bajando el umbral a 60 s y dejando solo la
 notificación: llegó al móvil.
 
+### El sensor `movimiento` distingue quién mueve el escritorio
+
+| Valor | Significa |
+|---|---|
+| `quieto` | Parado |
+| `subiendo` / `bajando` | **El sistema** está ejecutando un viaje |
+| `frenando` | Freno emitido, verificando que se detiene |
+| `subiendo (mando)` / `bajando (mando)` | **Una persona** lo está moviendo con el mando |
+
+Los estados `(mando)` **no vienen de ninguna orden**: se deducen viendo cambiar
+la altura en el bus mientras el ESP32 está en reposo. Si la altura sube y nadie
+lo ha pedido, es que hay alguien con el dedo en el botón. Vuelve a `quieto` a
+los 4 s sin cambios — el escritorio informa su altura cada ~1.5 s mientras
+viaja.
+
+**Importa más allá de la información**: la automatización que detiene el
+escritorio si desapareces mientras se mueve consulta este sensor, así que ahora
+cubre también **un movimiento continuo que arrancaste tú a mano y dejaste
+corriendo**.
+
 ### El contador mide TU postura, no la altura del escritorio
 
 Planteado por el propietario como caso de uso: *"me voy al baño y no estoy, no

@@ -219,6 +219,15 @@ static const uint8_t WAKE_CH = 1;  // channel 2, down. Never 3 or 4.
 // the control box reads, ours and the human's alike, so "a pressed key nobody
 // is claiming" means somebody is using the handset. Set from the decoder,
 // consumed by the main loop.
+// Movement we did NOT order: the handset. g_motion only tracks OUR trips, so
+// with the handset the desk moves and the state said "quieto" -- and the
+// safety automation that watches this topic could not see it either. The bus
+// tells us anyway: if the height changes while we are idle, somebody else is
+// moving it.
+static int32_t  g_motionRefCm = -1;    // height when we last looked
+static uint32_t g_motionRefMs = 0;
+static int8_t   g_manualDir  = 0;      // +1 up, -1 down, 0 still
+
 static volatile bool    g_manualKey = false;
 static volatile uint8_t g_manualKeyByte = 0;
 // 64-bit uptime for long-lived ages: millis() wraps at ~49.7 days, and the
@@ -654,6 +663,12 @@ static void emitTransaction(bool repeatedStart) {
         if (v >= 73 && v <= 118) {
           static int16_t candidate = -1;
           if (g_heightCm < 0 || abs(v - (int)g_heightCm) <= 3 || v == candidate) {
+            // Movement nobody ordered = the handset (or the box running a
+            // preset). Direction comes from the height itself.
+            if (g_motion == MOTION_IDLE && g_heightCm > 0 && v != g_heightCm) {
+              g_manualDir = (v > g_heightCm) ? 1 : -1;
+              g_motionRefMs = millis();
+            }
             g_heightCm = v;
             g_heightMs = millis();
             candidate = -1;
@@ -1184,15 +1199,28 @@ static void publishDiscovery() {
 // this very topic, so it could never fire.
 //
 // One small publish per transition costs nothing and keeps both working.
-static Motion g_lastPublishedMotion = (Motion)255;
+static char g_lastMotionStr[24] = "";
 static void publishMotion() {
   if (!g_mqtt.connected()) return;
-  if (g_motion == g_lastPublishedMotion) return;
-  g_lastPublishedMotion = g_motion;
-  g_mqtt.publish(topic("movimiento").c_str(),
-                 g_motion == MOTION_UP      ? "subiendo" :
-                 g_motion == MOTION_DOWN    ? "bajando"  :
-                 g_motion == MOTION_BRAKING ? "frenando" : "quieto", true);
+
+  // A manual move counts as movement for 4 s after the last height change:
+  // the desk reports roughly every 1.5 s while travelling.
+  if (g_motion == MOTION_IDLE && g_manualDir != 0 &&
+      (uint32_t)(millis() - g_motionRefMs) > 4000) {
+    g_manualDir = 0;
+  }
+
+  const char *st;
+  if      (g_motion == MOTION_UP)      st = "subiendo";
+  else if (g_motion == MOTION_DOWN)    st = "bajando";
+  else if (g_motion == MOTION_BRAKING) st = "frenando";
+  else if (g_manualDir > 0)            st = "subiendo (mando)";
+  else if (g_manualDir < 0)            st = "bajando (mando)";
+  else                                 st = "quieto";
+
+  if (!strcmp(st, g_lastMotionStr)) return;
+  strncpy(g_lastMotionStr, st, sizeof(g_lastMotionStr) - 1);
+  g_mqtt.publish(topic("movimiento").c_str(), st, true);
 }
 
 static void publishState() {
@@ -1242,7 +1270,7 @@ static void publishState() {
   snprintf(b, sizeof(b), "%lu", (unsigned long)(millis() / 1000));
   g_mqtt.publish(topic("uptime").c_str(), b, true);
 
-  g_lastPublishedMotion = (Motion)255;   // force it out on the periodic tick
+  g_lastMotionStr[0] = 0;   // force it out on the periodic tick
   publishMotion();
   g_mqtt.publish(topic("ultimo_freno").c_str(),
                  g_stopReason[0] ? g_stopReason : "-", true);
@@ -1698,6 +1726,7 @@ void loop() {
     mqttEnsure();
     if (g_mqtt.connected()) {
       g_mqtt.loop();
+      publishMotion();   // catches handset movement while we are idle
       if ((uint32_t)(millis() - g_lastPublish) >= PUBLISH_EVERY_MS) {
         g_lastPublish = millis();
         publishState();
