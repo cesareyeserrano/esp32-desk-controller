@@ -6,6 +6,63 @@
 
 ---
 
+## 2026-08-28 — Los contadores de postura contaban viajes a medias
+
+> *"creo que los contadores de tiempo de cuando estoy parado o sentado no son
+> precisos. Uno de los puntos es si pauso una actividad de subir o bajar, igual
+> cuenta como si hubiera subido o bajado."*
+
+**Cierto.** La postura se derivaba de **un umbral único en 95 cm**, y eso tenía
+dos consecuencias que se propagaban hasta las estadísticas del día:
+
+1. **La postura cambiaba a mitad de viaje.** Subiendo de 80 a 117, al cruzar los
+   95 ya contaba "de pie" — medio minuto antes de llegar
+2. **Un viaje interrumpido mentía indefinidamente.** Parar en 96 dejaba la
+   postura en "de pie", y `history_stats` sumaba esas horas como tiempo de pie
+   real
+
+### La solución la propuso el propietario, y es mejor que la mía
+
+Yo propuse una zona muerta (90–100 mantiene la postura anterior). Él propuso
+algo más simple:
+
+> *"cuando llegue a los targets 117 o 80, ahí sí marque con el tiempo"*
+
+**Solo cuenta ESTAR en una altura de trabajo:**
+
+| Altura | Postura |
+|---|---|
+| 77–83 | `sentado` |
+| 114–120 | `de pie` |
+| cualquier otra | `intermedia` — no cuenta |
+
+Elimina el problema de raíz: un viaje interrumpido a 96 no es ninguna postura,
+así que no arranca ningún contador ni ensucia ninguna estadística. Los ±3 cm
+cubren ajustes a mano.
+
+### La auditoría encontró más de lo buscado
+
+Revisando la cadena completa aparecieron **eslabones que no estaban
+documentados**: `escritorio_presencia_sostenida` (presencia con `delay_off` de
+15 min) y `escritorio_postura_efectiva` (que marca `ausente` cuando no hay
+nadie, para que **el escritorio olvidado arriba de noche no sume horas de pie**),
+más cuatro contadores `history_stats`. Están bien resueltos; quedan recogidos en
+[INTEGRACION_HA.md](INTEGRACION_HA.md) con el resto de la cadena.
+
+**Y `uso_manual` sigue sin existir como entidad**: el firmware solo lo publica
+tras el primer uso del mando desde el arranque. La condición que lo consulta ya
+está blindada para no bloquear, pero **la cortesía de "no muevas si acabo de
+usar el mando" no está protegiendo nada mientras el sensor no aparezca**.
+
+### Nota de acceso
+
+Durante esta sesión `ultron` dejó de resolver: **Tailscale estaba parado**. La
+máquina estaba perfectamente —Home Assistant y el broker respondían— y se llegó
+a ella por su IP local, `192.168.1.29`. Conviene recordarlo: el nombre depende
+de Tailscale, la IP no.
+
+---
+
 ## 2026-08-24 (noche) — El sensor de movimiento estaba muerto, y con él una protección
 
 > *"la entidad que indica si está quieto o en movimiento, no funciona"*

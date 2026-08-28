@@ -300,6 +300,46 @@ sesión de cambios, donde puede parecer que nunca dispara.
 **Verificado el 2026-08-24** bajando el umbral a 60 s y dejando solo la
 notificación: llegó al móvil.
 
+### Los contadores de tiempo: cómo se calculan y qué falló
+
+**Cadena completa**, de abajo arriba:
+
+```
+altura (del bus)  →  altura estable  →  postura  →  postura efectiva  →  contadores del día
+                     (conserva la      (solo en    (solo si hay
+                      última real)      targets)    presencia)
+```
+
+| Eslabón | Qué resuelve |
+|---|---|
+| `altura_estable` | La altura desaparece (`unknown`) cuando el display duerme |
+| `postura` | Traduce altura a postura — **solo en las alturas de trabajo** |
+| `presencia_sostenida` | Presencia con `delay_off` de 15 min: una escapada corta no descuenta |
+| `postura_efectiva` | `ausente` si no hay nadie: **el escritorio que se queda arriba de noche no suma horas "de pie"** |
+| `history_stats` | Tiempo de pie / sentado / veces, hoy y 7 días |
+
+⚠️ **Fallo corregido el 2026-08-28, señalado por el propietario:** *"si pauso una
+actividad de subir o bajar, igual cuenta como si hubiera subido"*.
+
+La postura usaba **un umbral único en 95 cm**, con dos consecuencias:
+
+1. **Cambiaba a mitad de viaje.** Subiendo de 80 a 117, al cruzar los 95 ya
+   contaba "de pie" — treinta segundos antes de llegar
+2. **Un viaje interrumpido mentía.** Parar en 96 dejaba la postura en "de pie"
+   de forma indefinida, y **los contadores del día sumaban esas horas**
+
+**Ahora la postura solo existe en las alturas de trabajo:**
+
+| Altura | Postura |
+|---|---|
+| 77–83 (objetivo **80**) | `sentado` |
+| 114–120 (objetivo **117**) | `de pie` |
+| cualquier otra | **`intermedia`** — no cuenta para nada |
+
+Los ±3 cm cubren ajustes a mano. **Si no estás en una postura de trabajo, no hay
+nada que cronometrar** — que es exactamente la propuesta del propietario y
+elimina el problema de raíz en vez de parchearlo.
+
 ### El sensor `movimiento` distingue quién mueve el escritorio
 
 | Valor | Significa |
