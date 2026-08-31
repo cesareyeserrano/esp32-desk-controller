@@ -1261,11 +1261,18 @@ static void publishState() {
 
   g_mqtt.publish(topic("ip").c_str(), WiFi.localIP().toString().c_str(), true);
 
+  // Always published, even before the handset has been touched once. It used
+  // to publish only after the first press, so after any reboot the entity did
+  // not exist -- and the courtesy rule that reads it ("do not move the desk if
+  // it was just adjusted by hand") silently protected nothing. Nobody having
+  // touched it is not missing data: it is a very large number.
   if (g_lastManualMs) {
     snprintf(b, sizeof(b), "%llu",
              (unsigned long long)((uptimeMs64() - g_lastManualMs) / 1000ULL));
-    g_mqtt.publish(topic("uso_manual").c_str(), b, true);
+  } else {
+    snprintf(b, sizeof(b), "99999");   // untouched since boot
   }
+  g_mqtt.publish(topic("uso_manual").c_str(), b, true);
 
   snprintf(b, sizeof(b), "%lu", (unsigned long)(millis() / 1000));
   g_mqtt.publish(topic("uptime").c_str(), b, true);

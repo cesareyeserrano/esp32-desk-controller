@@ -44,6 +44,21 @@ creyendo que no había nadie, sin dejar nada raro en ningún registro.
    re-verificación antes de mover sigue con el sensor crudo, que es donde
    interesa la respuesta inmediata
 
+### Y la regla de cortesía tampoco protegía nada
+
+El sensor `uso_manual` —segundos desde la última vez que alguien tocó el mando—
+**solo se publicaba después de la primera pulsación desde el arranque**. Con los
+reinicios de las actualizaciones, la entidad no existía, y la condición que la
+consulta *"no muevas el escritorio si se ajustó a mano hace menos de 5 min"*
+**no estaba protegiendo nada**.
+
+**Arreglado**: se publica siempre. Si nadie lo ha tocado, vale `99999` — que no
+es un dato ausente, es "hace muchísimo". Desplegado por OTA y verificado.
+
+**Es el mismo patrón que ya mordió dos veces en este proyecto**: una condición de
+seguridad que, al no poder evaluarse, deja de proteger en silencio en vez de
+avisar.
+
 ### Cinco automatizaciones estaban desactivadas
 
 Al revisarlo aparecieron apagadas: las tres de aviso (`desconectado`, `volvió`,
