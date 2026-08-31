@@ -6,6 +6,61 @@
 
 ---
 
+## 2026-08-31 — El sensor de presencia perdía a una persona quieta
+
+> *"se supone que el escritorio debió bajar hace como 5 min"* … *"pero si estaba,
+> no me he movido de aquí"*
+
+**El recordatorio funcionó y aun así no bajó**, y la culpa era de un ajuste mío.
+
+Reconstruido de los registros:
+
+| Hora | Qué pasó |
+|---|---|
+| 09:12 | Sube a 117 → empieza a contar "de pie" |
+| **09:45** | La automatización dispara y avisa. Correcto |
+| ~09:47 | Re-verifica presencia → **el sensor dice que no hay nadie** → se detiene |
+| 09:53 | El sensor vuelve a detectarle |
+
+**Pero él estaba ahí todo el rato.**
+
+### La causa: bajé el retardo del sensor a 30 s
+
+El 2026-08-23 bajé el retardo ocupado→desocupado del SNZB-06P de 90 a 30 s para
+que detectara antes las ausencias. **Solo pesé una cara del ajuste.** La otra es
+que un mmWave sigue a una persona por la respiración y los micro-movimientos: con
+30 s, alguien trabajando muy quieto **desaparece del sensor**. Con 90 s no
+llegaba a notarse.
+
+**Y el fallo era silencioso**: la automatización se cancelaba "correctamente"
+creyendo que no había nadie, sin dejar nada raro en ningún registro.
+
+### Arreglado en dos frentes
+
+1. **Retardo a 120 s**, más generoso que el original. La detección de ausencia
+   real durante un movimiento la cubre la protección de presencia, no este valor
+2. **El disparo usa la presencia SOSTENIDA** (`delay_off` de 15 min) en vez del
+   sensor crudo: una pérdida momentánea ya no cancela un recordatorio. La
+   re-verificación antes de mover sigue con el sensor crudo, que es donde
+   interesa la respuesta inmediata
+
+### Cinco automatizaciones estaban desactivadas
+
+Al revisarlo aparecieron apagadas: las tres de aviso (`desconectado`, `volvió`,
+`bus degradado`), el `resumen cada 30 min` —del que ya se había advertido que
+acabaría cansando— y ⚠️ **`parar si desaparece la presencia`**, que no es un
+aviso sino **una protección**: es la capa que detiene el escritorio si te vas
+mientras se mueve.
+
+**Reactivada a petición del propietario.** Y con un matiz que la explica: **hasta
+el 2026-08-24 esa automatización no podía funcionar** —el sensor de movimiento no
+se actualizaba durante los viajes—, así que apagarla por inútil era razonable.
+Ahora sí funciona.
+
+Las otras cuatro quedan apagadas a propósito.
+
+---
+
 ## 2026-08-28 — Los contadores de postura contaban viajes a medias
 
 > *"creo que los contadores de tiempo de cuando estoy parado o sentado no son

@@ -393,7 +393,7 @@ no la cierra.
 
 | Capa | Qué hace |
 |---|---|
-| **1. Retardo del sensor a 30 s** | Era 90. Ahora el sensor admite la ausencia tres veces antes |
+| **1. Retardo del sensor a 120 s** | ⚠️ **Corregido el 2026-08-31.** Estuvo en 30 s y era demasiado corto: el mmWave **perdía a una persona quieta trabajando** y los recordatorios se cancelaban solos, en silencio. El disparo usa además la **presencia sostenida**, que tolera pérdidas de hasta 15 min |
 | **2. Re-verificar tras 110 s** | Avisa, espera más que el retardo, y **vuelve a preguntar** antes de mover |
 | **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa. **Depende del sensor `movimiento`** — estuvo inoperante hasta el 2026-08-24 porque ese sensor no se actualizaba durante el viaje |
 
