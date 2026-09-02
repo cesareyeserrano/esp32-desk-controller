@@ -6,6 +6,149 @@
 
 ---
 
+## 2026-09-02 — Dos veces tenía razón él y no le creí
+
+> *"no es posible, me he estado moviendo mucho, el sensor no es"*
+
+Sesión de diagnóstico. **Ningún cambio de hardware.** Dos fallos reales
+encontrados en el lado de Home Assistant, los dos invisibles desde la interfaz.
+
+### El sensor de presencia parpadea, y yo culpaba al propietario
+
+Los recordatorios avisaban y luego **no movían el escritorio**. Mi explicación,
+repetida dos veces, fue que el mmWave pierde a una persona quieta. El
+propietario la rechazó las dos veces. Consultando la base de datos del
+`recorder` resultó que **tenía razón**: el sensor crudo cae y vuelve cada 1-2
+minutos, con él sentado delante y moviéndose. Decenas de transiciones en seis
+horas, frente a **4** del sensor `presencia_sostenida`.
+
+La re-verificación previa al movimiento preguntaba al sensor **crudo**. Cayó en
+uno de esos huecos y canceló el movimiento. No era mala suerte: con ese
+parpadeo, **cualquier comprobación instantánea es una moneda al aire**.
+
+Arreglado: disparo y re-verificación usan `presencia_sostenida`.
+
+Y un tercer hallazgo, del mismo tirón: llegué a anotar que el sensor *revertía
+su retardo a 30 s solo*. **Falso, y lo corrijo aquí mismo.** Los registros
+muestran que la automatización que lo pone en 120 **está desactivada desde el
+2026-08-31 a las 21:03**; por eso lleva tres días en 30. Su alias además dice
+*"a 30 s"* mientras su código pone 120 — el nombre viejo, sin actualizar. Queda
+sin explicar solo una línea: por qué el valor cayó de 120 a 30 a las 20:58 de
+aquel día, con la automatización aún activa.
+
+### Cada reinicio de Home Assistant borraba las horas acumuladas
+
+Detectado por el propietario en caliente: *"no va a subir porque dice que llevo
+sentado 5 min"*. Yo acababa de reiniciar Home Assistant.
+
+La automatización que empieza un periodo nuevo se disparaba con **cualquier**
+cambio del sensor de postura — incluido el `unknown → sentado` de un arranque,
+que no es levantarse sino el sensor naciendo. **Cada reinicio ponía el contador
+a cero.** Corregido exigiendo que la postura de origen sea también real, y
+**verificado reiniciando a propósito**: el contador conservó su valor.
+
+El contador se devolvió a su valor real (10:04:51, la última ausencia larga de
+verdad), leído de la base de datos, no estimado.
+
+### Lo que esta sesión debería haber cambiado antes
+
+Petición del propietario: *"no sé si tenemos logs de todo el sistema, para no ir
+a ciegas con estas cosas"*. **Los había desde el principio** —30 días en SQLite—
+y llevo la sesión entera emitiendo diagnósticos plausibles sin consultarlos. Los
+dos hallazgos de arriba salieron en minutos en cuanto miré.
+
+Queda escrito cómo consultarlos en
+[INTEGRACION_HA.md](INTEGRACION_HA.md), con las tres trampas que me costaron
+tiempo: abrir en `mode=ro`, no **inventar** los `entity_id` (inventé seis, los
+seis falsos, y monté con ellos un informe entero de bloqueos imaginarios), y no
+fiarse del `last_changed` de la interfaz tras un reinicio.
+
+### La prueba de que el fallo era ese: el día entero, disparo a disparo
+
+El propietario aportó el dato que lo cerró todo: *"la última vez que el
+escritorio intentó subir, lo paré manualmente"*. Buscando ese momento en los
+registros apareció la cronología completa del día. **Cada fila en punto es un
+disparo; la de 110 s después es el final de la espera previa a mover:**
+
+| Disparo | ¿Movió? | Con qué re-verificación |
+|---|---|---|
+| 07:15, 07:45, 08:20, 08:55 | **no** | sensor crudo |
+| **09:30** | **sí** | sensor crudo (acertó) |
+| 10:50 | **no** | sensor crudo |
+| 11:25 | **no** | sensor crudo |
+| 12:00 | no (cortado a los 34 s) | — |
+| **12:30** | **sí** | **presencia sostenida** ✅ |
+
+El de las 09:30 es el que el propietario paró con el mando: a las 09:31:54 el
+sensor marca `subiendo` (orden del ESP32) y a las 09:31:55 `subiendo (mando)`,
+con `uso_manual` a cero. **El sensor de movimiento hizo justo su trabajo**:
+distinguir quién movió el escritorio.
+
+Los de 10:50, 11:25 y 12:00 **completaron los 110 s de espera y luego no
+movieron**. Ese es el fallo exacto: la re-verificación contra el sensor crudo,
+cancelando en silencio. A las 12:30, con el arreglo puesto, movió.
+
+⚠️ **Suelto, y no menor:** el propietario dice que *"no volvió a avisar nada"*,
+pero la notificación se envía **antes** de esa espera, así que hoy salieron
+**nueve avisos** desde las 07:15 y no vio ninguno. **No se pudo comprobar si
+llegaron al móvil: los logs de esa franja se habían rotado** por los reinicios
+de esta misma sesión. Queda pendiente, y es independiente del fallo de arriba.
+
+### Verificado de extremo a extremo, por primera vez
+
+A las 12:30 del 2026-09-02, con los dos arreglos puestos y **sin intervención
+manual**:
+
+```
+12:30:00  dispara el recordatorio → notificación al móvil
+12:31:50  (tras los 110 s) re-verifica la presencia sostenida → OK
+12:31:57  subiendo            ← orden del ESP32, no del mando
+12:32:41  frenando → 116 cm
+12:32:46  117 cm
+```
+
+**El ciclo completo —avisar, esperar, re-verificar, mover— ocurrió entero.** Es
+la primera vez que se observa así; los tres fallos anteriores lo cortaban en el
+tercer paso.
+
+⚠️ **Y una trampa de medición que casi me hace declarar un fallo inexistente:**
+estuve leyendo `last_triggered` de la base de datos para saber si la
+automatización había disparado. **Ese atributo se vuelca con retraso**, y decía
+`None` incluso con el escritorio ya en 117. Llegué a concluir que "no ha
+disparado nunca" con el escritorio subiendo. **Para saber si un recordatorio
+funcionó, la fuente buena es el movimiento** (`sensor.…_movimiento` y la
+altura), no el atributo de la automatización.
+
+### Un riesgo que salió de una pregunta, no de una revisión
+
+*"Mi preocupación es cuando se dispara una automatización de HA y yo lo paro a
+mano. Si no hay riesgo con eso lo dejamos así."*
+
+Lo hay, y no estaba evaluado. **Eléctricamente no** —el optoacoplador está en
+paralelo con el pulsador, cerrar ambos es pulsar una tecla con dos dedos— pero
+el pulso largo **mantiene el contacto cerrado 2800 ms sin poder abortarse**, y
+en esa ventana el firmware es ciego a una pulsación humana. Si se pulsa la tecla
+contraria, la caja ve **SUBIR y BAJAR a la vez**, y lo que hace con eso **no
+está verificado**.
+
+Esa misma mañana el propietario pulsó la tecla contraria **~200 ms después** de
+que el contacto se abriera. Detalle, mitigaciones y la comprobación pendiente en
+[SEGURIDAD.md](SEGURIDAD.md).
+
+**Sin decidir:** usar M1/M2 para los objetivos de postura reduciría la ventana
+de 2800 a 800 ms y dejaría el frenado en manos de la caja —que también resuelve
+el riesgo de ADR-028, un cuelgue del ESP32 en viaje continuo—. Contradice la
+decisión de no acoplar las memorias al sistema, así que **necesita ADR**. El
+propietario cerró la sesión antes de decidir.
+
+### Estado
+
+Escritorio operativo. Firmware sin tocar. Contador de postura restaurado y
+sobreviviendo a reinicios. Retardo del sensor **en 30 s, sin tocar**, a petición
+del propietario.
+
+---
+
 ## 2026-08-31 — El sensor de presencia perdía a una persona quieta
 
 > *"se supone que el escritorio debió bajar hace como 5 min"* … *"pero si estaba,

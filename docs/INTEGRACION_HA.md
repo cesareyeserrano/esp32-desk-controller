@@ -393,8 +393,8 @@ no la cierra.
 
 | Capa | Qué hace |
 |---|---|
-| **1. Retardo del sensor a 120 s** | ⚠️ **Corregido el 2026-08-31.** Estuvo en 30 s y era demasiado corto: el mmWave **perdía a una persona quieta trabajando** y los recordatorios se cancelaban solos, en silencio. El disparo usa además la **presencia sostenida**, que tolera pérdidas de hasta 15 min |
-| **2. Re-verificar tras 110 s** | Avisa, espera más que el retardo, y **vuelve a preguntar** antes de mover |
+| **1. Presencia sostenida** (`delay_off: 15 min`) | La capa real. ⚠️ **Reescrita el 2026-09-02:** antes esta capa se fiaba del retardo de 120 s del propio sensor, y **el dispositivo lo revierte a 30 s por su cuenta**. Peor aún, el sensor crudo **parpadea cada 1-2 minutos** con la persona sentada delante (medido, ver abajo). Solo el sensor sostenido, que vive en Home Assistant, aguanta ese parpadeo |
+| **2. Re-verificar tras 110 s** | Avisa, espera, y **vuelve a preguntar** antes de mover. ⚠️ Preguntaba al sensor **crudo** hasta el 2026-09-02, y por eso cancelaba movimientos con el propietario sentado delante; ahora pregunta al sostenido |
 | **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa. **Depende del sensor `movimiento`** — estuvo inoperante hasta el 2026-08-24 porque ese sensor no se actualizaba durante el viaje |
 
 **La capa 3 es la que cierra el caso** que las otras dos no pueden: no predice,
@@ -441,6 +441,164 @@ propietario. El umbral de 95 las separa con holgura por los dos lados.
 sintaxis nueva (`- trigger: state`) dentro de la clave antigua (`trigger:`)
 **pasa la validación de HA y no dispara nunca**. Los sensores se quedan en
 `unknown` sin un solo error en el log. Hay que usar `- platform: state`.
+
+### El sensor de presencia parpadea — medido, no supuesto
+
+**El propietario lo dijo dos veces antes de que yo lo comprobara:** *"pero si
+estaba, no me he movido de aquí"* y *"no es posible, me he estado moviendo mucho,
+el sensor no es"*. Las dos veces respondí culpando a que estuviera quieto. **Las
+dos veces se equivocaba yo.**
+
+La consulta a la base de datos del `recorder` lo zanjó. Seis horas del
+2026-09-02, misma persona, mismo sitio:
+
+| Entidad | Cambios en 6 h |
+|---|---|
+| `binary_sensor.…_presencia` (crudo) | **decenas** — cae y vuelve cada 1-2 min |
+| `binary_sensor.escritorio_presencia_sostenida` | **4** |
+
+Ventana concreta del fallo de las 11:25, tal cual salió de la base de datos:
+
+```
+11:24:21 off   11:24:40 on   11:25:24 off   11:27:02 on   11:32:23 off …
+```
+
+La re-verificación cayó en el hueco de `11:25:24`. **No fue mala suerte
+puntual: con ese parpadeo, cualquier comprobación instantánea es una moneda al
+aire.** De ahí que tanto el disparo como la re-verificación previa al movimiento
+usen ahora `presencia_sostenida`, nunca el sensor crudo.
+
+#### El retardo del sensor lleva en 30 s desde el 31 de agosto
+
+Creí durante un rato que el dispositivo Zigbee *revertía su retardo solo* y lo
+anoté como misterio. **Los registros dicen otra cosa** y la mayor parte no tiene
+nada de misteriosa:
+
+| Fecha y hora | Retardo | Automatización que lo corrige |
+|---|---|---|
+| 2026-08-31 10:03 → 10:21 | **120** | **on** |
+| 2026-08-31 20:58 | vuelve a **30** | on |
+| 2026-08-31 21:03 | — | **off** |
+| desde entonces | **30**, siempre | off |
+
+La razón de que **siga** en 30 no es el cacharro: es que
+`automation.escritorio_retardo_del_sensor_de_presencia_a_30_s` —que pone 120 al
+arrancar Home Assistant— **está desactivada desde el 2026-08-31 a las 21:03**.
+Se desactivó y nadie volvió a ponerla.
+
+⚠️ **Su alias miente:** dice *"a 30 s"* y su código pone **120**. Es el nombre
+viejo, de antes de [la corrección del 2026-08-31](BITACORA.md). Un nombre que
+dice lo contrario que el código es exactamente el tipo de cosa que hace perder
+una tarde.
+
+**Lo que sí queda sin explicar**, y es solo una línea de la tabla: por qué a las
+20:58 del 31 el valor pasó de 120 a 30 estando la automatización activa.
+
+#### 30 o 120: lo que dicen los registros, y lo que dice el propietario
+
+Iba a reactivar el 120 hasta que el propietario lo paró: *"la semana pasada el
+sensor funcionaba bien con la configuración que teníamos, antes de ayer le
+pusimos 120 y empezó a funcionar mal"*. **No se ha tocado: sigue en 30.**
+
+Medido sobre el `recorder`, cambios de estado del sensor **crudo** en horas de
+trabajo (09:00–19:00):
+
+| Día | Retardo | Cambios/h | Apagones de <3 min |
+|---|---|---|---|
+| mié 26 ago | 30 | 9,1 | 37 |
+| jue 27 ago | 30 | 12,0 | 53 |
+| vie 28 ago | 30 | 4,7 | 17 |
+| **lun 31 ago** | **120** | **2,1** | **5** |
+| mar 1 sep | 30 | 19,6 | 84 |
+| mié 2 sep | 30 | 8,1 | 33 |
+
+**Los dos datos son ciertos y no se contradicen tanto como parece.** El 120
+reduce el parpadeo de forma clara —es el mejor día de los seis— pero *menos
+parpadeo no es lo mismo que "funciona bien"*: con 120 s el sensor tarda dos
+minutos en admitir una ausencia, y la re-verificación previa al movimiento
+ocurre a los 110 s. **Con 120, esa re-verificación puede decir "sigue ahí" de
+alguien que ya se ha ido**, y el escritorio se mueve solo. Esa es una hipótesis
+razonable de qué vio el propietario, y **está sin comprobar**.
+
+⚠️ **Lo que sí está medido:** el retardo **no** causó ninguno de los dos fallos
+del 2026-09-02. El contador borrado en cada reinicio y la re-verificación contra
+el sensor crudo ocurren exactamente igual con 30 que con 120.
+
+**Decisión: no se toca sin una medición del síntoma real** —recordatorios que no
+acaban en movimiento— y no del número de transiciones, que es lo que sé medir
+pero no es lo que le molesta a nadie.
+
+En cualquier caso la conclusión operativa no cambia: **el retardo del dispositivo
+no es una capa en la que apoyarse.** La protección real es
+`presencia_sostenida`, que vive en Home Assistant y no depende del cacharro.
+
+### Un reinicio de Home Assistant no es levantarse
+
+**Fallo encontrado el 2026-09-02**, con el escritorio negándose a subir: *"no va
+a subir porque dice que llevo sentado 5 min"*.
+
+`automation.escritorio_reiniciar_periodo_al_cambiar_de_postura` se disparaba con
+**cualquier** cambio de `sensor.escritorio_postura`. Al arrancar Home Assistant,
+ese sensor pasa de `unknown` a `sentado` — que no es un cambio de postura, es el
+sensor naciendo. La automatización lo contaba como postura nueva y **ponía el
+contador a cero**. Efecto: *cada reinicio de Home Assistant borraba las horas
+acumuladas*, y los recordatorios volvían a empezar de cero sin que nadie se
+hubiera movido de la silla.
+
+La condición ahora exige que la postura **de origen sea también una postura
+real**:
+
+```jinja
+{{ trigger.from_state is not none
+   and trigger.from_state.state in ['sentado','de pie','intermedia']
+   and trigger.to_state.state in ['sentado','de pie']
+   and trigger.from_state.state != trigger.to_state.state }}
+```
+
+Verificado reiniciando Home Assistant a propósito: el contador **conservó** su
+valor.
+
+### Los registros: mirar en vez de suponer
+
+Petición del propietario —*"no sé si tenemos logs de todo el sistema, para no ir
+a ciegas con estas cosas"*— después de una sesión entera de diagnósticos míos
+plausibles y equivocados.
+
+**Sí los hay**, y son la única fuente que ha decidido las discusiones de esta
+sesión. Home Assistant guarda 30 días en SQLite (`recorder`,
+`purge_keep_days: 30`).
+
+```bash
+ssh <usuario>@<host-de-HA> 'docker exec homeassistant python3 -c "
+import sqlite3
+con = sqlite3.connect(\"file:/config/home-assistant_v2.db?mode=ro\", uri=True)
+for st, t in con.execute(
+    \"\"\"SELECT s.state, datetime(s.last_updated_ts,\"unixepoch\",\"localtime\")
+         FROM states s JOIN states_meta m ON s.metadata_id = m.metadata_id
+         WHERE m.entity_id = ? AND s.last_updated_ts > strftime(\"%s\",\"now\",\"-8 hours\")
+         ORDER BY s.last_updated_ts\"\"\", (\"sensor.escritorio_postura\",)):
+    print(t, st)
+"'
+```
+
+⚠️ **`last_triggered` no sirve para saber si un recordatorio funcionó.** Ese
+atributo se vuelca a la base de datos con retraso: el 2026-09-02 marcaba `None`
+con el escritorio ya subiendo por orden de esa misma automatización. **La fuente
+buena es el movimiento** — `sensor.escritorio_jiecang_movimiento` y la altura—,
+que además distingue si movió el ESP32 (`subiendo`) o una persona
+(`subiendo (mando)`).
+
+Tres cosas más que ahorran tiempo:
+
+- **Abrir siempre en `mode=ro`.** Home Assistant tiene la base abierta; escribir
+  en ella desde fuera la corrompe.
+- **Los `entity_id` no se adivinan.** En esta sesión inventé seis nombres
+  plausibles y los seis eran falsos, lo que produjo un informe entero de
+  "BLOQUEA" imaginarios. Sacarlos primero con
+  `WHERE m.entity_id LIKE "%escritorio%"`.
+- **`last_changed` de la interfaz miente tras un reinicio**; la tabla `states`
+  no. Para "¿cuánto llevo sentado?", la fuente buena es
+  `input_datetime.escritorio_inicio_postura`.
 
 ## Panel
 

@@ -636,6 +636,62 @@ una memoria del mando ni por error**.
 - **El display se duerme** por inactividad: hay que despertarlo con un toque
   antes de fiarse de la primera lectura.
 
+**Paso 5 — Confiar en los recordatorios de extremo a extremo. ⬜ EN CURSO
+desde el 2026-09-02.**
+
+La fase 4 está montada y funcionando, pero **los recordatorios han fallado en
+silencio tres veces** (2026-08-24, 08-31 y 09-02), siempre por motivos distintos
+y **ninguno visible desde la interfaz de Home Assistant**. Los dos últimos —el
+parpadeo del sensor de presencia y el contador que se borraba en cada reinicio—
+están corregidos y verificados el 2026-09-02.
+
+✅ **Primera verificación completa el 2026-09-02 a las 12:30**: avisó, esperó,
+re-verificó y **subió de 80 a 117 sin intervención manual**. Detalle en la
+[bitácora](BITACORA.md).
+
+Falta **observar un par de días de uso real**: un ciclo bueno no descarta los
+fallos intermitentes, que es exactamente lo que han sido los tres anteriores. Un
+aviso que no acaba en movimiento es el fallo característico de este sistema.
+
+⚠️ **Y hay un segundo asunto abierto, distinto:** el 2026-09-02 se dispararon
+**nueve avisos** —07:15, 07:45, 08:20, 08:55, 09:30, 10:50, 11:25, 12:00 y
+12:30— y el propietario **no vio ninguna notificación**. La notificación se
+manda antes de la espera de 110 s, así que se enviaron. **No se pudo comprobar
+si llegaron al móvil porque los logs de esa franja ya se habían rotado.**
+
+**Al retomar, mirar esto primero**, y con los logs frescos: si el canal
+`notify.mobile_app_icesar_pro` no entrega, el sistema puede mover el escritorio
+sin avisar antes — que es peor que no moverlo.
+
+**Cómo comprobarlo sin adivinar:** las consultas a la base de datos del
+`recorder` están en [INTEGRACION_HA.md](INTEGRACION_HA.md). Esa sección existe
+porque el 2026-09-02 emití diagnósticos plausibles y equivocados durante toda una
+sesión teniendo 30 días de registros a mano sin mirarlos.
+
+Suelto conocido, **sin explicar**: el sensor Zigbee revierte su retardo a 30 s
+por su cuenta. No bloquea nada —la protección real es
+`binary_sensor.escritorio_presencia_sostenida`— pero está sin entender.
+
+**Paso 5b — Decidir sobre la ventana de 2800 ms.** El pulso largo no se puede
+abortar y, si se pulsa la tecla contraria mientras dura, la caja ve SUBIR y
+BAJAR a la vez. **Qué hace con eso no está verificado.** La comprobación es
+barata —pulsar ambas en el mando, sin el ESP32— y decide si hace falta arreglo.
+Detalle en [SEGURIDAD.md](SEGURIDAD.md). Si se decide usar M1/M2 para los
+objetivos de postura, **hace falta un ADR**: contradice una decisión ya tomada.
+
+**Paso 6 — La placa.** Especificación y planos listos en
+[hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md). Dos cosas
+**antes** de encargar nada:
+
+1. **Identificar el conector del cable original** (paso, anclaje, marca). Sin eso
+   no se puede elegir el JST.
+2. **Probar el buffer 74HC14 en protoboard.** Va en la placa y nunca se ha
+   montado.
+
+**Paso 7 — Capa 1 de protección eléctrica.** El cargador del ESP32 y el
+escritorio en la misma regleta. Cuesta cero y sigue pendiente
+([SEGURIDAD.md](SEGURIDAD.md)).
+
 ## Fase 5 — App ⬜
 
 Frontend propio contra la API WebSocket de HA. Estética HUD tipo JARVIS (cyan,

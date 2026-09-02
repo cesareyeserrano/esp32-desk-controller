@@ -164,6 +164,56 @@ Reglas para cuando exista accionamiento:
 
 ---
 
+## El pulso no se puede abortar — ventana de 2800 ms
+
+**Hallazgo del 2026-09-02**, a partir de una pregunta del propietario: *"mi
+preocupación es cuando se dispara una automatización de HA y yo lo paro a
+mano"*.
+
+**Riesgo eléctrico: ninguno, y esto sí está razonado.** El optoacoplador está
+**en paralelo** con el pulsador del mando. Que se cierren los dos a la vez es
+eléctricamente idéntico a pulsar una tecla con dos dedos: dos interruptores en
+paralelo, sin conflicto de corriente y sin forma de dañar nada.
+
+**El riesgo es lógico, y está sin evaluar.** Durante el pulso el canal queda
+cerrado **2800 ms y no hay forma de abortarlo**: la decodificación del bus
+ocurre *después* de abrir el contacto —corrección B2 del 2026-08-23, que existe
+porque decodificar dentro del pulso lo estiraba peligrosamente cerca de los
+3.0 s que sobrescriben un preset—. Mientras dura el pulso, **el firmware es
+ciego a que una persona ha pulsado**.
+
+Si en esa ventana se pulsa **la tecla contraria**, la caja de control ve
+**SUBIR y BAJAR cerrados a la vez**.
+
+⚠️ **Qué hace la caja con esa combinación NO ESTÁ VERIFICADO.** En escritorios
+de este tipo suele ser la entrada al modo de calibración, que haría perder la
+referencia de altura. Recuperable, pero no comprobado aquí. **Supuesto, no
+medido.**
+
+**Y no es teórico.** El 2026-09-02, con el recordatorio moviendo el escritorio:
+
+```
+09:31:54.0  el ESP32 cierra SUBIR (hasta ~09:31:56.8)
+09:31:55    el propietario pulsa SUBIR   <- dentro de la ventana, misma tecla: inofensivo
+09:31:57    pulsa BAJAR                  <- ~200 ms despues de abrirse el contacto
+```
+
+**La tecla contraria, a dos décimas de la ventana.**
+
+**Mitigaciones, ninguna aplicada:**
+
+1. **Decodificar dentro del pulso sin imprimir**, para abrir el contacto en
+   cuanto aparezca una tecla no atribuida. Choca de frente con la corrección B2:
+   habría que acotarlo con cuidado para no acercarse a los 3.0 s.
+2. **Usar las memorias M1/M2** para los objetivos de postura. El pulso baja de
+   2800 a 800 ms y el viaje lo gestiona la caja. Requiere ADR: contradice la
+   decisión del propietario de no acoplar las memorias físicas al sistema.
+
+**Comprobación pendiente y barata:** pulsar SUBIR y BAJAR a la vez en el mando,
+**sin el ESP32 conectado**, y ver qué hace. Es lo único que convierte este
+supuesto en un hecho. Propuesto el 2026-09-02; el propietario cerró la sesión
+antes de decidir.
+
 ## Riesgo de perder el escritorio
 
 La caja de control es propietaria y no se abre. Si se corrompe su configuración
