@@ -1,223 +1,227 @@
-# Seguridad
+# Safety
 
-> Se revisa antes de abrir cada fase nueva.
-
----
-
-## Riesgo eléctrico (fases 2 y 3)
-
-**El escritorio se desenchufa de la corriente para cualquier medición de
-resistencia o continuidad.** Medir resistencia en un circuito alimentado da
-lecturas falsas y puede dañar el multímetro.
-
-**Nunca se fuerza SDA a alto con una salida push-pull.** Mientras el AiP650 tira
-de la línea abajo, eso es un cortocircuito contra la salida del chip. El chip es
-irreemplazable y el mando entero con él. Ver [ADR-011](DECISIONS.md).
-
-**El cable de 6 hilos entre las dos columnas no se toca nunca.** Lleva los
-**29 V** del adaptador y la corriente de los motores. No hay nada ahí que el
-proyecto necesite.
-
-**El ESP32 no se alimenta del escritorio, ni siquiera de sus 5 V.** Esos 5 V los
-genera la caja de control para un chip que consume 0.3 mA; un ESP32 con WiFi
-pega picos de cientos de miliamperios y no se sabe qué aguanta ese regulador.
-USB desde el Mac, siempre. Ver [ADR-007](DECISIONS.md).
-
-**El hilo amarillo (5 V) no se conecta al ESP32.** Nunca, en ninguna fase. El ESP32
-se alimenta por USB ([ADR-007](DECISIONS.md)).
-
-**Ninguna línea de 5 V toca un GPIO directamente.** Los GPIO del ESP32 toleran
-3.6 V como máximo absoluto. Aplica a las líneas de datos ([ADR-005](DECISIONS.md))
-y a los pulsadores ([ADR-004](DECISIONS.md)).
-
-**Antes de conectar el ESP32, verificar que el mando funciona con las
-derivaciones soldadas.** Si no se comprueba en ese orden, un fallo posterior es
-imposible de atribuir: ¿la soldadura o la sonda?
-
-**El ESP32 se alimenta por USB antes de conectar los hilos al divisor, y se
-desconectan los hilos antes de quitar el USB.** Con el ESP32 sin corriente y la
-sonda puesta sobre un bus encendido, el diodo de protección del GPIO engancha el
-nodo del divisor y arrastra el bus hasta ~2.85 V, por debajo del umbral del
-chip: el mando falla. No hay daño —la corriente son ~210 µA, limitados por los
-9.1 kΩ— pero el síntoma aparecería justo después de soldar y apuntaría a las
-soldaduras. Ver [ADR-019](DECISIONS.md).
-
-**Se comprueba el nivel del bus con el multímetro antes de dar por bueno el
-montaje, y el criterio es el cociente entre dos lecturas, no un umbral
-absoluto.** Un multímetro promedia y el bus está conmutando, así que las dos
-lecturas salen por debajo de lo calculado en una cantidad desconocida. Se mide
-rojo↔azul y verde↔azul sin la sonda y con ella, con el escritorio quieto y el
-mismo número en pantalla: el cociente debe rondar **0.80**, y por debajo de
-**0.70** hay que desconectar. Procedimiento completo en
-[HARDWARE.md](HARDWARE.md), razonamiento en [ADR-018](DECISIONS.md).
+> Reviewed before opening every new phase.
+>
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md).*
 
 ---
 
-## Riesgo mecánico (fases 3 en adelante)
+## Electrical risk (phases 2 and 3)
 
-Un escritorio que se mueve solo puede atrapar manos, cables o mascotas. La
-superficie sube con fuerza suficiente para levantar un monitor, y por tanto
-suficiente para hacer daño.
+**Unplug the desk from mains for any resistance or continuity measurement.**
+Measuring resistance on a powered circuit gives false readings and can damage
+the multimeter.
 
-Reglas para cuando exista accionamiento:
+**Never force SDA high with a push-pull output.** While the AiP650 is pulling
+that line down, doing so is a short circuit against the chip's own output. The
+chip cannot be replaced, and the whole handset goes with it. See
+[ADR-011](DECISIONS.md).
 
-- **Límites de altura por software**, mínimo y máximo, verificados contra la
-  altura leída del bus. Un comando fuera de rango no se ejecuta.
-- **Ningún movimiento automático sin presencia.** Las automatizaciones que
-  mueven el escritorio requieren confirmación de que hay alguien delante.
-- **Parada disponible siempre.** El mando físico se mantiene conectado y
-  funcional en todas las fases; es el botón de pánico.
-- **Los pulsos de M1/M2 se acotan por hardware** ([ADR-010](DECISIONS.md)). Un
-  cierre largo graba el preset en vez de recuperarlo, y falla en silencio.
-- **Un ESP32 colgado no es hipotético: se colgó dos veces el 2026-08-03.** No
-  por un bug de lógica, sino por una condición eléctrica en un pin — una señal
-  a 175 kHz lo dejó sin responder, y no degradó suavemente.
+**The 6-wire cable between the two columns is never touched.** It carries the
+**29 V** from the adapter and the motor current. There is nothing in there that
+this project needs.
 
-  **Corrección del 2026-08-06, porque esta evidencia se citaba con más fuerza de
-  la que tiene:** aquellos cuelgues fueron por **saturación de interrupciones**,
-  con `attachInterrupt` enganchado a los dos pines. **Ese diseño de captura ya no
-  existe**: el sniffer pasó a muestreo por ráfagas y no engancha interrupciones a
-  esas líneas. El mecanismo concreto que se demostró está eliminado.
+**The ESP32 is never powered from the desk, not even from its 5 V.** Those 5 V
+are generated by the control box for a chip that draws 0.3 mA, while an ESP32
+with WiFi spikes into the hundreds of milliamps, and nobody knows what that
+regulator tolerates. USB from the Mac, always. See [ADR-007](DECISIONS.md).
 
-  Lo que queda en pie es lo genérico —cualquier firmware puede colgarse por otras
-  vías, y el actual desactiva interrupciones 2 ms cada ráfaga— pero **esto es una
-  precaución razonable, no un requisito con evidencia directa.** La diferencia
-  importa cuando decidir implica comprar componentes.
+**The yellow wire (5 V) never connects to the ESP32.** Not in any phase. The
+ESP32 is USB powered ([ADR-007](DECISIONS.md)).
 
-  Lo que no cambia: **lo único que puede parar un canal cerrado con el firmware
-  muerto es hardware que no dependa del CPU.**
-- ⚠️ **Los cables del pulsador van a las patas 3 y 4 del PC817, nunca a la 1 y
-  2.** Las 1 y 2 son el LED y ya llevan el ESP32; las 3 y 4 son el interruptor
-  aislado. Soldar el pulsador a las patas 1 y 2 uniría los 5 V del mando con el
-  GPIO del ESP32 y anularía el aislamiento entero.
+**No 5 V line ever touches a GPIO directly.** ESP32 GPIOs tolerate 3.6 V as an
+absolute maximum. This covers the data lines ([ADR-005](DECISIONS.md)) and the
+buttons ([ADR-004](DECISIONS.md)).
 
-- **Los cuatro canales llevan el mismo limitador de pulso de 300 ms**
-  ([ADR-023](DECISIONS.md)). Decidido el 2026-08-06, cerrando lo que bloqueaba
-  la fase 3. **El firmware solo emite toques; el hardware garantiza que ninguno
-  dure más.**
+**Before connecting the ESP32, confirm the handset still works with the taps
+soldered on.** Skip that order and any later fault becomes impossible to pin
+down: was it the solder joint or the probe?
 
-  **Corrección del 2026-08-23, y es incómoda:** desde que se escribió esto
-  hasta hoy, **ese watchdog no existía**. [ADR-024](DECISIONS.md) lo decidió y
-  nadie lo implementó: el firmware no configuraba ningún watchdog, y el ancho
-  del pulso lo acotaba el mismo software que podría colgarse. La promesa de
-  este documento era papel. Lo destapó la revisión adversarial del 2026-08-23
-  ([REVISION_FIRMWARE_2026-08-23.md](REVISION_FIRMWARE_2026-08-23.md), hallazgo
+**Power the ESP32 over USB before connecting the wires to the divider, and
+disconnect those wires before removing USB.** With the ESP32 unpowered and the
+probe sitting on a live bus, the GPIO protection diode clamps the divider node
+and drags the bus down to about 2.85 V, below the chip's threshold, so the
+handset fails. There is no damage, since the current is around 210 µA limited by
+the 9.1 kΩ, but the symptom would show up right after soldering and point at the
+joints. See [ADR-019](DECISIONS.md).
+
+**Check the bus level with the multimeter before accepting the assembly, and
+judge by the ratio between two readings rather than an absolute threshold.** A
+multimeter averages and the bus is switching, so both readings come out below
+the calculated value by an unknown amount. Measure red to blue and green to blue
+without the probe and then with it, desk still and the same number on screen:
+the ratio should sit around **0.80**, and anything below **0.70** means
+disconnect. Full procedure in [HARDWARE.md](HARDWARE.md), reasoning in
+[ADR-018](DECISIONS.md).
+
+---
+
+## Mechanical risk (phase 3 onward)
+
+A desk that moves on its own can trap hands, cables or pets. The surface lifts
+with enough force to raise a monitor, which is enough force to hurt someone.
+
+Rules for whenever actuation exists:
+
+- **Software height limits**, minimum and maximum, checked against the height
+  read from the bus. A command outside that range does not run.
+- **No automatic movement without presence.** Automations that move the desk
+  require confirmation that somebody is in front of it.
+- **A stop is always available.** The physical handset stays connected and
+  working through every phase. It is the panic button.
+- **M1 and M2 pulses are bounded in hardware** ([ADR-010](DECISIONS.md)). A long
+  close writes the preset instead of recalling it, and it fails silently.
+- **A hung ESP32 is not hypothetical: it hung twice on 2026-08-03.** Not from a
+  logic bug but from an electrical condition on a pin. A 175 kHz signal left it
+  unresponsive, and it did not degrade gracefully.
+
+  **Corrected on 2026-08-06, because this evidence was being cited with more
+  force than it carries:** those hangs came from **interrupt saturation**, with
+  `attachInterrupt` hooked to both pins. **That capture design no longer
+  exists.** The sniffer moved to burst sampling and hooks no interrupts to those
+  lines. The specific mechanism that was demonstrated is gone.
+
+  What still stands is the generic part. Any firmware can hang some other way,
+  and the current one disables interrupts for 2 ms per burst. But **this is a
+  reasonable precaution, not a requirement backed by direct evidence.** The
+  difference matters when the decision involves buying components.
+
+  What does not change: **the only thing that can open a closed channel with
+  dead firmware is hardware that does not depend on the CPU.**
+- ⚠️ **Button wires go to pins 3 and 4 of the PC817, never to 1 and 2.** Pins 1
+  and 2 are the LED and already carry the ESP32; pins 3 and 4 are the isolated
+  switch. Soldering the button to pins 1 and 2 would tie the handset's 5 V to the
+  ESP32 GPIO and destroy the isolation entirely.
+
+- **All four channels carry the same 300 ms pulse limiter**
+  ([ADR-023](DECISIONS.md)). Decided on 2026-08-06, closing what was blocking
+  phase 3. **The firmware only emits taps; the hardware guarantees none lasts
+  longer.**
+
+  **Corrected on 2026-08-23, and it is an uncomfortable correction:** from the
+  day this was written until then, **that watchdog did not exist**.
+  [ADR-024](DECISIONS.md) decided it and nobody implemented it. The firmware
+  configured no watchdog at all, and the pulse width was bounded by the very
+  software that might hang. This document's promise was paper. The adversarial
+  review of 2026-08-23 found it
+  ([REVISION_FIRMWARE_2026-08-23.md](REVISION_FIRMWARE_2026-08-23.md), finding
   B1).
 
-  **Desde el 2026-08-23 sí existe:** cada pulso arma el task watchdog del ESP32
-  con presupuesto de `ancho + 1 s` y pánico al vencer. Un cuelgue con el pin en
-  alto termina en reinicio del chip, el reinicio deja los GPIO como entradas, y
-  el canal se abre. Se desarma al soltar el pin. Verificado en operación normal:
-  no salta con pulsos legítimos.
+  **Since 2026-08-23 it does exist:** every pulse arms the ESP32 task watchdog
+  with a budget of `width + 1 s` and panics on expiry. A hang with the pin high
+  ends in a chip reset, the reset leaves the GPIOs as inputs, and the channel
+  opens. It disarms when the pin is released. Verified in normal operation: it
+  does not fire on legitimate pulses.
 
-  **Y el propio pulso ahora se mide:** al soltar se compara el ancho conseguido
-  contra el pedido, y un desborde de más de 100 ms se reporta con `[!!]`. Antes
-  la decodificación del bus se hacía **dentro** del contacto y podía alargarlo
-  sin que nadie lo supiera (hallazgo B2); ahora se captura durante y se
-  decodifica después de soltar.
+  **And the pulse now measures itself:** on release it compares the width
+  achieved against the width requested, and any overrun beyond 100 ms is
+  reported with `[!!]`. Bus decoding used to happen **inside** the contact and
+  could stretch it without anyone knowing (finding B2). Now the capture happens
+  during the pulse and the decoding after release.
 
-  ⚠️ **Antes de cablear nada hay que medir el nivel de los GPIO de control
-  durante el arranque y el reset.** Toda esta protección se apoya en que un
-  reinicio deje los pines sin conducir. **Si alguno se pone alto al arrancar, el
-  watchdog activaría el canal en vez de abrirlo.**
+  ⚠️ **Before wiring anything, measure the level of the control GPIOs during
+  boot and reset.** All of this protection rests on a reset leaving the pins non
+  conducting. **If any of them goes high at boot, the watchdog would activate
+  the channel instead of opening it.**
 
-  Los umbrales medidos que lo justifican: un toque pasa a **movimiento continuo**
-  entre **2.2 y 2.6 s**, y M1/M2 pasan a **grabar el preset** a los **3.0 s**.
-  Con 300 ms hay siete veces de margen por abajo, y casi el doble del mínimo de
-  160 ms que el chip exige para ver la pulsación.
+  The measured thresholds behind this: a tap becomes **continuous travel**
+  between **2.2 and 2.6 s**, and M1 or M2 **overwrite the preset** at **3.0 s**.
+  At 300 ms there is seven times the margin below, and almost double the 160 ms
+  minimum the chip needs to see a press at all.
 
-  Así **un contacto pegado no puede arrancar movimiento continuo ni sobrescribir
-  un preset**: como mucho mueve un centímetro o recupera una memoria.
+  So **a stuck contact cannot start continuous travel or overwrite a preset**.
+  At worst it moves a centimetre or recalls a memory.
 
-- ⚠️ **El movimiento continuo no se puede parar abriendo un contacto.** Medido:
-  tras soltar, el escritorio siguió **5 cm en 5 s** subiendo y **6 cm en 6.6 s**
-  bajando. Para detenerlo hay que **cerrar** un contacto, no abrirlo — por eso
-  ningún circuito que actúe por ausencia de señal sirve aquí.
+- ⚠️ **Continuous travel cannot be stopped by opening a contact.** Measured:
+  after release the desk kept going **5 cm in 5 s** upward and **6 cm in 6.6 s**
+  downward. Stopping it requires **closing** a contact, not opening one, which
+  is why no circuit acting on absence of signal is any use here.
 
-  **Cambiado el 2026-08-21 ([ADR-028](DECISIONS.md)).** El diseño era *evitar que
-  el movimiento continuo llegue a arrancar*. Ahora **se admite**, porque se midió
-  lo que faltaba: **un toque corto en el MISMO canal frena su propio movimiento
-  continuo**. Con un solo canal cableado hay parada.
+  **Changed on 2026-08-21 ([ADR-028](DECISIONS.md)).** The design used to be
+  *prevent continuous travel from ever starting*. It is now **admitted**, because
+  the missing measurement was taken: **a short tap on the SAME channel brakes its
+  own continuous travel**. With a single channel wired, there is a stop.
 
-  ⚠️ **Riesgo nuevo, y es de otra clase:** un cuelgue del ESP32 durante el viaje
-  deja el escritorio moviéndose **sin nada que lo pare**. El watchdog de
-  [ADR-024](DECISIONS.md) **no ayuda** — abre el canal, y abrir no frena. Queda
-  el tope físico y el mando. **Es una mitigación, no una garantía.**
+  ⚠️ **New risk, and of a different kind:** an ESP32 hang during travel leaves
+  the desk moving with **nothing to stop it**. The watchdog from
+  [ADR-024](DECISIONS.md) **does not help**, because it opens the channel, and
+  opening does not brake. What remains is the physical stop and the handset.
+  **That is a mitigation, not a guarantee.**
 
-  **Por eso: movimiento continuo solo con supervisión**, mientras no existan los
-  límites por software con la altura leída del bus. Los toques
-  ([ADR-027](DECISIONS.md), 800 ms) no tienen este riesgo y siguen siendo el modo
-  por defecto.
-- **Freno disponible siempre.** Cualquier botón detiene un movimiento en curso,
-  así que cualquier relé sirve de parada de emergencia. Ante una lectura de
-  altura incoherente, frenar es la acción por defecto, no seguir.
-- **Con altura obsoleta no se inicia movimiento** ([ADR-012](DECISIONS.md)). Si
-  el refresco del display se detiene o salta de forma incoherente durante un
-  movimiento, se frena.
-- **Sin bucles de reintento.** Si un movimiento no llega a la altura esperada,
-  se detiene y se reporta. No se reintenta solo: un sensor mal decodificado
-  reintentando indefinidamente es un escritorio golpeando contra un tope.
-- **El botón de reset no se cablea** ([ADR-008](DECISIONS.md)). Ejecuta una
-  recalibración que baja la superficie hasta el tope inferior, sin confirmación
-  y sin poder interrumpirse. Se deja físicamente fuera del circuito: no es una
-  comprobación de software que un bug pueda saltarse.
+  **Hence: continuous travel only under supervision**, for as long as software
+  limits based on the bus height do not exist. Taps
+  ([ADR-027](DECISIONS.md), 800 ms) carry no such risk and remain the default
+  mode.
+- **A brake is always available.** Any button stops movement in progress, so any
+  relay works as an emergency stop. Faced with an incoherent height reading,
+  braking is the default action, not carrying on.
+- **No movement starts on a stale height** ([ADR-012](DECISIONS.md)). If the
+  display refresh stops or jumps incoherently during a movement, it brakes.
+- **No retry loops.** If a movement does not reach the expected height, it stops
+  and reports. It does not retry on its own: a misdecoded sensor retrying
+  forever is a desk hammering against an end stop.
+- **The reset button is never wired** ([ADR-008](DECISIONS.md)). It runs a
+  recalibration that drives the surface down to the bottom stop, with no
+  confirmation and no way to interrupt it. It stays physically out of the
+  circuit, because that is stronger than a software check some bug can skip.
 
 ---
 
-## El pulso no se puede abortar — ventana de 2800 ms
+## The pulse cannot be aborted: a 2800 ms window
 
-**Hallazgo del 2026-09-02**, a partir de una pregunta del propietario: *"mi
-preocupación es cuando se dispara una automatización de HA y yo lo paro a
-mano"*.
+**Found on 2026-09-02**, from a question by the owner: *"my worry is when an HA
+automation fires and I stop the desk by hand"*.
 
-**Riesgo eléctrico: ninguno, y esto sí está razonado.** El optoacoplador está
-**en paralelo** con el pulsador del mando. Que se cierren los dos a la vez es
-eléctricamente idéntico a pulsar una tecla con dos dedos: dos interruptores en
-paralelo, sin conflicto de corriente y sin forma de dañar nada.
+**Electrical risk: none, and this part is reasoned.** The optocoupler sits **in
+parallel** with the handset button. Closing both at once is electrically
+identical to pressing one key with two fingers: two switches in parallel, no
+current conflict, and no way to damage anything.
 
-**El riesgo es lógico, y está sin evaluar.** Durante el pulso el canal queda
-cerrado **2800 ms y no hay forma de abortarlo**: la decodificación del bus
-ocurre *después* de abrir el contacto —corrección B2 del 2026-08-23, que existe
-porque decodificar dentro del pulso lo estiraba peligrosamente cerca de los
-3.0 s que sobrescriben un preset—. Mientras dura el pulso, **el firmware es
-ciego a que una persona ha pulsado**.
+**The risk is logical, and it is unevaluated.** During the pulse the channel
+stays closed for **2800 ms with no way to abort**, because bus decoding happens
+*after* the contact opens. That ordering comes from correction B2 of 2026-08-23,
+which exists because decoding inside the pulse stretched it dangerously close to
+the 3.0 s that overwrite a preset. While the pulse lasts, **the firmware is
+blind to a person having pressed anything**.
 
-Si en esa ventana se pulsa **la tecla contraria**, la caja de control ve
-**SUBIR y BAJAR cerrados a la vez**.
+If **the opposite key** is pressed inside that window, the control box sees
+**UP and DOWN closed at the same time**.
 
-⚠️ **Qué hace la caja con esa combinación NO ESTÁ VERIFICADO.** En escritorios
-de este tipo suele ser la entrada al modo de calibración, que haría perder la
-referencia de altura. Recuperable, pero no comprobado aquí. **Supuesto, no
-medido.**
+⚠️ **What the box does with that combination IS NOT VERIFIED.** On desks of this
+kind it is usually the way into calibration mode, which would lose the height
+reference. Recoverable, but not tested here. **Assumed, not measured.**
 
-**Y no es teórico.** El 2026-09-02, con el recordatorio moviendo el escritorio:
+**And it is not theoretical.** On 2026-09-02, with the reminder moving the desk:
 
 ```
-09:31:54.0  el ESP32 cierra SUBIR (hasta ~09:31:56.8)
-09:31:55    el propietario pulsa SUBIR   <- dentro de la ventana, misma tecla: inofensivo
-09:31:57    pulsa BAJAR                  <- ~200 ms despues de abrirse el contacto
+09:31:54.0  the ESP32 closes UP (until ~09:31:56.8)
+09:31:55    the owner presses UP     <- inside the window, same key: harmless
+09:31:57    presses DOWN             <- ~200 ms after the contact opened
 ```
 
-**La tecla contraria, a dos décimas de la ventana.**
+**The opposite key, two tenths of a second outside the window.**
 
-**Mitigaciones, ninguna aplicada:**
+**Mitigations, none applied:**
 
-1. **Decodificar dentro del pulso sin imprimir**, para abrir el contacto en
-   cuanto aparezca una tecla no atribuida. Choca de frente con la corrección B2:
-   habría que acotarlo con cuidado para no acercarse a los 3.0 s.
-2. **Usar las memorias M1/M2** para los objetivos de postura. El pulso baja de
-   2800 a 800 ms y el viaje lo gestiona la caja. Requiere ADR: contradice la
-   decisión del propietario de no acoplar las memorias físicas al sistema.
+1. **Decode inside the pulse without printing**, so the contact can open as soon
+   as an unattributed key shows up. This collides head on with correction B2, so
+   it would need careful bounding to stay away from 3.0 s.
+2. **Use the M1 and M2 presets** for the posture targets. The pulse drops from
+   2800 to 800 ms and the box handles the travel. Needs an ADR, since it
+   contradicts the owner's decision not to couple the physical presets to the
+   system.
 
-**Comprobación pendiente y barata:** pulsar SUBIR y BAJAR a la vez en el mando,
-**sin el ESP32 conectado**, y ver qué hace. Es lo único que convierte este
-supuesto en un hecho. Propuesto el 2026-09-02; el propietario cerró la sesión
-antes de decidir.
+**Pending and cheap check:** press UP and DOWN together on the handset **with
+the ESP32 disconnected**, and see what happens. That is the only thing that
+turns this assumption into a fact. Proposed on 2026-09-02; the owner closed the
+session before deciding.
 
-## Riesgo de perder el escritorio
+## Risk of losing the desk
 
-La caja de control es propietaria y no se abre. Si se corrompe su configuración
-o se daña el mando, no hay repuesto inmediato ni forma de diagnosticarlo.
+The control box is proprietary and does not get opened. If its configuration is
+corrupted or the handset is damaged, there is no immediate replacement and no
+way to diagnose it.
 
-De ahí la fase de solo lectura ([ADR-002](DECISIONS.md)): mientras no se escriba
-en el bus, ningún error del ESP32 puede alterar el estado del escritorio.
+That is the reason for the read-only phase ([ADR-002](DECISIONS.md)): as long as
+nothing is written to the bus, no ESP32 bug can alter the desk's state.

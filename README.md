@@ -1,120 +1,142 @@
-# Escritorio elevable automatizado — ESP32 + Home Assistant
+# Automated standing desk with an ESP32 and Home Assistant
 
-Automatizar un escritorio elevable **Jiecang** (vendido como Cougar) mediante
-ingeniería inversa del bus entre su caja de control y el mando físico: leer la
-altura real en todo momento y moverlo desde Home Assistant.
+This project automates a **Jiecang** standing desk (sold as Cougar) by reverse
+engineering the bus that runs between its control box and the physical handset,
+so the real height can be read at any moment and the desk can be driven from
+Home Assistant.
 
-**Sin abrir la caja de control, sin modificar el mando y sin perder su uso
-manual.** El mando físico sigue funcionando exactamente igual, y es el botón de
-pánico del sistema.
+None of it requires opening the control box or modifying the handset, and
+manual use is never lost. The handset keeps working exactly as it did, and it
+stays the panic button of the whole system.
 
-> **Estado: funcionando.** El escritorio se lee y se controla desde Home
-> Assistant con 19 entidades. El proyecto está documentado para poder retomarse
-> leyendo solo `docs/`.
+> **Status: working.** The desk is read and controlled from Home Assistant
+> through 19 entities, and the project is documented well enough that anyone can
+> pick it up again by reading `docs/` alone.
 
----
+> **On language.** Public facing documentation is in English. The engineering
+> log ([BITACORA.md](docs/BITACORA.md)) and the decision records
+> ([DECISIONS.md](docs/DECISIONS.md)) stay in Spanish on purpose: they are a
+> working diary written while the project happened, and translating them
+> afterwards would risk turning a recorded assumption into a stated fact, which
+> is the exact failure this project documents against.
 
-## Qué hace
+## What it does
 
-- **Lee la altura** en tiempo real, decodificando el bus del mando
-- **Mueve el escritorio a una altura concreta** — se pide 95 cm y va, frenando solo
-- **Expone todo a Home Assistant** por MQTT: altura, estado, salud del enlace, botones
-- **Detecta el uso manual**: sabe cuándo una persona ha tocado el mando, no solo cuándo lo movió el ESP32
+It reads the height live by decoding the handset bus, and it moves the desk to
+whatever height you ask for. Request 95 cm and it goes, braking on its own.
+Everything reaches Home Assistant over MQTT: height, state, link health,
+buttons. It also tells apart who moved the desk, so a press on the physical
+handset is never confused with a command from the ESP32.
 
-## Cómo funciona
+## How it works
 
-El mando lleva un **AiP650E** (clon del TM1650), un controlador de display y
-teclado que habla con la caja de control por un bus de dos hilos tipo I²C
-**sin direccionamiento**, a ~202 kHz.
+The handset carries an **AiP650E**, a TM1650 clone that drives the display and
+scans the keyboard. It talks to the control box over a two wire bus that looks
+like I²C but has no addressing at all, running at roughly 202 kHz.
 
-**Leer** — una sonda resistiva deriva las dos líneas hacia el ESP32, que
-muestrea a 4 MHz por ráfagas y decodifica las tramas. El bus nunca se escribe.
+To read it, a resistive probe taps both lines into the ESP32, which samples at
+4 MHz in bursts and decodes the frames. The bus is never written to.
 
-**Actuar** — cuatro **PC817** en paralelo con los pulsadores del mando, como
-contactos secos aislados galvánicamente. El ESP32 "pulsa botones"; la caja de
-control no distingue esos toques de un dedo.
+To act on it, four **PC817** optocouplers sit in parallel with the handset
+buttons as galvanically isolated dry contacts. The ESP32 presses buttons, and
+the control box cannot tell those presses from a finger.
 
 ```
-caja de control ──bus 2 hilos──> mando (AiP650E)
-                      │                  │
-                   sonda            4 pulsadores
-                      │                  │
-                      └──> ESP32 <───PC817 x4
-                             │
-                          WiFi/MQTT ──> Home Assistant
+control box ──2-wire bus──> handset (AiP650E)
+                   │              │
+                 probe        4 buttons
+                   │              │
+                   └──> ESP32 <───PC817 x4
+                          │
+                       WiFi/MQTT ──> Home Assistant
 ```
 
-## Lo medido
+## What has been measured
 
-Todo verificado contra el hardware real, no deducido de datasheets:
+All of this was verified against the real hardware. None of it was inferred
+from datasheets.
 
 | | |
 |---|---|
-| Códigos de tecla | subir `0x47`, bajar `0x57`, memorias `0x67` y `0x6F` |
-| Rango físico | 73 – 118 cm |
-| Velocidad | 0.68 cm/s, igual en ambos sentidos |
-| Inercia tras frenar | ~1 cm |
-| Mínimo para registrar tecla | 160 ms |
-| Toque → movimiento continuo | 2.2 – 2.6 s |
-| Toque → **grabar** preset | 3.0 s |
-| Salud del bus en reposo | ~0.7% de tramas malformadas |
+| Key codes | up `0x47`, down `0x57`, presets `0x67` and `0x6F` |
+| Physical range | 73 to 118 cm |
+| Speed | 0.68 cm/s, the same in both directions |
+| Coasting after braking | ~1 cm |
+| Minimum for a key to register | 160 ms |
+| Tap to continuous travel | 2.2 to 2.6 s |
+| Tap to **overwrite** a preset | 3.0 s |
+| Idle bus health | ~0.7% malformed frames |
 
-Esos dos últimos umbrales son los que gobiernan el diseño: **nada accesible
-desde el móvil puede mantener un contacto tanto tiempo.**
+Those last two thresholds govern the whole design, because nothing reachable
+from a phone may ever hold a contact closed that long.
 
-## Seguridad
+## Safety
 
-Un escritorio que se mueve solo puede hacer daño. Las protecciones, en capas:
+A desk that moves on its own can hurt someone, so the protections come in
+layers. There are mechanical end stops, and the handset stays connected as a
+physical stop. Galvanic isolation means no ESP32 voltage can reach the control
+box. Every pulse width is bounded well clear of the dangerous thresholds, and a
+watchdog reboots the chip if it ever hangs with a contact closed, which opens
+that contact.
 
-- **Físicas** — topes mecánicos, y el mando siempre conectado como parada
-- **Aislamiento galvánico** — ninguna tensión del ESP32 puede llegar a la caja
-- **Tiempos acotados** — los anchos de pulso quedan lejos de los umbrales peligrosos
-- **Watchdog** — un cuelgue con un contacto cerrado reinicia el chip y lo abre
-- **Supervisión de viaje** — frena por objetivo, por límite, por lectura obsoleta, por estancamiento, por dirección invertida y por tiempo máximo; y **verifica que frenó**
-- **Vigilancia externa** — Home Assistant avisa al móvil si algo se mueve más de 3 minutos, si el enlace se degrada o si el ESP32 desaparece
+Travel is supervised: it brakes on target, on limit, on a stale reading, on a
+stall, on reversed direction and on maximum time, and afterwards it verifies
+that the brake actually took. Home Assistant watches from outside and alerts the
+phone if anything moves for more than 3 minutes, if the link degrades, or if the
+ESP32 disappears.
 
-⚠️ **Límite conocido:** si el ESP32 muere en mitad de un viaje, nada lo frena por
-software — frenar exige *cerrar* un contacto. Quedan el tope físico y el mando.
+⚠ **Known limit.** If the ESP32 dies mid travel, nothing brakes it in software,
+because braking requires *closing* a contact. What remains is the physical stop
+and the handset.
 
-## Documentación
+⚠ **Known and not yet evaluated.** The long pulse holds a contact closed for
+2800 ms and cannot be aborted. Press the opposite key during that window and the
+control box sees UP and DOWN at once. There is no electrical risk, but what the
+box does with that combination has not been verified. See
+[SEGURIDAD.md](docs/SEGURIDAD.md).
 
-El proyecto se documenta con una disciplina explícita
-([POLITICA_DOCUMENTACION.md](docs/POLITICA_DOCUMENTACION.md)): cada afirmación
-técnica marcada como **verificada, supuesta o descartada**, decisiones
-irreversibles en ADR, capturas crudas sin editar, y **nada de correcciones
-silenciosas** — lo que estaba mal se corrige *y se registra que estaba mal*.
+## Documentation
 
-| Documento | Qué contiene |
-|---|---|
-| [PLAN.md](docs/PLAN.md) | Fases y siguiente paso concreto |
-| [DECISIONS.md](docs/DECISIONS.md) | 33 ADR con su porqué |
-| [BITACORA.md](docs/BITACORA.md) | Diario de sesiones, incluidos los errores |
-| [PROTOCOLO.md](docs/PROTOCOLO.md) | El bus, descifrado |
-| [HARDWARE.md](docs/HARDWARE.md) | Mediciones y montaje |
-| [SEGURIDAD.md](docs/SEGURIDAD.md) | Riesgos y reglas |
-| [INTEGRACION_HA.md](docs/INTEGRACION_HA.md) | Qué se expone a Home Assistant |
-| [capturas/](docs/capturas/) | Volcados crudos del bus, con su contexto |
+The project follows an explicit discipline, written down in
+[POLITICA_DOCUMENTACION.md](docs/POLITICA_DOCUMENTACION.md). Every technical
+claim is marked as verified, assumed or ruled out. Irreversible decisions become
+ADRs. Raw captures are kept unedited. And there are no silent corrections: when
+something turns out to be wrong it gets fixed *and* the fact that it was wrong
+gets recorded.
 
-La bitácora incluye los caminos equivocados a propósito: un mando dado por
-quemado que era un cortocircuito de estaño, un canal "muerto" que era un fallo
-del propio sniffer, y dos rondas de revisión adversarial que encontraron
-regresiones introducidas por los arreglos anteriores.
+| Document | What it holds | Language |
+|---|---|---|
+| [PLAN.md](docs/PLAN.md) | Phases and the concrete next step | English |
+| [PROTOCOLO.md](docs/PROTOCOLO.md) | The bus, decoded | English |
+| [HARDWARE.md](docs/HARDWARE.md) | Measurements and wiring | English |
+| [SEGURIDAD.md](docs/SEGURIDAD.md) | Risks and rules | English |
+| [INTEGRACION_HA.md](docs/INTEGRACION_HA.md) | What is exposed to Home Assistant | English |
+| [hardware/PCB_ESPECIFICACION.md](docs/hardware/PCB_ESPECIFICACION.md) | Board specification and schematics | English |
+| [capturas/](docs/capturas/) | Raw bus dumps, with their context | English |
+| [DECISIONS.md](docs/DECISIONS.md) | 34 ADRs with their reasoning | Spanish |
+| [BITACORA.md](docs/BITACORA.md) | Session diary, mistakes included | Spanish |
 
-## Montarlo
+The log keeps the wrong turns on purpose. A handset written off as burnt that
+turned out to be a solder bridge. A channel reported dead that was a bug in the
+sniffer itself. Two rounds of adversarial review that found regressions
+introduced by the previous round of fixes.
 
-**Hace falta:** un ESP32 DevKit, 4 optoacopladores PC817, resistencias, y un
-escritorio Jiecang con mando `JK-CH506` o compatible.
+## Building it
 
-1. `firmware/desk_sniffer/secrets.h.example` → `secrets.h`, con tus credenciales
-2. Compilar y cargar con `arduino-cli` (ver [firmware/README.md](firmware/README.md))
-3. Un broker MQTT alcanzable; las entidades aparecen solas por discovery
+You need an ESP32 DevKit, four PC817 optocouplers, a handful of resistors, and a
+Jiecang desk with a `JK-CH506` handset or something compatible.
 
-⚠️ **Antes de tocar hardware**, leer [SEGURIDAD.md](docs/SEGURIDAD.md). El
-orden de conexión importa: **USB primero, hilos del bus después.**
+1. Copy `firmware/desk_sniffer/secrets.h.example` to `secrets.h` and fill in your credentials
+2. Compile and flash with `arduino-cli`, described in [firmware/README.md](firmware/README.md)
+3. Point it at a reachable MQTT broker. The entities show up on their own through discovery
 
-## Licencia
+⚠ **Read [SEGURIDAD.md](docs/SEGURIDAD.md) before touching hardware.** The
+connection order matters: USB first, bus wires second.
 
-MIT — ver [LICENSE](LICENSE).
+## License
 
-El datasheet de `docs/hardware/datasheets/` es del fabricante y se incluye
-porque el original ya no es descargable; sus derechos son de I-CORE.
+MIT, see [LICENSE](LICENSE).
+
+The datasheet under `docs/hardware/datasheets/` belongs to the manufacturer and
+is included here because the original is no longer downloadable. Its rights
+belong to I-CORE.
