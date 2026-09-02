@@ -1,344 +1,348 @@
-# Protocolo del bus del mando
+# The handset bus protocol
 
-> **Estado: DESCIFRADO.** Verificado contra el datasheet y contra capturas
-> reales del bus del escritorio.
+> **Status: DECODED.** Verified against the datasheet and against real captures
+> from the desk's bus.
 >
-> Fuente: *AiP650E Product Specification*, Wuxi I-CORE, doc
-> `AiP650E-AX-XS-B037EN`, versión 2024-01-B1. Todo lo marcado **[datasheet]**
-> sale de ahí. **[medido]** es verificación propia sobre la placa.
-> **[capturado]** sale de las capturas del 2026-08-06 en
-> [capturas/](capturas/). Lo que no lleve marca es interpretación, y lo dice.
+> Source: *AiP650E Product Specification*, Wuxi I-CORE, doc
+> `AiP650E-AX-XS-B037EN`, version 2024-01-B1. Anything marked **[datasheet]**
+> comes from there. **[measured]** is our own verification on the board.
+> **[captured]** comes from the 2026-08-06 captures in
+> [capturas/](capturas/). Anything unmarked is interpretation, and says so.
+>
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md).*
 
 ---
 
-## Cómo se lee la altura
+## How the height is read
 
-**[capturado]** — verificado contra lo que muestra la pantalla del mando.
+**[captured]**, verified against what the handset screen shows.
 
-La caja de control repite un ciclo cada **~200 ms**, siempre el mismo:
+The control box repeats one cycle every **~200 ms**, always the same:
 
 ```
-S 68 <seg> P     escribe el digito 1
-S 6A <seg> P     escribe el digito 2
-S 6C <seg> P     escribe el digito 3
-S 6E <seg> P     escribe el digito 4
-S 4F <tecla> P   lee el teclado
+S 68 <seg> P     writes digit 1
+S 6A <seg> P     writes digit 2
+S 6C <seg> P     writes digit 3
+S 6E <seg> P     writes digit 4
+S 4F <key>  P    reads the keyboard
 ```
 
-Los cuatro bytes de segmentos, traducidos con la tabla de segmentos, **son
-literalmente el número que se ve en pantalla**: la altura en centímetros
-enteros, con el cuarto dígito en blanco. `080` = 80 cm, `117` = 117 cm.
+Those four segment bytes, translated through the segment table, **are literally
+the number on screen**: the height in whole centimetres, with the fourth digit
+blank. `080` = 80 cm, `117` = 117 cm.
 
-**Verificación cruzada del 2026-08-06**, comparando lo leído del bus con lo que
-la persona veía en el mando en ese mismo momento:
+**Cross-check of 2026-08-06**, comparing what was read off the bus against what
+the person was seeing on the handset at that same moment:
 
-| Acción | Pantalla | Bus |
+| Action | Screen | Bus |
 |---|---|---|
-| Subir manual | 86 | `086` ✅ |
-| Bajar manual | 77 | `077` ✅ |
-| Ir a memoria alta | 117 | `117` ✅ |
-| Ir a memoria baja | 80 | `080` ✅ |
+| Manual up | 86 | `086` ✅ |
+| Manual down | 77 | `077` ✅ |
+| Go to high preset | 117 | `117` ✅ |
+| Go to low preset | 80 | `080` ✅ |
 
-El caso de **117 es el que importa**: confirma que el dígito de las centenas
-también decodifica bien. Ninguna captura previa había pasado de 99.
+**The 117 case is the one that matters**: it confirms the hundreds digit decodes
+correctly too. No earlier capture had gone past 99.
 
-### La altura se refresca DURANTE el movimiento ✅
+### The height refreshes DURING movement ✅
 
-**[capturado]** — y era el riesgo que podía tumbar el proyecto entero.
+**[captured]**, and this was the risk that could have sunk the whole project.
 
-Mientras el escritorio se mueve, la altura se actualiza **cada centímetro**, sin
-esperar a llegar. Medido: **~1.2 s por centímetro**, o sea **8.5 mm/s**, idéntico
-subiendo y bajando (39 cm en 45.9 s de subida, 36 cm en 42.5 s de bajada).
+While the desk moves, the height updates **every centimetre**, without waiting
+to arrive. Measured: **~1.2 s per centimetre**, meaning **8.5 mm/s**, identical
+going up and down (39 cm in 45.9 s rising, 36 cm in 42.5 s descending).
 
-En los primeros centímetros tras arrancar tarda más —2.5 a 3 s cada uno— antes
-de estabilizarse. Es la rampa de aceleración del motor, y es exactamente la razón
-por la que [ADR-001](DECISIONS.md) descartó contar segundos.
+The first few centimetres after starting take longer, 2.5 to 3 s each, before
+settling. That is the motor's acceleration ramp, and it is exactly why
+[ADR-001](DECISIONS.md) ruled out counting seconds.
 
-**Consecuencia: el lazo cerrado es viable.** El requisito real del proyecto queda
-confirmado sobre hardware.
+**Consequence: closed-loop control is viable.** The project's real requirement
+is confirmed on hardware.
 
-### Al pulsar una memoria, el display anuncia el destino primero
+### On pressing a preset, the display announces the destination first
 
-**[capturado]** — hallazgo no buscado, y útil.
+**[captured]**, an unsought finding, and a useful one.
 
-Al pulsar un botón de memoria, la pantalla **parpadea la altura de destino**
-antes de empezar a moverse, y solo después pasa a contar la altura real:
+When a preset button is pressed, the screen **blinks the destination height**
+before starting to move, and only afterwards counts the real height:
 
 ```
 102.47   '  7'
-102.67   '117'   <- parpadea el DESTINO, tres veces
+102.67   '117'   <- blinks the DESTINATION, three times
 103.87   '117'
-104.07   '078'   <- y ahora cuenta desde donde esta
+104.07   '078'   <- and now counts from where it is
 104.47   '079'
   ...
-150.00   '117'   <- llega
+150.00   '117'   <- arrives
 ```
 
-Eso permite que el ESP32 sepa **a dónde va el escritorio en el instante en que
-alguien pulsa memoria**, no solo dónde está. Para la fase 4 significa poder
-anticipar el movimiento en vez de perseguirlo.
+That lets the ESP32 know **where the desk is heading the moment somebody presses
+a preset**, not just where it is. For phase 4 it means anticipating the movement
+instead of chasing it.
 
-Distinguirlo de una altura real es directo: el destino aparece **antes** de que
-la altura empiece a cambiar, y alterna con dígitos en blanco.
+Telling it apart from a real height is straightforward: the destination appears
+**before** the height starts changing, and alternates with blank digits.
 
-### Rango real y comportamiento en los topes
+### Real range and behaviour at the end stops
 
-**[capturado]** — [2026-08-06-topes-fisicos.log](capturas/2026-08-06-topes-fisicos.log),
-recorriendo todo el rango en los dos sentidos.
+**[captured]**, from
+[2026-08-06-topes-fisicos.log](capturas/2026-08-06-topes-fisicos.log), running
+the full range in both directions.
 
-**El escritorio va de 73 a 118 cm.** 45 cm de recorrido.
+**The desk goes from 73 to 118 cm.** 45 cm of travel.
 
-**Al llegar al tope no pasa nada especial**, y eso es una buena noticia:
+**Nothing special happens on reaching the stop**, and that is good news:
 
-- **El display sigue mostrando un número.** No aparece código de error ni ningún
-  patrón de segmentos que el decodificador no sepa traducir — verificado: cero
-  códigos desconocidos en toda la captura.
-- **No parpadea al topar.**
-- **No aparece ningún comando nuevo** en el bus.
-- La cadencia se mantiene en ~1.2 s por centímetro hasta el final; el último
-  centímetro de arriba tardó 1.4 s. Apenas frena.
+- **The display keeps showing a number.** No error code appears, and no segment
+  pattern the decoder cannot translate. Verified: zero unknown codes in the
+  whole capture.
+- **It does not blink on hitting the stop.**
+- **No new command appears** on the bus.
+- The cadence holds at ~1.2 s per centimetre right to the end; the last
+  centimetre at the top took 1.4 s. It barely slows.
 
-**Consecuencia para el firmware:** llegar al tope es indistinguible de estar
-parado. La única señal es que **la altura deja de cambiar** aunque se sigan
-mandando toques. Ese es el criterio que habrá que usar para no encadenar toques
-indefinidamente contra un tope.
+**Consequence for the firmware:** reaching the stop is indistinguishable from
+standing still. The only signal is that **the height stops changing** even
+though taps keep being sent. That is the criterion needed to avoid chaining taps
+forever against a stop.
 
-### Qué significa el parpadeo del display
+### What the display blink means
 
-**[capturado]** — corregido respecto a una interpretación anterior.
+**[captured]**, corrected against an earlier interpretation.
 
-El display **parpadea cuando arranca un movimiento continuo**, no cuando llega al
-tope. Confirmado en dos capturas: 0 parpadeos tras un toque de 2.2 s que se paró
-solo, 2 y 3 tras las pulsaciones que dispararon movimiento continuo, y **ninguno
-al topar**.
+The display **blinks when continuous travel starts**, not on reaching the stop.
+Confirmed across two captures: 0 blinks after a 2.2 s tap that stopped by
+itself, 2 and 3 after the presses that triggered continuous travel, and **none
+on hitting the stop**.
 
-Sirve para que el firmware detecte que se disparó un movimiento que no pidió.
+It gives the firmware a way to detect a movement it did not ask for.
 
-### Control del display
+### Display control
 
-**[capturado]** — 17 apariciones a lo largo de todas las capturas.
+**[captured]**, 17 occurrences across all captures.
 
-El comando `0x48` va siempre seguido del **mismo byte, `0x21`**:
+Command `0x48` is always followed by the **same byte, `0x21`**:
 
 ```
 S 48 21 P   ->   display=ON, sleep=no, seg=8, brightness=2
 ```
 
-**Nunca se ha visto la caja mandar el bit de sueño.** Con el escritorio quieto el
-display se pone en blanco escribiendo `0x00` en los cuatro dígitos, pero el chip
-**no se duerme** y el bus sigue refrescando cada 200 ms. Eso mantiene abierta la
-pregunta 6 —si tras mucho más tiempo llega a dormirse— pero descarta que lo haga
-en los minutos que llevan las capturas.
+**The box has never been seen sending the sleep bit.** With the desk idle the
+display blanks by writing `0x00` into all four digits, but the chip **does not
+sleep** and the bus keeps refreshing every 200 ms. That leaves question 6 open,
+about whether it eventually sleeps after much longer, but rules it out over the
+minutes the captures cover.
 
-### Comando `0x90` — SIN IDENTIFICAR
+### Command `0x90`: UNIDENTIFIED
 
-**[capturado]** — y es lo único del protocolo que sigue sin explicación.
+**[captured]**, and it is the only part of the protocol still unexplained.
 
-Aparece en **las cinco capturas**, entre una y cinco veces cada una, siempre con
-el mismo formato de dos bytes y siempre con ACK:
+It shows up in **all five captures**, between one and five times each, always in
+the same two-byte format and always ACKed:
 
 ```
-S 90 42 P   ->   desconocido
+S 90 42 P   ->   unknown
 ```
 
-Se cuela **al principio de un ciclo de refresco**, en la posición donde debería
-ir el `0x68` del primer dígito, y el `0x68` llega ~300 µs después.
+It slips in **at the start of a refresh cycle**, in the position where the
+`0x68` of the first digit belongs, and that `0x68` arrives ~300 µs later.
 
-No encaja con ningún comando del datasheet. Es raro —una vez cada dos o tres
-minutos— y **no impide leer la altura**, así que no bloquea nada. Pero está sin
-explicar y conviene no fingir lo contrario.
+It matches no command in the datasheet. It is rare, roughly once every two or
+three minutes, and **it does not stop the height being read**, so it blocks
+nothing. But it is unexplained, and pretending otherwise would be worse.
 
-### Códigos de tecla
+### Key codes
 
-**[capturado]** — mapeados el 2026-08-06 pulsando cada botón por separado.
+**[captured]**, mapped on 2026-08-06 by pressing each button separately.
 
-| Código | Botón | Cómo se identificó |
+| Code | Button | How it was identified |
 |---|---|---|
-| **`0x47`** | **Subir** | 15 lecturas seguidas mientras subía |
-| **`0x57`** | **Bajar** | 18 lecturas seguidas mientras bajaba |
-| **`0x6F`** | **Memoria** (la de 117 cm) | Una lectura, justo antes de ir a 117 |
-| **`0x67`** | **Memoria** (la de 80 cm) | Una lectura, justo antes de ir a 80 |
-| — | **Reset** | **Sin capturar y sin capturar nunca.** [ADR-008](DECISIONS.md) |
+| **`0x47`** | **Up** | 15 consecutive reads while rising |
+| **`0x57`** | **Down** | 18 consecutive reads while descending |
+| **`0x6F`** | **Preset** (the 117 cm one) | One read, right before going to 117 |
+| **`0x67`** | **Preset** (the 80 cm one) | One read, right before going to 80 |
+| | **Reset** | **Never captured and never will be.** [ADR-008](DECISIONS.md) |
 
-Todos llevan el **bit 6 a uno** cuando la tecla está pulsada, como dice el
-datasheet — lo que confirma desde el hardware real el razonamiento de
-[ADR-011](DECISIONS.md): simular una pulsación exigiría forzar ese bit a uno en
-un bus que solo puede tirar hacia abajo.
+All of them carry **bit 6 set** while the key is pressed, exactly as the
+datasheet says. That confirms from real hardware the reasoning in
+[ADR-011](DECISIONS.md): simulating a press would require forcing that bit to
+one on a bus that can only pull down.
 
-**En reposo** se ven `0x07`, `0x17`, `0x21`, `0x27` y `0x2F`, siendo `0x27` el
-dominante con diferencia. **El datasheet dice que sin tecla vale `0x2E`; en esta
-placa no es así.** Diferencia real, anotada. Lo que sí se cumple sin excepción es
-que el bit 6 está a cero en todos los valores de reposo, y ese es el bit que
-importa para detectar una pulsación.
+**At rest** the values seen are `0x07`, `0x17`, `0x21`, `0x27` and `0x2F`, with
+`0x27` dominant by a wide margin. **The datasheet says no-key should be `0x2E`;
+on this board it is not.** A real difference, recorded. What does hold without
+exception is that bit 6 is zero in every resting value, and that is the bit that
+matters for detecting a press.
 
-### Tiempos de pulsación, medidos **[capturado]**
+### Press timing, measured **[captured]**
 
-| | Duración | Cómo se midió |
+| | Duration | How it was measured |
 |---|---|---|
-| **Recuperar** un preset (toque) | **< 0.2 s** | Produce una sola lectura de teclado |
-| **Grabar** un preset (mantener) | **3.0 s** | 15 lecturas seguidas antes del primer parpadeo |
+| **Recall** a preset (tap) | **< 0.2 s** | Produces a single keyboard read |
+| **Store** a preset (hold) | **3.0 s** | 15 consecutive reads before the first blink |
 
-La caja **confirma la grabación con cinco parpadeos del display cada 0.6 s**, que
-siguen aunque se suelte el botón. Detalle y captura en
+The box **confirms the write with five display blinks every 0.6 s**, which
+continue even after the button is released. Detail and capture in
 [HARDWARE.md](HARDWARE.md).
 
-Quince veces de margen entre recuperar y grabar. Es el número que le faltaba a
-[ADR-010](DECISIONS.md) y que bloqueaba el cableado de las memorias.
+Fifteen times the margin between recalling and storing. That is the number
+[ADR-010](DECISIONS.md) was missing, and it was blocking the preset wiring.
 
 ---
 
-## El chip
+## The chip
 
-**AiP650EO**, marcado `19BT450` (código de lote), SOP-16, paso 1.27 mm.
+**AiP650EO**, marked `19BT450` (a lot code), SOP-16, 1.27 mm pitch.
 
-Es la variante SOP16 del **AiP650E** de Wuxi I-CORE. Driver de LED de
-**8 segmentos × 4 dígitos, cátodo común**, con escaneo de teclado **7×4**
-integrado y soporte de algunas combinaciones. Compatible a nivel de software
-con el TM1650 de Titan Micro.
+It is the SOP16 variant of Wuxi I-CORE's **AiP650E**. An LED driver for
+**8 segments × 4 digits, common cathode**, with an integrated **7×4** keyboard
+scan and support for some key combinations. Software compatible with Titan
+Micro's TM1650.
 
-| Parámetro | Valor | Fuente |
+| Parameter | Value | Source |
 |---|---|---|
-| Alimentación | 3 – 5.5 V (típico 5 V) | [datasheet] |
-| Corriente en reposo | 0.3 mA típico | [datasheet] |
-| Corriente en sueño | 0.05 mA típico | [datasheet] |
-| Velocidad del bus | 0 a 4 Mbps | [datasheet] |
-| Ciclo de refresco de display | 4 – 20 ms, típico 8 ms | [datasheet] |
-| Intervalo de escaneo de teclado | 20 – 80 ms, típico 40 ms | [datasheet] |
+| Supply | 3 to 5.5 V (5 V typical) | [datasheet] |
+| Idle current | 0.3 mA typical | [datasheet] |
+| Sleep current | 0.05 mA typical | [datasheet] |
+| Bus speed | 0 to 4 Mbps | [datasheet] |
+| Display refresh cycle | 4 to 20 ms, 8 ms typical | [datasheet] |
+| Keyboard scan interval | 20 to 80 ms, 40 ms typical | [datasheet] |
 
-### Pinout SOP-16 [datasheet] + [medido]
+### SOP-16 pinout [datasheet] + [measured]
 
-| Pin | Nombre | Función | Hilo del cable |
+| Pin | Name | Function | Cable wire |
 |---|---|---|---|
-| 1 | DIG1 | Dígito 1 / fila 1 del teclado | |
-| **2** | **CLK** | Reloj, entrada. **Pull-up interno** | **Rojo** |
-| **3** | **DIO** | Datos, bidireccional. **Open-drain, pull-up interno** | **Verde** |
-| **4** | **GND** | Tierra | **Azul** |
-| 5 | DIG2 | Dígito 2 / fila 2 | |
-| 6 | DIG3 | Dígito 3 / fila 3 | |
-| 7 | DIG4 | Dígito 4 / fila 4 | |
-| 8 | A/KI1 | Segmento A / columna 1. Pull-down interno | |
-| 9 | B/KI2 | Segmento B / columna 2. Pull-down interno | |
-| **10** | **VDD** | Alimentación | **Amarillo** |
-| 11 | C/KI3 | Segmento C / columna 3 | |
-| 12 | D/KI4 | Segmento D / columna 4 | |
-| 13 | E/KI5 | Segmento E / columna 5 | |
-| 14 | F/KI6 | Segmento F / columna 6 | |
-| 15 | G/KI7 | Segmento G / columna 7 | |
-| 16 | DP/KP | Punto decimal | |
+| 1 | DIG1 | Digit 1 / keyboard row 1 | |
+| **2** | **CLK** | Clock, input. **Internal pull-up** | **Red** |
+| **3** | **DIO** | Data, bidirectional. **Open-drain, internal pull-up** | **Green** |
+| **4** | **GND** | Ground | **Blue** |
+| 5 | DIG2 | Digit 2 / row 2 | |
+| 6 | DIG3 | Digit 3 / row 3 | |
+| 7 | DIG4 | Digit 4 / row 4 | |
+| 8 | A/KI1 | Segment A / column 1. Internal pull-down | |
+| 9 | B/KI2 | Segment B / column 2. Internal pull-down | |
+| **10** | **VDD** | Supply | **Yellow** |
+| 11 | C/KI3 | Segment C / column 3 | |
+| 12 | D/KI4 | Segment D / column 4 | |
+| 13 | E/KI5 | Segment E / column 5 | |
+| 14 | F/KI6 | Segment F / column 6 | |
+| 15 | G/KI7 | Segment G / column 7 | |
+| 16 | DP/KP | Decimal point | |
 
-**Medido el 2026-08-02:** los cuatro hilos del cable dan **0.2 Ω** contra las
-patas 2, 3, 4 y 10. Coincidencia exacta con el datasheet.
+**Measured on 2026-08-02:** the four cable wires read **0.2 Ω** against pins 2,
+3, 4 and 10. An exact match with the datasheet.
 
-De paso, esos 0.2 Ω dicen otra cosa: **esta placa no lleva las resistencias de
-220 Ω en serie** que el circuito de aplicación recomendado pone entre el
-conector externo y las patas CLK/DIO. La conexión es directa.
+Those 0.2 Ω say something else in passing: **this board does not carry the 220 Ω
+series resistors** that the recommended application circuit puts between the
+external connector and the CLK/DIO pins. The connection is direct.
 
-### Niveles eléctricos [datasheet]
+### Electrical levels [datasheet]
 
-| Parámetro | Valor |
+| Parameter | Value |
 |---|---|
-| CLK/DIO nivel bajo (VIL) | máx. 0.2 × VDD = **1.0 V** |
-| CLK/DIO nivel alto (VIH) | mín. 0.7 × VDD = **3.5 V** |
-| Pull-up interno de CLK (IUP1) | 550 µA típico ≈ **9.1 kΩ** a 5 V |
-| Pull-up interno de DIO (IUP2) | 550 µA típico ≈ **9.1 kΩ** a 5 V |
-| Máximo absoluto en cualquier entrada | VDD + 0.5 V |
+| CLK/DIO low level (VIL) | max. 0.2 × VDD = **1.0 V** |
+| CLK/DIO high level (VIH) | min. 0.7 × VDD = **3.5 V** |
+| CLK internal pull-up (IUP1) | 550 µA typical ≈ **9.1 kΩ** at 5 V |
+| DIO internal pull-up (IUP2) | 550 µA typical ≈ **9.1 kΩ** at 5 V |
+| Absolute maximum on any input | VDD + 0.5 V |
 
-**Este es el dato que desbloqueó el montaje.** El pull-up del bus no hay que
-medirlo: viene dentro del chip y el datasheet lo especifica. Si además hubiera
-resistencias de pull-up externas —el circuito recomendado lleva dos de 10 kΩ—
-el pull-up resultante solo sería más fuerte, nunca más débil. Dimensionar la
-sonda para 9.1 kΩ es seguro pase lo que pase. Ver [ADR-013](DECISIONS.md).
-
----
-
-## Quién manda en el bus
-
-La caja de control es el **master**. El AiP650E es **esclavo**: no decide nada,
-solo obedece y responde. Toda la lógica de comportamiento —qué es un pulso
-corto, cuántos milisegundos son "mantenido", cuándo eso significa grabar un
-preset— vive en la caja de control. El mando es un periférico tonto.
-
-Por el cable viajan dos clases de transacción: escrituras de display (la caja le
-dice al chip qué segmentos encender) y lecturas de teclado (la caja le pregunta
-qué tecla está pulsada).
-
-## Trama [datasheet]
-
-Parecido a I2C, con START, STOP y ACK, MSB primero. **Sin direccionamiento de
-7 bits**: el primer byte tras el START es un comando fijo, no una dirección más
-bit R/W. Ver [ADR-006](DECISIONS.md).
-
-- START: CLK en alto y DIO pasando de alto a bajo.
-- STOP: CLK en alto y DIO pasando de bajo a alto.
-- Los datos se enganchan en el **flanco de subida de CLK**. DIO no puede cambiar
-  con CLK en alto.
-- ACK: en el noveno pulso de CLK. En una lectura de teclado, el ACK del byte de
-  comando es 0 y el del byte de datos es 1.
-
-**Regla útil para el decodificador:** el **bit 0 del byte de comando distingue
-escritura de lectura**. `0x48` (sistema) y `0x68`/`0x6A`/`0x6C`/`0x6E`
-(dígitos) terminan en 0 y son escrituras; `0x49` (leer tecla) termina en 1.
+**This is the figure that unblocked the build.** The bus pull-up does not need
+measuring: it is inside the chip and the datasheet specifies it. And if there
+were external pull-ups on top, since the recommended circuit carries two of
+10 kΩ, the resulting pull-up would only be stronger, never weaker. Sizing the
+probe for 9.1 kΩ is safe whatever the case. See [ADR-013](DECISIONS.md).
 
 ---
 
-## Comandos [datasheet]
+## Who runs the bus
 
-| Byte | Nombre | Qué hace |
+The control box is the **master**. The AiP650E is a **slave**: it decides
+nothing, it obeys and answers. All behavioural logic, meaning what counts as a
+short pulse, how many milliseconds make a hold, when that means storing a
+preset, lives in the control box. The handset is a dumb peripheral.
+
+Two kinds of transaction travel down the cable: display writes, where the box
+tells the chip which segments to light, and keyboard reads, where the box asks
+which key is pressed.
+
+## Frame format [datasheet]
+
+I2C-like, with START, STOP and ACK, MSB first. **No 7-bit addressing**: the
+first byte after START is a fixed command, not an address plus R/W bit. See
+[ADR-006](DECISIONS.md).
+
+- START: CLK high and DIO going from high to low.
+- STOP: CLK high and DIO going from low to high.
+- Data is latched on the **rising edge of CLK**. DIO cannot change while CLK is
+  high.
+- ACK: on the ninth CLK pulse. In a keyboard read, the command byte's ACK is 0
+  and the data byte's ACK is 1.
+
+**A useful rule for the decoder:** **bit 0 of the command byte distinguishes
+write from read**. `0x48` (system) and `0x68`, `0x6A`, `0x6C`, `0x6E` (digits)
+end in 0 and are writes; `0x49` (read key) ends in 1.
+
+---
+
+## Commands [datasheet]
+
+| Byte | Name | What it does |
 |---|---|---|
-| `0x48` | System Instruction | Fija parámetros de sistema. Le sigue el byte de instrucción de display |
-| `0x68` | Dirección DIG1 | Le sigue el byte de segmentos del dígito 1 |
-| `0x6A` | Dirección DIG2 | Ídem dígito 2 |
-| `0x6C` | Dirección DIG3 | Ídem dígito 3 |
-| `0x6E` | Dirección DIG4 | Ídem dígito 4 |
-| `0x49` | Get key | Lee el teclado. El chip responde un byte |
+| `0x48` | System Instruction | Sets system parameters. Followed by the display instruction byte |
+| `0x68` | DIG1 address | Followed by the segment byte for digit 1 |
+| `0x6A` | DIG2 address | Same for digit 2 |
+| `0x6C` | DIG3 address | Same for digit 3 |
+| `0x6E` | DIG4 address | Same for digit 4 |
+| `0x49` | Get key | Reads the keyboard. The chip answers with one byte |
 
-El comando `Get key` está definido como `0100_1XX1`, con los bits 2 y 1
-indiferentes. Así que **también valen `0x4B`, `0x4D` y `0x4F`** — el
-decodificador debe enmascarar esos dos bits en vez de comparar contra `0x49`.
+The `Get key` command is defined as `0100_1XX1`, with bits 2 and 1 don't-care.
+So **`0x4B`, `0x4D` and `0x4F` are equally valid**, and the decoder has to mask
+those two bits rather than compare against `0x49`.
 
-Al encender, primero se transfieren los datos a RAM y después se enciende el
-display.
+On power-up, data is transferred to RAM first and the display is turned on
+afterwards.
 
-### Byte de instrucción de display [datasheet]
+### Display instruction byte [datasheet]
 
-El byte que sigue a `0x48`:
+The byte following `0x48`:
 
-| Bit | Nombre | Significado |
+| Bit | Name | Meaning |
 |---|---|---|
-| 6–4 | BR[2:0] | Brillo. `000` = 8 niveles, `001` = 1 nivel … `111` = 7 niveles |
-| 3 | S | `1` = modo 7 segmentos, `0` = modo 8 segmentos |
-| **2** | **W** | **`1` = modo sueño activado**, `0` = desactivado |
-| 0 | D | `1` = display encendido, `0` = apagado |
+| 6–4 | BR[2:0] | Brightness. `000` = 8 levels, `001` = 1 level … `111` = 7 levels |
+| 3 | S | `1` = 7-segment mode, `0` = 8-segment mode |
+| **2** | **W** | **`1` = sleep mode on**, `0` = off |
+| 0 | D | `1` = display on, `0` = off |
 
-Los bits 2 y 0 son los que importan para [ADR-012](DECISIONS.md): la caja de
-control **puede apagar el display y puede dormir el chip**. Si lo hace, el
-refresco se detiene y la altura leída se queda congelada.
+Bits 2 and 0 are the ones that matter for [ADR-012](DECISIONS.md): the control
+box **can turn the display off and can put the chip to sleep**. If it does, the
+refresh stops and the height being read freezes.
 
-## Segmentos [datasheet]
+## Segments [datasheet]
 
-| Segmento | A | B | C | D | E | F | G | DP |
+| Segment | A | B | C | D | E | F | G | DP |
 |---|---|---|---|---|---|---|---|---|
 | Bit | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
 
-Tabla de dígitos, que es todo lo que hace falta para leer la altura:
+The digit table, which is all that is needed to read the height:
 
-| Dígito | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
+| Digit | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 |
 |---|---|---|---|---|---|---|---|---|---|---|
 | Byte | `0x3F` | `0x06` | `0x5B` | `0x4F` | `0x66` | `0x6D` | `0x7D` | `0x07` | `0x7F` | `0x6F` |
 
-Con el bit 7 puesto, el dígito lleva punto decimal: `74.5` en pantalla son los
-bytes `0x07`, `0xE6`, `0x6D`.
+With bit 7 set, the digit carries a decimal point: `74.5` on screen is the bytes
+`0x07`, `0xE6`, `0x6D`.
 
-**El decodificador de altura se puede escribir antes de capturar nada.** La
-captura confirma; no descubre.
+**The height decoder can be written before capturing anything.** The capture
+confirms; it does not discover.
 
-## Teclado [datasheet]
+## Keyboard [datasheet]
 
-Ante el comando `Get key`, el chip responde un byte. Tabla oficial:
+On a `Get key` command the chip answers with one byte. Official table:
 
 | | DIG1 | DIG2 | DIG3 | DIG4 |
 |---|---|---|---|---|
-| **SIN TECLA** | `00_101_110` = **`0x2E`** | ← el mismo para las cuatro | | |
+| **NO KEY** | `00_101_110` = **`0x2E`** | ← the same for all four | | |
 | KI1 | `01_000_100` `0x44` | `01_000_101` `0x45` | `01_000_110` `0x46` | `01_000_111` `0x47` |
 | KI2 | `0x4C` | `0x4D` | `0x4E` | `0x4F` |
 | KI3 | `0x54` | `0x55` | `0x56` | `0x57` |
@@ -348,123 +352,126 @@ Ante el comando `Get key`, el chip responde un byte. Tabla oficial:
 | KI7 | `0x74` | `0x75` | `0x76` | `0x77` |
 | KI1+KI2 | `0x7C` | `0x7D` | `0x7E` | `0x7F` |
 
-Estructura: **bit 6 = tecla pulsada**, bits 5–3 = columna KI, bit 2 = siempre 1,
-bits 1–0 = fila DIG.
+Structure: **bit 6 = key pressed**, bits 5–3 = KI column, bit 2 = always 1, bits
+1–0 = DIG row.
 
-Reglas de comportamiento [datasheet]:
+Behavioural rules [datasheet]:
 
-- **Una pulsación solo se reconoce si dura al menos dos periodos de escaneo.**
-  Con el intervalo entre 20 y 80 ms, el suelo real es de **160 ms** en el peor
-  caso. Determina la duración mínima de un pulso de relé — ver
-  [HARDWARE.md](HARDWARE.md).
-- Las combinaciones KI1+KI2 sobre el mismo DIG tienen **prioridad máxima**.
-- Si hay varias teclas a la vez, gana **el código más bajo**.
+- **A press is only recognised if it lasts at least two scan periods.** With the
+  interval between 20 and 80 ms, the real floor is **160 ms** in the worst case.
+  This sets the minimum relay pulse duration, see [HARDWARE.md](HARDWARE.md).
+- KI1+KI2 combinations on the same DIG have **top priority**.
+- If several keys are down at once, **the lowest code wins**.
 
-### Por qué esto cierra la puerta a la inyección — [datasheet]
+### Why this closes the door on injection [datasheet]
 
-Sin tecla, el chip devuelve `0x2E` = `0010_1110`. Con tecla, por ejemplo
+With no key, the chip returns `0x2E` = `0010_1110`. With a key, for example
 `0x44` = `0100_0100`.
 
-Para fabricar una pulsación habría que llevar el **bit 6 de 0 a 1**. En un bus
-open-drain solo se puede forzar un bit a **0**; el 1 lo pone el pull-up y nadie
-más. No es difícil: es imposible. Ver [ADR-011](DECISIONS.md).
+Manufacturing a press would mean driving **bit 6 from 0 to 1**. On an open-drain
+bus a bit can only be forced to **0**; the 1 is set by the pull-up and by
+nothing else. It is not difficult, it is impossible. See
+[ADR-011](DECISIONS.md).
 
-**Lo único que sí se puede hacer, y no sirve:** forzando bits a 0 se puede
-enmascarar una pulsación real, o convertir una tecla en otra de código menor —
-`0x74` (KI7) se puede degradar a `0x44` (KI1). Ambas cosas exigen que alguien
-esté pulsando físicamente, así que no valen para automatizar.
+**The only thing that can be done, and it is no use:** by forcing bits to 0 you
+can mask a real press, or turn one key into another with a lower code, since
+`0x74` (KI7) can be degraded to `0x44` (KI1). Both require somebody physically
+pressing, so neither helps with automation.
 
-**Prohibido** forzar DIO a alto con una salida push-pull: mientras el AiP650E
-tira de la línea abajo, eso es un cortocircuito contra la salida del chip.
-
----
-
-## Matriz de teclado y montaje del mando [datasheet]
-
-Los botones cierran una columna **KI** contra una fila **DIG**. Las KI llevan
-pull-down interno (30–90 µA) y las DIG son salidas. El circuito de aplicación
-recomienda **2 kΩ en serie en cada línea DIG** dentro de la matriz de teclas,
-para que las pulsaciones no perturben el display.
-
-Esto explica la medida de **5 V entre las patas de un pulsador**: la línea DIG
-está en alto y la KI en bajo por su pull-down. Ver
-[ADR-004](DECISIONS.md).
-
-Para el accionamiento por relé, el contacto del relé va **en paralelo al
-pulsador**, haciendo exactamente lo mismo que el botón.
+**Forbidden:** driving DIO high with a push-pull output. While the AiP650E is
+pulling that line down, that is a short circuit against the chip's output.
 
 ---
 
-## Preguntas abiertas
+## Keyboard matrix and handset build [datasheet]
 
-### Respondidas por las capturas del 2026-08-06 ✅
+The buttons close a **KI** column against a **DIG** row. The KI lines have
+internal pull-downs (30 to 90 µA) and the DIG lines are outputs. The application
+circuit recommends **2 kΩ in series on each DIG line** inside the key matrix, so
+presses do not disturb the display.
 
-1. ~~**¿Qué dígitos usa y en qué orden?**~~ → `68`, `6A`, `6C`, `6E` en ese
-   orden, de izquierda a derecha. El cuarto va siempre en blanco. Sin punto
-   decimal: la altura son centímetros enteros.
-2. ~~**¿A qué velocidad corre el bus?**~~ → **~202 kHz**, y esa cifra es un
-   suelo. Obligó a rehacer la captura: por interrupción no daba abasto, y se
-   pasó a muestreo por ráfagas.
-3. ~~**¿Cada cuánto refresca la altura?**~~ → ciclo completo cada **~200 ms**;
-   la altura cambia cada **~1.2 s**, que es lo que tarda en moverse 1 cm.
-4. ~~**¿Qué código de tecla es cada botón?**~~ → subir `0x47`, bajar `0x57`,
-   memorias `0x6F` y `0x67`. Tabla arriba.
-5. ~~**¿Se refresca la altura durante el movimiento?**~~ → **Sí.** Cada
-   centímetro, sin esperar a llegar. **El lazo cerrado es viable.**
+That explains the **5 V measured across a button's pins**: the DIG line is high
+and the KI is low through its pull-down. See [ADR-004](DECISIONS.md).
 
-### Todavía abiertas
-
-6. ~~**¿Apaga el display o duerme el chip por inactividad?**~~ → **Apaga el
-   display, pero NO duerme el chip.** Medido con el escritorio quieto durante
-   **15 minutos**: el sniffer se armó **4505 veces y ninguna encontró el bus en
-   silencio**. A los pocos segundos la pantalla se apaga escribiendo `0x00` en
-   los cuatro dígitos, pero el refresco de 200 ms no se detiene nunca, y el
-   comando de control **siempre dice `sleep=no`**.
-   **Consecuencia:** el ESP32 puede distinguir *"no hay altura que mostrar"* de
-   *"no hay bus"*, que era justo lo que [ADR-012](DECISIONS.md) necesitaba.
-   *Sin verificar: qué pasa tras horas, o al volver de un corte de corriente.*
-9. **¿Qué es el comando `0x90 42`?** Aparece en las cinco capturas, una a cinco
-   veces cada una, y no está en el datasheet. Ver arriba. No bloquea nada.
-7. **¿Alguna función usa combinación de teclas?** El chip lo soporta. Si grabar
-   preset o el reset fueran combinaciones, un solo relé no las reproduce. Nada
-   en las capturas lo sugiere todavía, pero no se ha probado a propósito.
-8. ~~**¿Cuánto hay que mantener M1/M2 hasta que graba?**~~ → **3.0 s**, medido
-   el 2026-08-06. Ver arriba. Respondida.
+For relay actuation, the relay contact goes **in parallel with the button**,
+doing exactly what the button does.
 
 ---
 
-## Tabla de confirmación propia
+## Open questions
 
-Lo observado en el bus real, que en algún punto **difiere del datasheet**.
+### Answered by the 2026-08-06 captures ✅
 
-| Byte observado | Interpretación | Captura |
+1. ~~**Which digits does it use, and in what order?**~~ → `68`, `6A`, `6C`, `6E`
+   in that order, left to right. The fourth is always blank. No decimal point:
+   the height is whole centimetres.
+2. ~~**How fast does the bus run?**~~ → **~202 kHz**, and that figure is a
+   floor. It forced the capture to be rebuilt: interrupts could not keep up, and
+   it moved to burst sampling.
+3. ~~**How often does the height refresh?**~~ → full cycle every **~200 ms**;
+   the height changes every **~1.2 s**, which is how long 1 cm of movement
+   takes.
+4. ~~**Which key code is each button?**~~ → up `0x47`, down `0x57`, presets
+   `0x6F` and `0x67`. Table above.
+5. ~~**Does the height refresh during movement?**~~ → **Yes.** Every centimetre,
+   without waiting to arrive. **Closed-loop control is viable.**
+
+### Still open
+
+6. ~~**Does it turn the display off or put the chip to sleep on inactivity?**~~
+   → **It blanks the display but does NOT sleep the chip.** Measured with the
+   desk idle for **15 minutes**: the sniffer armed **4505 times and not once
+   found the bus silent**. Within seconds the screen blanks by writing `0x00`
+   into all four digits, but the 200 ms refresh never stops, and the control
+   command **always says `sleep=no`**.
+   **Consequence:** the ESP32 can tell *"there is no height to show"* from
+   *"there is no bus"*, which is exactly what [ADR-012](DECISIONS.md) needed.
+   *Unverified: what happens after hours, or on returning from a power cut.*
+9. **What is the `0x90 42` command?** It appears in all five captures, one to
+   five times each, and it is not in the datasheet. See above. It blocks
+   nothing.
+7. **Does any function use a key combination?** The chip supports it. If storing
+   a preset or the reset were combinations, a single relay would not reproduce
+   them. Nothing in the captures suggests it yet, but it has not been tested on
+   purpose.
+8. ~~**How long must M1 or M2 be held before it stores?**~~ → **3.0 s**, measured
+   on 2026-08-06. See above. Answered.
+
+---
+
+## Our own confirmation table
+
+What was observed on the real bus, which at one point **differs from the
+datasheet**.
+
+| Byte observed | Interpretation | Capture |
 |---|---|---|
-| `68` `6A` `6C` `6E` | Direcciones de los cuatro dígitos, de izquierda a derecha | ambas del 2026-08-06 |
-| `4F` | Comando de lectura de teclado. Encaja con la máscara `0100_1XX1` | ambas |
-| `0x27` | Teclado en reposo, valor dominante. **El datasheet dice `0x2E`** | ambas |
-| `0x07` `0x17` `0x21` `0x2F` | Otros valores de reposo, todos con el bit 6 a cero | ambas |
-| `0x47` | Tecla **subir** pulsada | [pulsadores](capturas/2026-08-06-pulsadores.log) |
-| `0x57` | Tecla **bajar** pulsada | pulsadores |
-| `0x6F` | Tecla de **memoria** (preset de 117 cm) | pulsadores |
-| `0x67` | Tecla de **memoria** (preset de 80 cm) | pulsadores |
-| `0x00` en los 4 dígitos | Display en blanco, con el bus aún refrescando | ambas |
+| `68` `6A` `6C` `6E` | Addresses of the four digits, left to right | both from 2026-08-06 |
+| `4F` | Keyboard read command. Matches the `0100_1XX1` mask | both |
+| `0x27` | Keyboard at rest, dominant value. **The datasheet says `0x2E`** | both |
+| `0x07` `0x17` `0x21` `0x2F` | Other resting values, all with bit 6 clear | both |
+| `0x47` | **Up** key pressed | [pulsadores](capturas/2026-08-06-pulsadores.log) |
+| `0x57` | **Down** key pressed | pulsadores |
+| `0x6F` | **Preset** key (117 cm) | pulsadores |
+| `0x67` | **Preset** key (80 cm) | pulsadores |
+| `0x00` in all 4 digits | Display blanked, bus still refreshing | both |
 
 <details>
-<summary>Tabla original, previa a las capturas</summary>
+<summary>Original table, before the captures</summary>
 
-| Byte observado | Interpretación | Captura |
+| Byte observed | Interpretation | Capture |
 |---|---|---|
 | | | |
 
-*Quedó vacía: se llenó de una vez con las dos capturas del 2026-08-06.*
+*It stayed empty and was filled in one go by the two captures of 2026-08-06.*
 
 </details>
 
 ---
 
-> **Correcciones registradas.** Una versión anterior de este archivo daba el
-> pinout como 5 = SCL, 6 = SDA, 15 = GND, 16 = VDD, tomado de components101.
-> **Estaba mal**, y la medición lo desmintió. Otra versión advertía que los
-> comandos y el formato de teclado procedían de fuentes del TM1650 y no del chip
-> real; esa advertencia ya no aplica: el datasheet de I-CORE los confirma uno
-> por uno. Detalle en la [bitácora](BITACORA.md).
+> **Corrections on record.** An earlier version of this file gave the pinout as
+> 5 = SCL, 6 = SDA, 15 = GND, 16 = VDD, taken from components101. **It was
+> wrong**, and the measurement disproved it. Another version warned that the
+> commands and keyboard format came from TM1650 sources rather than the real
+> chip; that warning no longer applies, since the I-CORE datasheet confirms them
+> one by one. Detail in the [log](BITACORA.md).
