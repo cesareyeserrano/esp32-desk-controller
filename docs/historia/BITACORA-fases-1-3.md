@@ -66,14 +66,14 @@ ciclo de corriente y **usar el mando a mano varios minutos**.
 
 ### Cuatro errores de diagnóstico, para no repetirlos
 
-**1. No apliqué [ADR-019](DECISIONS.md), que describe este síntoma literalmente.**
+**1. No apliqué [ADR-019](../DECISIONS.md), que describe este síntoma literalmente.**
 Dice que con el ESP32 sin corriente y la sonda sobre un bus encendido, el mando
 falla, y que *"el síntoma aparecería justo después de soldar y apuntaría a las
 soldaduras"*. Es exactamente lo que pasó y lo que estuvimos persiguiendo. **El
 ADR existía para evitar esta confusión y no lo consulté.**
 
 **2. Di el divisor por 9.1 kΩ durante todo el diagnóstico.** Lo montado son
-**16.3 kΩ** desde [ADR-022](DECISIONS.md), del 2026-08-06. [HARDWARE.md](HARDWARE.md)
+**16.3 kΩ** desde [ADR-022](../DECISIONS.md), del 2026-08-06. [HARDWARE.md](../HARDWARE.md)
 conservaba el diagrama viejo y el error se propagó a las cabeceras de las
 capturas escritas ese mismo día. Corregido en HARDWARE.md; **las capturas de hoy
 que dicen "sonda 9.1k/27k" están mal en ese dato**.
@@ -121,12 +121,12 @@ desconectado apoya (a). **El A/B de arriba es lo que las separa.**
 Mando **destapado**, con sus cables soldados. ESP32 desconectado del bus. Los
 ocho cables de los pulsadores, conectados o no según dónde se dejara la prueba.
 Escritorio en el tope inferior tras una recalibración: en algún momento se pulsó
-el botón de **reset** —el que [ADR-008](DECISIONS.md) manda no cablear— y el
+el botón de **reset** —el que [ADR-008](../DECISIONS.md) manda no cablear— y el
 escritorio bajó del todo, aunque **no está confirmado** que fuera esa pulsación
 la que lo provocó.
 
 **Pendiente por eso:** comprobar si el reset alteró M1 y M2. Con
-[ADR-029](DECISIONS.md) el sistema ya no depende de esas alturas, pero conviene
+[ADR-029](../DECISIONS.md) el sistema ya no depende de esas alturas, pero conviene
 saberlo.
 
 ---
@@ -155,7 +155,7 @@ ráfaga, y ESPHome espera componentes que devuelvan enseguida**. Meterlo ahí
 obliga a reescribir como máquina de estados el código con timing crítico que ya
 costó una tarde de depuración.
 
-Razonado en [ADR-030](DECISIONS.md), **incluido el vaivén**: la causa fue
+Razonado en [ADR-030](../DECISIONS.md), **incluido el vaivén**: la causa fue
 recomendar antes de mirar, y sin eso el ADR parecería más limpio de lo que fue.
 
 ### Verificado eslabón por eslabón, no de golpe
@@ -200,7 +200,7 @@ medirlo en STA con tráfico real. Medido:
 la flash y el 16% de la RAM.
 
 Captura:
-[capturas/2026-08-22-mqtt-primera-conexion.log](capturas/2026-08-22-mqtt-primera-conexion.log).
+[capturas/2026-08-22-mqtt-primera-conexion.log](../capturas/2026-08-22-mqtt-primera-conexion.log).
 
 ### Los controles: seis botones en Home Assistant
 
@@ -225,7 +225,7 @@ bajar     -> CHANNEL 2  0x57
 ```
 
 **Trece entidades** en total. Captura:
-[capturas/2026-08-22-controles-mqtt.log](capturas/2026-08-22-controles-mqtt.log).
+[capturas/2026-08-22-controles-mqtt.log](../capturas/2026-08-22-controles-mqtt.log).
 
 **Decisión de seguridad, tomada al implementar:** se expone **solo el toque,
 nunca el pulso largo**. Así nada pulsable desde un móvil puede arrancar
@@ -249,7 +249,7 @@ las memorias en cuanto delatan su código.
 ### Decidido: las memorias del mando son opacas
 
 A propuesta de quien tiene el escritorio: **el sistema no asocia M1 y M2 a
-ninguna altura** ([ADR-029](DECISIONS.md)). Si nunca afirma que M1 vale 80, no
+ninguna altura** ([ADR-029](../DECISIONS.md)). Si nunca afirma que M1 vale 80, no
 puede mentir cuando el reset o una regrabación lo cambien. Los presets por
 software son independientes y no pueden sobrescribir las memorias del mando.
 
@@ -266,9 +266,9 @@ dentro del mando, que está casi listo para cerrarse.
 ### El barrido
 
 Con el procedimiento que dejó escrito la sesión anterior: **`h` primero** para
-comprobar que el puerto recibe ([ADR-026](DECISIONS.md)), y **pulso de 300 ms**
+comprobar que el puerto recibe ([ADR-026](../DECISIONS.md)), y **pulso de 300 ms**
 para identificar — con ese ancho subir y bajar registran la tecla en el bus
-**sin mover el escritorio** ([ADR-027](DECISIONS.md)), así que se puede
+**sin mover el escritorio** ([ADR-027](../DECISIONS.md)), así que se puede
 identificar sin efectos. Las memorias sí arrancan viaje con cualquier toque, y
 eso se avisó antes de dispararlas.
 
@@ -279,13 +279,13 @@ eso se avisó antes de dispararlas.
 | 3 | GPIO 25 | **Memoria 80 cm** | `0x67` | KI5 / DIG4. Viajó 073 → 080 |
 | 4 | GPIO 33 | **Memoria 117 cm** | `0x6F` | KI6 / DIG4. Viajó 080 → 117 |
 
-**Los cuatro códigos coinciden con lo que [PROTOCOLO.md](PROTOCOLO.md) predecía**
+**Los cuatro códigos coinciden con lo que [PROTOCOLO.md](../PROTOCOLO.md) predecía**
 desde el 2026-08-06, decodificado leyendo el bus. La predicción se cumplió sin
 un solo ajuste.
 
-Captura: [capturas/2026-08-22-cuatro-canales-verificados.log](capturas/2026-08-22-cuatro-canales-verificados.log).
+Captura: [capturas/2026-08-22-cuatro-canales-verificados.log](../capturas/2026-08-22-cuatro-canales-verificados.log).
 
-**El reset no está cableado** ([ADR-008](DECISIONS.md)), como estaba previsto.
+**El reset no está cableado** ([ADR-008](../DECISIONS.md)), como estaba previsto.
 
 ### Lo que esto cierra
 
@@ -326,7 +326,7 @@ bajando, 43 cm en 64 s subiendo. Dato nuevo, no estaba en ningún sitio.
 **Esta vez sí se guardó el volcado crudo** (311 KB), corrigiendo la carencia
 anotada el 2026-08-21, cuando las pruebas de movimiento solo dejaron la traza de
 alturas. Captura:
-[capturas/2026-08-22-recorrido-completo.log](capturas/2026-08-22-recorrido-completo.log).
+[capturas/2026-08-22-recorrido-completo.log](../capturas/2026-08-22-recorrido-completo.log).
 El guion está en `tools/recorrido_prueba.py`.
 
 **Y quedaron identificadas las memorias:** **M1 → canal 3 → 80 cm**, **M2 →
@@ -363,7 +363,7 @@ Coste: programa del 21% al 67% de la flash, RAM del 9% al 16%.
 ⚠️ **Supuesto, no verificado:** es modo AP **sin clientes**, el caso más suave.
 **Falta medirlo en STA con tráfico real**, y hasta entonces la arquitectura no
 está confirmada. Captura:
-[capturas/2026-08-22-wifi-impacto.log](capturas/2026-08-22-wifi-impacto.log).
+[capturas/2026-08-22-wifi-impacto.log](../capturas/2026-08-22-wifi-impacto.log).
 Sketch: [../firmware/test_wifi_impact/](../firmware/test_wifi_impact/).
 
 **Y de paso quedó la referencia de qué es un bus sano:** 1502 transacciones por
@@ -372,7 +372,7 @@ si un 2% es normal o es la sonda degradándose.
 
 ### Diseño de la integración
 
-Escrito [INTEGRACION_HA.md](INTEGRACION_HA.md) con el catálogo completo: estado,
+Escrito [INTEGRACION_HA.md](../INTEGRACION_HA.md) con el catálogo completo: estado,
 uso, eventos, controles y diagnóstico, marcando **qué se puede medir ya y qué hay
 que implementar**.
 
@@ -392,7 +392,7 @@ Aparecieron **cinco bytes distintos en reposo**: `0x07`, `0x17`, `0x27`, `0x2E` 
 `0x2F`. **Ninguno lleva el bit `0x40`, así que ninguno es una tecla pulsada** —el
 decodificador los trata a todos como reposo, y por eso no estorban—. Pero no se
 sabe en qué se diferencian. Probablemente indican qué columna se está
-escaneando. Anotado en [PLAN.md](PLAN.md).
+escaneando. Anotado en [PLAN.md](../PLAN.md).
 
 ---
 
@@ -418,7 +418,7 @@ adelante, una sola sesión toca el hardware.
 **1. El comando no llegaba al sketch.** Ni a 460800 ni a 115200, con dos
 herramientas independientes (`serial_talk.py` y `arduino-cli monitor`), y con el
 `switch` instrumentado para delatar cualquier byte: **cero bytes**. Esto
-contradice al [ADR-025](DECISIONS.md), escrito esa misma tarde, que daba 460800
+contradice al [ADR-025](../DECISIONS.md), escrito esa misma tarde, que daba 460800
 por verificado con 10 comandos de 10.
 
 Se bisecó el firmware entero. Descartados por medición: la velocidad,
@@ -428,7 +428,7 @@ Después de todo eso **el puerto empezó a recibir de forma fiable, con un cambi
 puramente cosmético**, y siguió haciéndolo en 5 pruebas de 5.
 
 **La causa no se identificó.** Está escrito así, sin adornos, en
-[ADR-026](DECISIONS.md), junto con la tabla completa de lo que se midió y la
+[ADR-026](../DECISIONS.md), junto con la tabla completa de lo que se midió y la
 regla que evita repetir el error: **mandar `h` y comprobar que responde, antes
 de cualquier prueba de canal.**
 
@@ -441,13 +441,13 @@ de cualquier prueba de canal.**
 | La caja de control ve una tecla | **No** — 56 lecturas, todas `4F 17` (reposo) |
 | Repetido 3 veces más | Idéntico |
 
-Captura: [capturas/2026-08-21-canal2-no-responde.log](capturas/2026-08-21-canal2-no-responde.log).
+Captura: [capturas/2026-08-21-canal2-no-responde.log](../capturas/2026-08-21-canal2-no-responde.log).
 
 **3. Prueba de control: el pulsador a mano sí funciona.** Es lo que separa un
 fallo de lectura de uno de accionamiento, y salió limpio:
 
 - **19 lecturas del byte `0x57`** — BAJAR, justo lo que predecía
-  [PROTOCOLO.md](PROTOCOLO.md)
+  [PROTOCOLO.md](../PROTOCOLO.md)
 - El display se encendió y el escritorio **bajó de 78 a 77 cm**
 
 **Verificado, y corrige una duda razonable:** el sniffer detecta pulsaciones
@@ -459,17 +459,17 @@ el decodificador, no en el puerto serie.
 
 ### Correcciones registradas
 
-- **[ADR-025](DECISIONS.md) no se reproduce.** No se toca —los ADR no se
-  editan—; lo corrige [ADR-026](DECISIONS.md).
+- **[ADR-025](../DECISIONS.md) no se reproduce.** No se toca —los ADR no se
+  editan—; lo corrige [ADR-026](../DECISIONS.md).
 - La captura
-  [capturas/2026-08-21-canal2-disparo-bajar.log](capturas/2026-08-21-canal2-disparo-bajar.log)
+  [capturas/2026-08-21-canal2-disparo-bajar.log](../capturas/2026-08-21-canal2-disparo-bajar.log)
   queda **marcada INSERVIBLE**, sin tocar su contenido: parecía un canal muerto
   y era el puerto serie. Es el primer caso del error que la regla nueva evita.
 
 ### Estado del firmware
 
 `desk_sniffer` a **115200**, con una línea que imprime cada byte recibido
-([ADR-026](DECISIONS.md), punto 3). Compila limpio: 21% de programa, 9% de RAM.
+([ADR-026](../DECISIONS.md), punto 3). Compila limpio: 21% de programa, 9% de RAM.
 
 ### Desenlace: el canal 2 funciona. Era el sniffer.
 
@@ -500,7 +500,7 @@ instrumento que contradice al mundo físico está mal el instrumento.
 **Corregido:** el bucle captura y decodifica mientras el contacto está cerrado, y
 solo arranca una ráfaga si cabe entera dentro del pulso, para que decodificar no
 pueda alargar el contacto. Ese límite es lo que sostiene
-[ADR-023](DECISIONS.md). El pulso vuelve a **300 ms**.
+[ADR-023](../DECISIONS.md). El pulso vuelve a **300 ms**.
 
 **Verificado a la primera con la corrección:**
 
@@ -508,7 +508,7 @@ pueda alargar el contacto. Ese límite es lo que sostiene
 [2.597976] >>> KEY PRESSED KI3 / DIG4   <== CHANNEL 2 answered with 0x57
 ```
 
-Captura: [capturas/2026-08-21-canal2-verificado-0x57.log](capturas/2026-08-21-canal2-verificado-0x57.log).
+Captura: [capturas/2026-08-21-canal2-verificado-0x57.log](../capturas/2026-08-21-canal2-verificado-0x57.log).
 **`0x57` es BAJAR. El paso 3 de la fase 3 queda cerrado.**
 
 ### Dos correcciones más, del mismo rato
@@ -553,9 +553,9 @@ lazo cerrado —pulso, leer la altura del bus, decidir— y **siete pulsos no
 movieron ni un centímetro**, aunque el `0x57` aparecía en el bus cada vez. Con
 **800 ms** bajó 4 cm en 12 pulsos.
 
-[ADR-023](DECISIONS.md) eligió los 300 ms razonando entre el mínimo de 160 ms y
+[ADR-023](../DECISIONS.md) eligió los 300 ms razonando entre el mínimo de 160 ms y
 los 2.2 s del movimiento continuo, **dando por hecho que un pulso que el chip ve
-es un pulso que mueve**. No lo es. Corregido en [ADR-027](DECISIONS.md): el ancho
+es un pulso que mueve**. No lo es. Corregido en [ADR-027](../DECISIONS.md): el ancho
 pasa a **800 ms**, todavía 2.75× por debajo del umbral peligroso.
 
 **Ese fue el primer posicionamiento automático del proyecto:** el ESP32 pulsando,
@@ -566,7 +566,7 @@ el escritorio, señalando —con razón— que los tiempos ya estaban medidos y 
 pulso largo lo manda solo.
 
 Al revisar la documentación apareció **una contradicción interna que llevaba
-semanas ahí**: la tabla de [HARDWARE.md](HARDWARE.md) decía *"sigue hasta que se
+semanas ahí**: la tabla de [HARDWARE.md](../HARDWARE.md) decía *"sigue hasta que se
 pulse **cualquier** botón"* y el texto de la misma medición decía *"solo paró al
 pulsar **otra** tecla"*. **Con un solo canal cableado, la diferencia es entre
 poder frenar y no poder.**
@@ -581,8 +581,8 @@ detiene el escritorio. Hacia arriba no habría sido seguro.
 | **Toque corto, MISMO canal** | **paró en 76 cm**, 8 s sin moverse |
 
 **El texto era el impreciso; la tabla tenía razón.** Corregido en
-[HARDWARE.md](HARDWARE.md) y [SEGURIDAD.md](SEGURIDAD.md), y decidido en
-[ADR-028](DECISIONS.md), que **reabre explícitamente** la regla de "evitar que el
+[HARDWARE.md](../HARDWARE.md) y [SEGURIDAD.md](../SEGURIDAD.md), y decidido en
+[ADR-028](../DECISIONS.md), que **reabre explícitamente** la regla de "evitar que el
 movimiento continuo arranque".
 
 ⚠️ **Y añade un riesgo que antes no existía:** un cuelgue durante el viaje deja
@@ -594,12 +594,12 @@ Después se bajó al tope inferior con un pulso largo: **73 cm**, parado solo.
 
 **Sin captura cruda de estas dos pruebas.** Se registró la traza de alturas, no
 el volcado del bus, porque el guion de control leía el puerto en vivo. Es una
-carencia respecto a la [política](POLITICA_DOCUMENTACION.md) y se anota como tal:
+carencia respecto a la [política](../POLITICA_DOCUMENTACION.md) y se anota como tal:
 las cifras de arriba salen de la traza, no de un log crudo revisable.
 
 ### Lo que sí era real de todo aquello
 
-- El **fallo de recepción del puerto serie** ([ADR-026](DECISIONS.md)) existió y
+- El **fallo de recepción del puerto serie** ([ADR-026](../DECISIONS.md)) existió y
   sigue sin explicarse. La regla de mandar `h` antes de cada prueba se mantiene.
 - El cable **estuvo conectado al canal 1** buena parte de la tarde mientras se
   disparaba el canal 2, cosa que se descubrió al probar los cuatro canales
@@ -615,7 +615,7 @@ pulsador del mando. Se cableó **bajar**, al **canal 2 (GPIO 26)**.
 ⚠️ **Corrección dentro de la propia sesión.** Esta entrada se escribió primero
 diciendo **subir**, porque así se reportó al principio. Es falso: el pulsador
 soldado es el de **bajar**, confirmado por quien lo soldó tras probarlo a mano.
-Se corrige aquí y en [PLAN.md](PLAN.md). **Consecuencia práctica: el código
+Se corrige aquí y en [PLAN.md](../PLAN.md). **Consecuencia práctica: el código
 esperado en la comprobación es `0x57`, no `0x47`** — que es justo lo contrario
 de lo que decía. Si no se hubiera detectado, un canal bien soldado habría
 parecido un error, o al revés.
@@ -710,7 +710,7 @@ abierto en reposo y con el chip en reset, y que condujera solo durante los
 2 kΩ en serie con ~90 µA. Añadir 152 Ω sube la resistencia un 7% y hace caer
 **13 mV**. Para el chip es un boton pulsado.
 
-**Esto sostiene [ADR-024](DECISIONS.md):** el canal solo conduce cuando el
+**Esto sostiene [ADR-024](../DECISIONS.md):** el canal solo conduce cuando el
 firmware lo ordena. Un reinicio deja los pines en alta impedancia y el canal
 abierto, que es exactamente lo que el watchdog necesita para proteger.
 
@@ -751,7 +751,7 @@ por canal:
 | 4 | GPIO 33 | ✅ |
 
 **Con los cuatro optoacopladores montados, los cuatro pines siguen leyendo 0 al
-arrancar.** Ninguno se activa solo, que es lo que sostiene [ADR-024](DECISIONS.md).
+arrancar.** Ninguno se activa solo, que es lo que sostiene [ADR-024](../DECISIONS.md).
 
 Todos los pulsos, 160 en total, salieron de **300 ms exactos**.
 
@@ -782,12 +782,12 @@ dos coincidan.
 `desk_sniffer` pasa a hacer las dos cosas:
 
 - **El bus sigue siendo de solo lectura para siempre.** Sus dos pines son
-  entrada de `setup()` al apagado. [ADR-011](DECISIONS.md) intacto.
+  entrada de `setup()` al apagado. [ADR-011](../DECISIONS.md) intacto.
 - **Los cuatro canales de accionamiento van por pines aparte**, aislados
   galvanicamente y en paralelo a los pulsadores, que es justo la ruta que
   ADR-011 prescribe.
 - Los pines se ponen bajos **como primera instruccion de `setup()`**, antes que
-  nada mas, por lo que exige [ADR-024](DECISIONS.md).
+  nada mas, por lo que exige [ADR-024](../DECISIONS.md).
 - Comandos `1` `2` `3` `4` para disparar un canal 300 ms.
 - **Y lo que da valor a todo esto:** tras el pulso vigila el bus 1.5 s, y cuando
   aparece una tecla pulsada imprime `<== CHANNEL n answered with 0xNN`. Un canal
@@ -798,7 +798,7 @@ Compilado con la toolchain real: 21% de programa, 9% de RAM.
 ### Siguiente
 
 **Soldar el primer canal** a un pulsador y comprobarlo con ese mensaje. Tabla de
-codigos en [PROTOCOLO.md](PROTOCOLO.md): subir `0x47`, bajar `0x57`, memorias
+codigos en [PROTOCOLO.md](../PROTOCOLO.md): subir `0x47`, bajar `0x57`, memorias
 `0x6F` y `0x67`.
 
 ---
@@ -821,7 +821,7 @@ codigos en [PROTOCOLO.md](PROTOCOLO.md): subir `0x47`, bajar `0x57`, memorias
   puesto. El amarillo **no** se soldó. Verificado: 11 MΩ entre rojo y verde, sin
   puentes de estaño.
 - **Sonda montada en protoboard**, dos canales de 9.1 k + 7.4 k arriba y 27 kΩ
-  abajo ([ADR-022](DECISIONS.md)). Verificada con el cable azul fuera: 36 kΩ por
+  abajo ([ADR-022](../DECISIONS.md)). Verificada con el cable azul fuera: 36 kΩ por
   canal.
 - **Conectada al ESP32**: P18 = CLK (rojo), P4 = DIO (verde), GND común.
 - **ESP32 alimentado por USB** desde el Mac, con la versión de **muestreo por
@@ -831,17 +831,17 @@ codigos en [PROTOCOLO.md](PROTOCOLO.md): subir `0x47`, bajar `0x57`, memorias
 - Bus a **4.7 V**, nodo del GPIO a **2.9 V**, medidos con todo en marcha.
 
 **Al retomar:** si algo se desconectó por el camino, el orden de
-[ADR-019](DECISIONS.md) es **USB primero, hilos del bus después**; al desmontar,
+[ADR-019](../DECISIONS.md) es **USB primero, hilos del bus después**; al desmontar,
 al revés. Y el divisor solo se comprueba con el cable azul fuera, o el mando
 mete un camino paralelo de ~34 kΩ y el número no significa nada.
 
 ### Componentes recibidos y medidos
 
 Llegan las resistencias. Medidas antes de usarse, como exige
-[ADR-015](DECISIONS.md):
+[ADR-015](../DECISIONS.md):
 
 - **27 kΩ: entre 26.79 y 27.01 kΩ** pieza a pieza. Con las 9.1 kΩ del cajón dan
-  bus a 3.99 V y GPIO a 2.98–2.99 V — clavado en [ADR-016](DECISIONS.md). Los
+  bus a 3.99 V y GPIO a 2.98–2.99 V — clavado en [ADR-016](../DECISIONS.md). Los
   extremos del lote se separan 10 mV en el GPIO, así que da igual qué dos se usen.
 - 10 kΩ y 330 Ω, para la fase 3.
 
@@ -913,7 +913,7 @@ qué condiciones** se tomaba cada uno.
 entradas cortocircuitadas, error de transcripción— y las cuatro cayeron. Todas
 compartían el mismo defecto: **daban por supuesto el estado del montaje en el
 momento de medir.** Una medición sin sus condiciones no es un dato, y la regla 1
-de la [política](POLITICA_DOCUMENTACION.md) ya lo exige para la bitácora —
+de la [política](../POLITICA_DOCUMENTACION.md) ya lo exige para la bitácora —
 "cómo se midió, contra qué referencia"— pero no se estaba aplicando al preguntar.
 
 **Qué habría ahorrado tiempo:** preguntar desde el principio *"¿qué hay conectado
@@ -950,7 +950,7 @@ pull-up interno de 9.1 kΩ, el bus habría caído a **2.92 V**, por debajo del V
 de 3.5 V del chip. El mando habría dejado de funcionar, y al GPIO le habrían
 llegado 0.9 V, así que el sniffer tampoco habría visto nada. **Dos fallos a la
 vez, con el síntoma apuntando a las soldaduras del mando en vez de a la
-protoboard** — exactamente el modo de fallo de [ADR-005](DECISIONS.md), evitado
+protoboard** — exactamente el modo de fallo de [ADR-005](../DECISIONS.md), evitado
 esta vez por medición en vez de por cálculo.
 
 </details>
@@ -966,7 +966,7 @@ el azul puesto y el escritorio apagado, el mando aporta un camino paralelo de
 ### La comprobación del cociente destapa un pull-up no documentado
 
 Con el escritorio encendido y quieto, siguiendo el orden de
-[ADR-019](DECISIONS.md) —USB primero, hilos después—:
+[ADR-019](../DECISIONS.md) —USB primero, hilos después—:
 
 | | Medido |
 |---|---|
@@ -993,7 +993,7 @@ juega a favor del bus y **en contra del GPIO**. Medido en el nodo: **3.5 V**,
 contra un máximo absoluto de 3.6 V. **Margen del 2%.**
 
 Corregido en el momento añadiendo una 7.4 kΩ en serie con cada 9.1 kΩ
-([ADR-022](DECISIONS.md)). Resultado medido: **bus 4.7 V, GPIO 2.9 V**, ambos
+([ADR-022](../DECISIONS.md)). Resultado medido: **bus 4.7 V, GPIO 2.9 V**, ambos
 centrados. El mando sigue funcionando con normalidad.
 
 Sin la comprobación del cociente —que hace tres días parecía una formalidad— el
@@ -1024,11 +1024,11 @@ cola. `dropped` es cero.
 
 1. **El bus corre de verdad a 195 kHz.** Está por encima del techo de captura
    medido el 2026-08-03 (125 kHz limpio, pérdida silenciosa desde 150). Tocaría
-   el plan B del periférico RMT que [PLAN.md](PLAN.md) ya declara.
+   el plan B del periférico RMT que [PLAN.md](../PLAN.md) ya declara.
 2. **Cada flanco real se cuenta dos veces.** El divisor redondea los flancos y
    una subida lenta con ruido cruza el umbral del GPIO más de una vez. El bus
    real sería la mitad, ~97 kHz, dentro del techo. Tocaría el buffer Schmitt
-   declarado en [ADR-018](DECISIONS.md).
+   declarado en [ADR-018](../DECISIONS.md).
 
 **Lo que apunta a la segunda:** 18.544 flancos entre 41 transacciones son **452
 flancos por transacción**. Una transacción de 8 bytes son 72 pulsos de reloj, o
@@ -1106,7 +1106,7 @@ centenas, que ninguna captura previa había alcanzado.
 **La altura se refresca DURANTE el movimiento.** Era el riesgo que podía tumbar
 el proyecto entero, escrito en PLAN.md como *"si no, el lazo cerrado no funciona
 y hay que replantear"*. Se actualiza **cada centímetro, a ~1.2 s**, sin esperar a
-llegar. **El lazo cerrado es viable y el requisito real de [ADR-001](DECISIONS.md)
+llegar. **El lazo cerrado es viable y el requisito real de [ADR-001](../DECISIONS.md)
 queda confirmado sobre hardware.**
 
 **Velocidad medida: 8.5 mm/s**, idéntica en los dos sentidos — 39 cm en 45.9 s
@@ -1122,7 +1122,7 @@ habría funcionado.
 | `0x57` | Bajar |
 | `0x6F` | Memoria de 117 cm |
 | `0x67` | Memoria de 80 cm |
-| — | Reset: **no se pulsó, y no se pulsará** ([ADR-008](DECISIONS.md)) |
+| — | Reset: **no se pulsó, y no se pulsará** ([ADR-008](../DECISIONS.md)) |
 
 **Hallazgo no buscado, y valioso: al pulsar una memoria el display parpadea la
 altura de DESTINO** antes de moverse, y solo después cuenta la altura real. El
@@ -1132,9 +1132,9 @@ en vez de perseguir el movimiento. Para la fase 4 cambia el diseño a mejor.
 **Diferencia real contra el datasheet:** en reposo el teclado vale `0x27`, no el
 `0x2E` documentado. Lo que sí se cumple sin excepción es el bit 6 a cero en
 reposo, que es lo que importa para detectar pulsaciones. Anotado en
-[PROTOCOLO.md](PROTOCOLO.md).
+[PROTOCOLO.md](../PROTOCOLO.md).
 
-**Dato nuevo para [ADR-010](DECISIONS.md):** un toque de memoria produce **una
+**Dato nuevo para [ADR-010](../DECISIONS.md):** un toque de memoria produce **una
 sola lectura de teclado**, o sea que dura menos de los ~200 ms del ciclo. Primera
 medida real de cuánto es "corto" en este mando.
 
@@ -1176,7 +1176,7 @@ pegado tendría que quedarse cerrado **tres segundos completos**, no unas décim
 **Diseño que sale de aquí:** pulsos de 200–300 ms para recuperar, con el
 temporizador de hardware cortando a 500 ms. Seis veces por debajo del umbral y
 por encima del mínimo de 160 ms que exige el chip. Anotado en
-[HARDWARE.md](HARDWARE.md).
+[HARDWARE.md](../HARDWARE.md).
 
 ---
 
@@ -1208,7 +1208,7 @@ descripción que se estaba usando —"para cuando sueltas"— contradecía lo qu
 decía HARDWARE.md. Los datos para desmentirlo llevaban horas capturados.*
 
 **Segunda: el umbral que separa toque de continuo.** Medido pulsando cada vez
-más largo, en [2026-08-06-umbral-toque-vs-continuo.log](capturas/2026-08-06-umbral-toque-vs-continuo.log):
+más largo, en [2026-08-06-umbral-toque-vs-continuo.log](../capturas/2026-08-06-umbral-toque-vs-continuo.log):
 
 | Duración | Resultado |
 |---|---|
@@ -1219,7 +1219,7 @@ más largo, en [2026-08-06-umbral-toque-vs-continuo.log](capturas/2026-08-06-umb
 Y el de grabar preset es **3.0 s**. **Los dos rondan los 2–3 segundos:** la caja
 parece tener un único concepto de "pulsación larga" para los cuatro botones.
 
-**Decisión ([ADR-023](DECISIONS.md)): limitador de ancho de pulso a 300 ms,
+**Decisión ([ADR-023](../DECISIONS.md)): limitador de ancho de pulso a 300 ms,
 idéntico en los cuatro canales.** El firmware solo emite toques y el hardware
 garantiza que ninguno dure más. Siete veces por debajo del umbral peligroso y
 casi el doble del mínimo de 160 ms que el chip exige.
@@ -1237,7 +1237,7 @@ no pidió. Queda como refuerzo por software, no como la protección.
 
 Medición propuesta por quien maneja el escritorio, no por el análisis, y era un
 hueco real: nadie había mirado qué pasa al llegar al final del recorrido.
-Captura [2026-08-06-topes-fisicos.log](capturas/2026-08-06-topes-fisicos.log).
+Captura [2026-08-06-topes-fisicos.log](../capturas/2026-08-06-topes-fisicos.log).
 
 **Rango real: 73 a 118 cm.** 45 cm de recorrido. Hasta ahora solo se conocía de
 77 a 117, que es donde se había estado, no dónde están los límites.
@@ -1269,7 +1269,7 @@ se paró solo, 2 y 3 tras los continuos, y **ninguno al topar**.
 - **Un comando `0x90 42` que no está en el datasheet**, presente en las cinco
   capturas, una a cinco veces cada una, siempre con ACK. Se cuela al principio de
   un ciclo de refresco. No impide nada. **Sin explicar**, y anotado como tal en
-  [PROTOCOLO.md](PROTOCOLO.md).
+  [PROTOCOLO.md](../PROTOCOLO.md).
 
 ### Cuarta vez que un contador mide la herramienta y no el mundo
 
@@ -1301,7 +1301,7 @@ qué mide cuando no hay nada que medir.**
 
 Quince minutos con el escritorio quieto, el volcado crudo apagado y el Mac
 forzado despierto con `caffeinate`. Resultado en
-[2026-08-06-reposo-largo-2.log](capturas/2026-08-06-reposo-largo-2.log):
+[2026-08-06-reposo-largo-2.log](../capturas/2026-08-06-reposo-largo-2.log):
 
 ```
 bursts         : 4505 recorded, 0 armed on a quiet bus
@@ -1317,7 +1317,7 @@ pocos segundos el display se apaga escribiendo `0x00` en los cuatro dígitos, pe
 el refresco de 200 ms no se detiene, y el comando de control siempre dice
 `sleep=no`. **Son dos cosas distintas y solo ocurre la primera.**
 
-Eso acota mucho [ADR-012](DECISIONS.md) sin anularlo: la caducidad de la altura
+Eso acota mucho [ADR-012](../DECISIONS.md) sin anularlo: la caducidad de la altura
 sigue haciendo falta —la caja puede reiniciarse, un cable soltarse— pero **el
 sueño del chip deja de ser un escenario esperado**. Y aparece una señal mejor de
 la que el ADR preveía: como el bus sigue vivo con la pantalla en blanco, el ESP32
@@ -1346,7 +1346,7 @@ declarar START o STOP. **Mientras tanto, el suelo de ruido de `malformed` es
 ### Qué queda abierto al cerrar la sesión
 
 1. **Diseñar el limitador de ancho de pulso de 300 ms.** La decisión ya está
-   tomada ([ADR-023](DECISIONS.md)); falta elegir con qué se implementa y qué
+   tomada ([ADR-023](../DECISIONS.md)); falta elegir con qué se implementa y qué
    hace falta comprar.
 2. **Cuál de las dos memorias es M1 y cuál M2.** Se sabe qué código va con qué
    preset —`0x6F` con 117 cm y `0x67` con 80 cm— pero no cuál botón físico es
@@ -1354,10 +1354,10 @@ declarar START o STOP. **Mientras tanto, el suelo de ruido de `malformed` es
 3. **Si alguna función usa combinación de teclas.** El chip lo soporta y nada lo
    sugiere todavía, pero no se ha probado a propósito.
 4. **Qué es el comando `0x90 42`.** Presente en las cinco capturas, ausente del
-   datasheet, sin efecto observable. Anotado en [PROTOCOLO.md](PROTOCOLO.md).
+   datasheet, sin efecto observable. Anotado en [PROTOCOLO.md](../PROTOCOLO.md).
 5. **El suelo de ruido de `malformed` es ~0.8 %, no cero.** Son transacciones de
    más, no pérdidas — la cuenta de ciclos cuadra exacta. Documentado en
-   [firmware/README.md](../firmware/README.md).
+   [firmware/README.md](../../firmware/README.md).
 
 ### Lección de método, que es la que más va a servir
 
@@ -1406,7 +1406,7 @@ Esta sesión empezó como revisión de documentos —cero mediciones previstas�
 acabó con trabajo real sobre hardware: firmware compilado, cargado y medido. Lo
 que sigue distingue una cosa de la otra.
 
-**Plano nuevo:** [hardware/plano_sonda_v2.svg](hardware/plano_sonda_v2.svg), con
+**Plano nuevo:** [hardware/plano_sonda_v2.svg](../hardware/plano_sonda_v2.svg), con
 el divisor de ADR-016 dibujado. Rehecho una vez porque la primera versión
 dibujaba tres símbolos de masa separados y **no se entendía que son un solo
 punto** — pregunta directa de quien iba a montarlo, que es la mejor prueba de que
@@ -1430,7 +1430,7 @@ parecido en la misma carpeta son un riesgo concreto. Se hicieron dos cosas:
    preferente, pero quizá sirve"— y una instrucción no.
 
 En el nombre antiguo queda un **archivo redirector**, porque
-[ADR-005](DECISIONS.md) enlaza el plano por nombre y los ADR no se editan:
+[ADR-005](../DECISIONS.md) enlaza el plano por nombre y los ADR no se editan:
 borrarlo dejaría un enlace roto en un documento inmutable.
 
 ### Lo que se comprobó y está bien
@@ -1443,7 +1443,7 @@ sigue en pie importa tanto como saber qué falló:
   salen. La sonda de ADR-016 —9.1 kΩ / 27 kΩ, bus a 3.99 V, GPIO a 2.99 V— es
   correcta y **no cambia**.
 - **El pinout medido es correcto** y coincide con el datasheet.
-- **El razonamiento de [ADR-011](DECISIONS.md) es correcto.** Verificado contra
+- **El razonamiento de [ADR-011](../DECISIONS.md) es correcto.** Verificado contra
   la tabla de teclado: sin tecla `0x2E` tiene el bit 6 a cero y con tecla a uno,
   así que inyectar exigiría forzar un 1 en un bus open-drain. Imposible, como
   decía.
@@ -1469,7 +1469,7 @@ El criterio pasa a ser el **cociente** entre las dos lecturas, donde el ciclo de
 trabajo se cancela: ≈0.80 esperado, por debajo de 0.70 desconectar. De propina,
 el cociente da el pull-up interno real, que era el único parámetro del diseño que
 seguía siendo un valor *típico* de datasheet sin mínimo garantizado. El diseño
-tolera un pull-up hasta un 70 % más débil que el típico. [ADR-018](DECISIONS.md).
+tolera un pull-up hasta un 70 % más débil que el típico. [ADR-018](../DECISIONS.md).
 
 ### Corrección 2 — un estado peligroso que no estaba contemplado
 
@@ -1481,10 +1481,10 @@ falla.
 No hay daño —son ~210 µA, limitados por los 9.1 kΩ de arriba— pero el síntoma
 aparecería justo después de haber soldado en la placa del mando, y la conclusión
 natural sería "rompí algo al soldar". Es el mismo patrón que
-[ADR-005](DECISIONS.md) evitó: un fallo cuyo síntoma apunta al sitio equivocado.
+[ADR-005](../DECISIONS.md) evitó: un fallo cuyo síntoma apunta al sitio equivocado.
 
 Regla nueva: USB primero, hilos después; al desmontar, al revés.
-[ADR-019](DECISIONS.md).
+[ADR-019](../DECISIONS.md).
 
 ### Corrección 3 — la impedancia publicada de la sonda estaba mal
 
@@ -1498,13 +1498,13 @@ Mismo error en ADR-013: 10.3 kΩ publicados, 13.9 kΩ reales.
 **No cambia el diseño ni el orden de preferencia** —ADR-016 sigue siendo mejor
 que ADR-013 en esto, 10.9 contra 13.9— pero el margen es menor del que decía el
 texto, y el umbral de "por debajo de 200 kHz va sobrado" de
-[firmware/README.md](../firmware/README.md) no se sostiene por cálculo. Se
+[firmware/README.md](../../firmware/README.md) no se sostiene por cálculo. Se
 sustituye por un criterio empírico: si `malformed` se queda en cero, sirve.
-[ADR-018](DECISIONS.md).
+[ADR-018](../DECISIONS.md).
 
 ### Corrección 4 — un supuesto escrito como hecho, otra vez
 
-[firmware/README.md](../firmware/README.md) afirmaba "la nuestra es un DevKit de
+[firmware/README.md](../../firmware/README.md) afirmaba "la nuestra es un DevKit de
 38 pines con **WROOM-32**". **Nunca se comprobó.** Lo único anotado del
 inventario es la serigrafía de la placa de expansión, que no dice nada del
 módulo. Y si fuera un WROVER, GPIO16 —el pin elegido para CLK— está ocupado por
@@ -1519,13 +1519,13 @@ nombre antiguo de Espressif para el WROOM-32. Apunta a WROOM, pero es un dato de
 tienda, exactamente la misma clase de dato que las otras tres veces.
 
 **Así que el supuesto no se resolvió, se eliminó: CLK pasa de P16 a P18**
-([ADR-020](DECISIONS.md)). P18 y P4 están libres en WROOM y en WROVER, no son
+([ADR-020](../DECISIONS.md)). P18 y P4 están libres en WROOM y en WROVER, no son
 pines de arranque y no son de la flash. La pregunta deja de tener consecuencias.
 
 Se decidió ahora porque ahora es gratis —no hay nada soldado ni cableado, cuesta
 una constante en el sketch— y después costaría desmontar.
 
-Efecto lateral: el ESP32 de repuesto de [COMPRAS.md](COMPRAS.md) ya no tiene que
+Efecto lateral: el ESP32 de repuesto de [COMPRAS.md](../COMPRAS.md) ya no tiene que
 ser WROOM. Cualquiera de los dos sirve.
 
 ### Y con las fotografías del producto, la bornera queda mapeada
@@ -1536,7 +1536,7 @@ quedaba pendiente y dan bastante más:
 - **P18 está en la bornera**, columna izquierda, entre P5 y P19. La comprobación
   que ADR-020 dejaba abierta queda cerrada. **P4 está en la misma columna**,
   cuatro posiciones antes.
-- **Las dos columnas completas anotadas** en [HARDWARE.md](HARDWARE.md), que
+- **Las dos columnas completas anotadas** en [HARDWARE.md](../HARDWARE.md), que
   hasta ahora solo describía tres pines de memoria y con una orientación
   ("bornera derecha con el USB-C hacia abajo") que en las fotos no cuadra. Ahora
   se localizan por vecinos, que no depende de cómo se sujete la placa.
@@ -1560,13 +1560,13 @@ quedaba pendiente y dan bastante más:
 faltan y las cuatro que hay que tomar, para que se suelten ahí cuando se tengan.
 
 Lo importante es que **los datos ya no dependen de esas fotos**: todo lo que
-demostraban está transcrito en [HARDWARE.md](HARDWARE.md) y marcado como
+demostraban está transcrito en [HARDWARE.md](../HARDWARE.md) y marcado como
 verificado por fotografía. Servirían para volver a comprobarlo sin la placa
 delante, no para saberlo.
 
 ### La lista de compras estaba escrita para otro país
 
-[COMPRAS.md](COMPRAS.md) daba todo en euros y con proveedores implícitos
+[COMPRAS.md](../COMPRAS.md) daba todo en euros y con proveedores implícitos
 europeos. **El proyecto se compra en Bogotá.** Una lista que no se puede ejecutar
 donde está la persona es una lista mala, por muy bien razonada que esté.
 
@@ -1612,11 +1612,11 @@ el del jumper, está corroborado por la fotografía. El resto no se usó.
 **Queda sin verificar lo que decide**: que la corriente por el botón vaya siempre
 en el mismo sentido. Un PC817 conduce en una sola dirección; un botón y un
 photoMOS, en las dos. Lo responde la captura del bus. **Es un candidato anotado
-en [COMPRAS.md](COMPRAS.md) con sus dos pruebas de multímetro pendientes, no una
-decisión**: [ADR-017](DECISIONS.md) sigue vigente.
+en [COMPRAS.md](../COMPRAS.md) con sus dos pruebas de multímetro pendientes, no una
+decisión**: [ADR-017](../DECISIONS.md) sigue vigente.
 
 **Un hallazgo extra al revisar los pines:** el ejemplo de cabecera de
-[capturas/README.md](capturas/README.md) —una plantilla pensada para copiarse—
+[capturas/README.md](../capturas/README.md) —una plantilla pensada para copiarse—
 decía `sonda 10k/20k en P16 (amarillo)`. Las dos cosas mal: esa sonda nunca se
 adoptó, y el **amarillo es el hilo de 5 V**, que no se conecta jamás. Corregido y
 anotado allí mismo.
@@ -1631,7 +1631,7 @@ silencio:
    decía que la cuenta se reinicia por transacción; el código no lo hacía. El
    primer flanco de cada trama medía hacia atrás hasta la trama anterior,
    cruzando el hueco muerto, y si ese hueco pasaba de 17.9 s —el chip dormido,
-   [ADR-012](DECISIONS.md)— la resta daba la vuelta y dejaba un mínimo falso y
+   [ADR-012](../DECISIONS.md)— la resta daba la vuelta y dejaba un mínimo falso y
    minúsculo. Justo el número que decide si el divisor sirve.
 2. **La marca de tiempo podía saltar 17.9 s.** Si la interrupción encolaba un
    evento justo después de que el bucle diera la cola por vacía, el *keep-alive*
@@ -1660,10 +1660,10 @@ se tocó.
 
 ### Precisiones menores
 
-- [HARDWARE.md](HARDWARE.md) decía que el material entre 1 kΩ y 10 kΩ suma
+- [HARDWARE.md](../HARDWARE.md) decía que el material entre 1 kΩ y 10 kΩ suma
   43 kΩ. En esa banda suman **41.7 kΩ**; los 43 salían de incluir las de 800 Ω y
   555 Ω, que no sirven para esto. La conclusión —no alcanza— no cambia.
-- [COMPRAS.md](COMPRAS.md) decía "conectar el analizador lógico a través de los
+- [COMPRAS.md](../COMPRAS.md) decía "conectar el analizador lógico a través de los
   mismos divisores", ambiguo. Montarle un **segundo** divisor de los mismos
   valores carga el bus con 18 kΩ y lo hunde a 3.32 V, por debajo del umbral.
   Aclarado: el mismo nodo, en paralelo.
@@ -1671,16 +1671,16 @@ se tocó.
   componentes piden. Pasan a **330 Ω**, 6.2 mA, a confirmar contra el datasheet
   de la pieza que se compre.
 - El plan B de la sonda (buffer 74LVC2G17) quedó huérfano cuando ADR-016
-  reemplazó a ADR-013. Re-anclado en [ADR-018](DECISIONS.md).
+  reemplazó a ADR-013. Re-anclado en [ADR-018](../DECISIONS.md).
 
 ### Hueco de seguridad anotado, sin decidir
 
-[ADR-010](DECISIONS.md) exige temporizador independiente por hardware **solo para
+[ADR-010](../DECISIONS.md) exige temporizador independiente por hardware **solo para
 M1 y M2**, porque el fallo que tenía en mente era sobrescribir un preset. Pero un
 contacto pegado en **subir** mueve el escritorio hasta el tope, y
-[ADR-009](DECISIONS.md) depende de mantener ese canal cerrado durante segundos.
+[ADR-009](../DECISIONS.md) depende de mantener ese canal cerrado durante segundos.
 Las protecciones para ese caso viven todas en el firmware, que es lo que se
-supone que ha fallado. Anotado en [SEGURIDAD.md](SEGURIDAD.md) como bloqueante
+supone que ha fallado. Anotado en [SEGURIDAD.md](../SEGURIDAD.md) como bloqueante
 de la fase 3. **No se decide aquí**: la fase 3 no está abierta.
 
 ### El atajo del puerto de accesorios queda descartado
@@ -1692,13 +1692,13 @@ mando y el cable de 6 hilos de los motores. Ningún RJ11, RJ12 ni RJ45.
 Era la única vía que podía acortar el proyecto entero: esas cajas Jiecang con
 puerto serie 9600 8N1 tienen componentes de ESPHome ya escritos, y habrían hecho
 innecesarios el sniffer, el accionamiento y todo lo que hay que soldar en el
-mando. Cierra el paso C de [PLAN.md](PLAN.md) en negativo.
+mando. Cierra el paso C de [PLAN.md](../PLAN.md) en negativo.
 
 Era lo esperable —un mando con AiP650E indica caja de gama sencilla— y el
 resultado sirve igual: **deja de haber una alternativa pendiente de explorar.**
 El bus del mando es el único camino, y ahora se sabe en vez de suponerse.
 
-Corregido de paso un supuesto de [HARDWARE.md](HARDWARE.md), que daba por hecho
+Corregido de paso un supuesto de [HARDWARE.md](../HARDWARE.md), que daba por hecho
 que la caja tenía "al menos tres conectores: uno por motor y uno para el mando".
 Los conectores reales están ahora anotados como verificados.
 
@@ -1870,7 +1870,7 @@ costaría más que el valor que aporta.
 muerto, en menos de un factor de dos de frecuencia.
 
 **Consecuencia para la fase 3, que era precaución teórica y ahora es evidencia:**
-[ADR-010](DECISIONS.md) exige que los pulsos de relé se acoten con un
+[ADR-010](../DECISIONS.md) exige que los pulsos de relé se acoten con un
 **temporizador independiente del firmware**, capaz de abrir el relé aunque el
 programa esté colgado. Hasta hoy eso se justificaba con "un cuelgue del
 firmware", en abstracto.
@@ -1880,7 +1880,7 @@ señal externa, sin ningún bug de lógica.** Una condición eléctrica en un pi
 basta para dejarlo sin responder. Si eso pasa con un relé de "subir" cerrado, lo
 único que para el escritorio es hardware que no dependa del CPU.
 
-Refuerza también el punto pendiente anotado en [SEGURIDAD.md](SEGURIDAD.md) sobre
+Refuerza también el punto pendiente anotado en [SEGURIDAD.md](../SEGURIDAD.md) sobre
 acotar por hardware **también subir y bajar**, no solo M1 y M2.
 
 ### Cuarto hallazgo, y el más incómodo: el sketch aprobaba con el cable quitado
@@ -1962,7 +1962,7 @@ estar ya generando flancos al pulsarlo, cosa que no es evidente. La vía cómoda
 ### Siguiente paso
 
 Sin cambios de fondo: **comprar dos resistencias de 27 kΩ**. Se puede soldar
-mientras tanto. Orden completo en [PLAN.md](PLAN.md).
+mientras tanto. Orden completo en [PLAN.md](../PLAN.md).
 
 ---
 
@@ -2027,10 +2027,10 @@ síntoma, "no se ve tráfico", no señalaba a ninguno de los dos errores.
 
 Se evitó porque el handover marcaba ese punto como *supuesto* y no como hecho, y
 porque no se soldó nada hasta verificarlo. Es exactamente para lo que existe la
-regla 5 de la [política](POLITICA_DOCUMENTACION.md).
+regla 5 de la [política](../POLITICA_DOCUMENTACION.md).
 
-Corregido en [HARDWARE.md](HARDWARE.md), [PROTOCOLO.md](PROTOCOLO.md) y
-[REFERENCIAS.md](REFERENCIAS.md). El pinout equivocado queda anotado como tal en
+Corregido en [HARDWARE.md](../HARDWARE.md), [PROTOCOLO.md](../PROTOCOLO.md) y
+[REFERENCIAS.md](../REFERENCIAS.md). El pinout equivocado queda anotado como tal en
 los tres sitios, no borrado.
 
 ---
@@ -2046,7 +2046,7 @@ tiene *built-in pull-up resistors* y DIO es *N-Channel, Open-Drain*; página 6
 los cuantifica en **550 µA típicos**, unos **9.1 kΩ** a 5 V.
 
 Con eso **la medición del pull-up deja de ser necesaria** — era lo único que
-bloqueaba el montaje. Sonda definida en [ADR-013](DECISIONS.md): divisor de
+bloqueaba el montaje. Sonda definida en [ADR-013](../DECISIONS.md): divisor de
 15 kΩ / 33 kΩ, que deja el bus a 4.20 V (mínimo exigido 3.5 V) y entrega 2.89 V
 al GPIO. Hay que comprar 2×15 kΩ y 2×33 kΩ; no hay nada aprovechable en el
 inventario.
@@ -2057,16 +2057,16 @@ TM1650 y ya no lo son:
 - Comandos `0x48` sistema, `0x68`/`0x6A`/`0x6C`/`0x6E` dígitos, `0x49` teclado.
 - Mapa de segmentos A = bit 0 … DP = bit 7.
 - Tabla completa de códigos de teclado. **Sin tecla = `0x2E`; con tecla, bit 6 a
-  uno.** Confirma [ADR-011](DECISIONS.md) desde la fuente primaria: inyectar
+  uno.** Confirma [ADR-011](../DECISIONS.md) desde la fuente primaria: inyectar
   exigiría llevar un bit de 0 a 1 en un bus open-drain.
 
 **Datos nuevos:**
 
 - **Duración mínima de pulsación: ~160 ms.** El chip solo reconoce una tecla si
   dura dos periodos de escaneo, y el periodo llega a 80 ms. Es el suelo que le
-  faltaba a [ADR-010](DECISIONS.md), que hasta ahora solo tenía techo.
+  faltaba a [ADR-010](../DECISIONS.md), que hasta ahora solo tenía techo.
 - **El modo sueño existe explícitamente** (bit 2 del byte de display).
-  [ADR-012](DECISIONS.md) deja de ser precaución teórica.
+  [ADR-012](../DECISIONS.md) deja de ser precaución teórica.
 - **El chip admite combinaciones KI1+KI2** sobre el mismo DIG, con prioridad
   máxima. Si alguna función del mando usa combinación, un relé solo no la
   reproduce.
@@ -2087,7 +2087,7 @@ TM1650 y ya no lo son:
 - **Verificado por datasheet:** pull-ups internos, comandos, segmentos, códigos
   de teclado, tiempos de escaneo, existencia del modo sueño.
 - **Pendiente de captura:** cómo usa la caja de control todo esto. Las siete
-  preguntas abiertas están en [PROTOCOLO.md](PROTOCOLO.md).
+  preguntas abiertas están en [PROTOCOLO.md](../PROTOCOLO.md).
 - **Duda menor sin resolver:** al medir ~5 V contra el azul en su día, ¿el
   multímetro mostraba signo negativo? Ya no importa — la continuidad al chip
   resolvió la identificación de los hilos por otra vía.
@@ -2100,12 +2100,12 @@ funcionales. El conector de 4 pines se desenchufó y se volvió a enchufar.
 ### Siguiente paso
 
 **Comprar dos resistencias de 27 kΩ** — con las 9.1 kΩ ya medidas, es todo lo
-que falta ([ADR-016](DECISIONS.md)).
+que falta ([ADR-016](../DECISIONS.md)).
 
 Se puede soldar mientras tanto, que no depende de ellas: tres hilos al conector
 del mando (rojo, verde y azul; el amarillo no). Y de paso, mirar la caja de
 control por fuera a ver si tiene un puerto serie adicional (paso C de
-[PLAN.md](PLAN.md)), que sería un atajo grande.
+[PLAN.md](../PLAN.md)), que sería un atajo grande.
 
 
 
@@ -2132,7 +2132,7 @@ Comprobaciones que trae incorporadas, cada una por un motivo concreto:
   16 bits; cualquier otra cosa es un flanco perdido.
 - **Contador de descartes de buffer** y **medida del periodo de reloj más
   corto**, que es lo que dirá si el divisor resistivo aguanta o hace falta el
-  buffer del que habla [ADR-013](DECISIONS.md).
+  buffer del que habla [ADR-013](../DECISIONS.md).
 
 **Sin compilar.** No hay toolchain de Arduino en el Mac. El código está escrito
 y revisado a mano, pero nunca pasó por un compilador ni por hardware.
@@ -2147,7 +2147,7 @@ Revisión buscando fallos, no confirmaciones. Ocho hallazgos, todos corregidos.
    contador de ciclos de la CPU, de 32 bits, que a 240 MHz da la vuelta cada
    17.9 s. Si el bus se queda callado más que eso, la marca de tiempo se va al
    garete en silencio. Y es justo el escenario de
-   [ADR-012](DECISIONS.md): el chip puede dormirse. Corregido con un
+   [ADR-012](../DECISIONS.md): el chip puede dormirse. Corregido con un
    *keep-alive* que absorbe ciclos mientras el bus está callado.
 2. **La comprobación de líneas daba "OK" con un cable cortado.** Solo comparaba
    cuál de los dos tenía más flancos; con DIO a cero seguía diciendo que el
@@ -2180,7 +2180,7 @@ bus real.
 
 Leído el código de colores de todo el surtido y confirmado con multímetro que
 las dos de blanco-café-rojo son **9.1 kΩ**, no los 920 Ω que se habían anotado
-en su día. Inventario completo en [HARDWARE.md](HARDWARE.md).
+en su día. Inventario completo en [HARDWARE.md](../HARDWARE.md).
 
 Primer cálculo: no alcanzaba. Dos divisores necesitan unos 90 kΩ repartidos en
 cuatro piezas de valor medio, y todo el surtido por encima de 1 kΩ suma unos
@@ -2189,7 +2189,7 @@ cuatro piezas de valor medio, y todo el surtido por encima de 1 kΩ suma unos
 Rehecho el reparto poniendo **9.1 kΩ arriba** en vez de 15 kΩ, sí sale, y con
 una ventaja inesperada: la impedancia que ve el GPIO baja de 10.3 kΩ a 6.5 kΩ,
 así que los flancos se redondean menos que en el diseño preferente. Registrado
-como [ADR-014](DECISIONS.md), con verificación obligatoria del nivel del bus al
+como [ADR-014](../DECISIONS.md), con verificación obligatoria del nivel del bus al
 conectar, porque el margen sobre el umbral del chip baja de 0.7 V a 0.38 V.
 
 Descartada por poco margen la combinación 9.1 k / 15 k: deja el bus a 3.63 V con
@@ -2203,7 +2203,7 @@ las 9.1 kΩ dan 4.0 V en el GPIO, por encima de lo que tolera el ESP32, y
 corregir el reparto exige más material del que hay. **Ninguna combinación del
 inventario real monta los dos divisores.**
 
-ADR-014 queda **anulado por [ADR-015](DECISIONS.md)** sin haberse montado nunca.
+ADR-014 queda **anulado por [ADR-015](../DECISIONS.md)** sin haberse montado nunca.
 
 Tercera corrección de inventario del día, y la segunda que cambia el diseño:
 
@@ -2227,7 +2227,7 @@ parecían de 15 kΩ y luego de 75 kΩ son **7.4 kΩ** (violeta-verde-**rojo**); 
 
 Aparecen **dos de 9.1 kΩ** confirmadas, que son un valor excelente para la parte
 de arriba del divisor. Con eso la compra necesaria baja de cuatro resistencias a
-**dos**, y la sonda final queda fijada en [ADR-016](DECISIONS.md): **9.1 kΩ
+**dos**, y la sonda final queda fijada en [ADR-016](../DECISIONS.md): **9.1 kΩ
 arriba, 27 kΩ abajo**, con el bus en 3.99 V y el GPIO en 2.99 V — las dos
 tensiones centradas en su rango. Gana además en impedancia sobre ADR-013:
 6.8 kΩ en vez de 10.3 kΩ, así que redondea menos los flancos.
@@ -2237,7 +2237,7 @@ cada divisor necesita ~25 kΩ, dos necesitan 50 kΩ, y todo el material entre
 1 kΩ y 10 kΩ suma **43 kΩ**. Faltan siete. La de 74 kΩ permitiría una línea
 buena pero consume todo el material medio y deja la segunda en 2.2 V.
 
-Inventario completo en [HARDWARE.md](HARDWARE.md), ya sobre valores medidos y no
+Inventario completo en [HARDWARE.md](../HARDWARE.md), ya sobre valores medidos y no
 leídos.
 
 Lección de proceso, que es lo que hay que llevarse: un supuesto disfrazado de
@@ -2248,7 +2248,7 @@ explícitamente lo medido de lo leído.
 ### Sonda final y lista de compras
 
 Inventario medido pieza a pieza, 30 resistencias. Sonda fijada en
-[ADR-016](DECISIONS.md): **9.1 kΩ arriba, 27 kΩ abajo**, bus a 3.99 V y GPIO a
+[ADR-016](../DECISIONS.md): **9.1 kΩ arriba, 27 kΩ abajo**, bus a 3.99 V y GPIO a
 2.99 V. Falta comprar solo **dos resistencias de 27 kΩ**.
 
 Hallazgo aparte, al preparar el pedido: **el módulo de relés mecánicos del
@@ -2256,9 +2256,9 @@ inventario no sirve para el accionamiento.** Los pulsadores conmutan
 microamperios —2 kΩ en serie en la matriz y pull-down interno de 50 µA— y un
 contacto mecánico por debajo de su corriente mínima se vuelve intermitente con
 el tiempo, con un modo de fallo que aparece meses después. Se sustituye por
-relés de estado sólido optoacoplados (photoMOS). [ADR-017](DECISIONS.md).
+relés de estado sólido optoacoplados (photoMOS). [ADR-017](../DECISIONS.md).
 
-Lista de compras razonada en [COMPRAS.md](COMPRAS.md), archivo nuevo. Lo de
+Lista de compras razonada en [COMPRAS.md](../COMPRAS.md), archivo nuevo. Lo de
 mayor valor por euro que hay ahí: un **analizador lógico USB de 10 €**, que
 elimina la restricción de partida del proyecto —"no hay instrumentos, el ESP32
 tiene que hacer de instrumento"— y convierte la fase de captura de "a ciegas" en
@@ -2268,9 +2268,9 @@ tiene que hacer de instrumento"— y convierte la fase de captura de "a ciegas" 
 
 ADR-011 a ADR-017. Firmware del sniffer, en
 [firmware/desk_sniffer/](../firmware/desk_sniffer/). Inventario completo de
-resistencias, medido pieza a pieza. [COMPRAS.md](COMPRAS.md) nuevo. Reescritura
-de [PROTOCOLO.md](PROTOCOLO.md) con el protocolo verificado contra el datasheet. Regla 4 nueva en la
-[política](POLITICA_DOCUMENTACION.md): las fuentes primarias se guardan dentro
+resistencias, medido pieza a pieza. [COMPRAS.md](../COMPRAS.md) nuevo. Reescritura
+de [PROTOCOLO.md](../PROTOCOLO.md) con el protocolo verificado contra el datasheet. Regla 4 nueva en la
+[política](../POLITICA_DOCUMENTACION.md): las fuentes primarias se guardan dentro
 del proyecto.
 
 ---
@@ -2301,11 +2301,11 @@ alto del bus a ~1.75 V, muy por debajo del umbral del AiP650.
 Consecuencia: el mando habría dejado de funcionar al conectar el ESP32, y el
 síntoma habría apuntado a las soldaduras del conector, no a las resistencias.
 
-Detalle completo en [ADR-005](DECISIONS.md).
+Detalle completo en [ADR-005](../DECISIONS.md).
 
 Segundo hallazgo, del datasheet: el AiP650 es familia TM1650 y **no usa
 direccionamiento I2C de 7 bits**. El primer byte tras el START es un comando
-fijo, no una dirección. Registrado como [ADR-006](DECISIONS.md).
+fijo, no una dirección. Registrado como [ADR-006](../DECISIONS.md).
 
 ### Interpretación
 
@@ -2335,7 +2335,7 @@ Contexto aportado en conversación, sin medición nueva:
   maquilado; la pista útil sigue siendo Jiecang / TM1650.
 - Los 5 pulsadores son **subir, bajar, M1, M2, reset**. Corrige el supuesto de
   ADR-003 de que el quinto era "M" de grabar preset. Registrado como
-  [ADR-008](DECISIONS.md): el reset baja el escritorio hasta el tope para
+  [ADR-008](../DECISIONS.md): el reset baja el escritorio hasta el tope para
   recalibrar, así que no se cablea nunca.
 - Confirmado que el display muestra la altura. Es lo que sostiene ADR-001.
 
@@ -2349,11 +2349,11 @@ Comportamiento de los botones, verificado por uso:
 
 Dos consecuencias, ambas registradas:
 
-- [ADR-009](DECISIONS.md): con la altura leída del bus, los relés alcanzan
+- [ADR-009](../DECISIONS.md): con la altura leída del bus, los relés alcanzan
   altura arbitraria — mantener, vigilar, soltar al llegar. El modo relé deja de
   ser plan B degradado y pasa a ser solución completa. Inyectar en el bus queda
   como mejora opcional, no como requisito.
-- [ADR-010](DECISIONS.md): el mismo botón que recupera un preset lo sobrescribe
+- [ADR-010](../DECISIONS.md): el mismo botón que recupera un preset lo sobrescribe
   si se mantiene, y el fallo es silencioso. Los pulsos de M1/M2 se acotan por
   temporizador independiente del firmware.
 
@@ -2362,7 +2362,7 @@ master y le pregunta por el teclado; toda la lógica de tiempos vive en la caja.
 Por eso inyectar una pulsación es responder a esa pregunta en lugar del chip.
 Al ser open-drain solo se puede forzar un bit a 0, así que la viabilidad depende
 de si la tecla pulsada se codifica con ceros o con unos. Anotado en
-[PROTOCOLO.md](PROTOCOLO.md) como la pregunta que debe responder la captura.
+[PROTOCOLO.md](../PROTOCOLO.md) como la pregunta que debe responder la captura.
 
 Pendiente de medir, sin instrumentos: el umbral de tiempo que separa "ir al
 preset" de "grabar preset".
@@ -2370,7 +2370,7 @@ preset" de "grabar preset".
 ### Investigación del chip y del mando, mismo día
 
 A partir de fotografías macro del AiP650EO y de la serigrafía de la PCB, se
-investigó el chip con fuentes públicas. Todo en [REFERENCIAS.md](REFERENCIAS.md).
+investigó el chip con fuentes públicas. Todo en [REFERENCIAS.md](../REFERENCIAS.md).
 Sin medición, sin tocar hardware.
 
 Tres resultados, en orden de importancia:
@@ -2378,26 +2378,26 @@ Tres resultados, en orden de importancia:
 **1. La inyección en el bus es imposible.** El byte de teclado del TM1650 marca
 la pulsación con el **bit 6 a uno**; en reposo ese bit está a cero. Simularla
 exige forzar un bit de 0 a 1, y el bus open-drain solo permite forzar a 0. No es
-difícil: es eléctricamente imposible. [ADR-011](DECISIONS.md). El accionamiento
+difícil: es eléctricamente imposible. [ADR-011](../DECISIONS.md). El accionamiento
 queda por contacto seco, definitivamente, y el bus pasa a ser de solo lectura
 permanente en vez de "por ahora".
 
 **2. El protocolo ya está documentado, no hay que descifrarlo.** Comandos
 (`0x48` control, `0x68`/`0x6A`/`0x6C`/`0x6E` dígitos, `0x49` teclado), mapa de
 segmentos bit a bit y formato del byte de tecla, todo en
-[PROTOCOLO.md](PROTOCOLO.md). **El decodificador de altura se puede escribir
+[PROTOCOLO.md](../PROTOCOLO.md). **El decodificador de altura se puede escribir
 antes de capturar nada**; la captura pasa de descubrir a confirmar.
 
 **3. El pinout del chip evita una incógnita entera.** Pines 5 = SCL, 6 = SDA,
 15 = GND, 16 = VDD. Con continuidad entre los hilos del conector y esos pines se
 identifican los cuatro hilos con multímetro — incluido cuál es SDA y cuál SCL,
 que se iba a resolver escuchando el bus. Añadido como medición A en
-[PLAN.md](PLAN.md).
+[PLAN.md](../PLAN.md).
 
 Además:
 
 - Riesgo nuevo detectado: si la caja apaga el display por inactividad, la altura
-  se queda congelada y **parece válida**. [ADR-012](DECISIONS.md).
+  se queda congelada y **parece válida**. [ADR-012](../DECISIONS.md).
 - `JK-CH506` no está en el catálogo público de Jiecang (sus mandos son
   `JCHT35Kxx`). Es referencia de fabricación; no hay documentación oficial que
   buscar, y la del chip es suficiente.
@@ -2406,7 +2406,7 @@ Además:
   2025.
 - Posible atajo sin explorar: si la caja de control tuviera un puerto serie
   adicional, hay componentes ESPHome ya hechos para el protocolo Jiecang y
-  sobra todo lo demás. Añadido como comprobación C en [PLAN.md](PLAN.md).
+  sobra todo lo demás. Añadido como comprobación C en [PLAN.md](../PLAN.md).
 
 Pendiente menor: guardar las fotografías macro del chip y de la serigrafía en
 `hardware/`.
@@ -2414,7 +2414,7 @@ Pendiente menor: guardar las fotografías macro del chip y de la serigrafía en
 ### Sonda final y lista de compras
 
 Inventario medido pieza a pieza, 30 resistencias. Sonda fijada en
-[ADR-016](DECISIONS.md): **9.1 kΩ arriba, 27 kΩ abajo**, bus a 3.99 V y GPIO a
+[ADR-016](../DECISIONS.md): **9.1 kΩ arriba, 27 kΩ abajo**, bus a 3.99 V y GPIO a
 2.99 V. Falta comprar solo **dos resistencias de 27 kΩ**.
 
 Hallazgo aparte, al preparar el pedido: **el módulo de relés mecánicos del
@@ -2422,9 +2422,9 @@ inventario no sirve para el accionamiento.** Los pulsadores conmutan
 microamperios —2 kΩ en serie en la matriz y pull-down interno de 50 µA— y un
 contacto mecánico por debajo de su corriente mínima se vuelve intermitente con
 el tiempo, con un modo de fallo que aparece meses después. Se sustituye por
-relés de estado sólido optoacoplados (photoMOS). [ADR-017](DECISIONS.md).
+relés de estado sólido optoacoplados (photoMOS). [ADR-017](../DECISIONS.md).
 
-Lista de compras razonada en [COMPRAS.md](COMPRAS.md), archivo nuevo. Lo de
+Lista de compras razonada en [COMPRAS.md](../COMPRAS.md), archivo nuevo. Lo de
 mayor valor por euro que hay ahí: un **analizador lógico USB de 10 €**, que
 elimina la restricción de partida del proyecto —"no hay instrumentos, el ESP32
 tiene que hacer de instrumento"— y convierte la fase de captura de "a ciegas" en
@@ -2433,9 +2433,9 @@ tiene que hacer de instrumento"— y convierte la fase de captura de "a ciegas" 
 ### Archivos generados
 
 Toda la estructura de `docs/`. ADR-001 a ADR-012, más REFERENCIAS.md. El handover original quedó
-congelado en [historia/HANDOVER-2026-07-27.md](historia/HANDOVER-2026-07-27.md)
+congelado en [historia/HANDOVER-2026-07-27.md](../historia/HANDOVER-2026-07-27.md)
 y el plano antiguo en
-[hardware/plano_divisores_v1.svg](hardware/plano_divisores_v1.svg), marcado como
+[hardware/plano_divisores_v1.svg](../hardware/plano_divisores_v1.svg), marcado como
 obsoleto por ADR-005.
 
 ---
@@ -2445,10 +2445,10 @@ obsoleto por ADR-005.
 El trabajo previo (identificación del mando, del chip AiP650EO, del pinout del
 cable con multímetro, y el inventario de resistencias) se hizo antes de existir
 esta política. No hay registro por sesión; el resultado consolidado está en
-[historia/HANDOVER-2026-07-27.md](historia/HANDOVER-2026-07-27.md) y repartido
+[historia/HANDOVER-2026-07-27.md](../historia/HANDOVER-2026-07-27.md) y repartido
 por los documentos temáticos.
 
 Lo que **sí** se sabe de esas sesiones, y conviene recordar: la recomendación
 osciló varias veces entre relés y cable sin dejar constancia de por qué, lo que
 generó confusión y trabajo repetido. Esa es la razón de ser de la regla 1 de la
-[política](POLITICA_DOCUMENTACION.md).
+[política](../POLITICA_DOCUMENTACION.md).

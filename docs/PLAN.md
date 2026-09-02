@@ -1,132 +1,391 @@
 # Plan
 
-> Fases y estado. Se actualiza al abrir o cerrar una fase, o cuando cambia el
-> alcance. El detalle de por qué está en [DECISIONS.md](DECISIONS.md).
+> Phases and status. Updated when a phase opens or closes, or when the scope
+> changes. The reasoning behind each decision lives in
+> [DECISIONS.md](DECISIONS.md).
+>
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md).*
 
-**Fase actual: 4 — ESPHome / Home Assistant.** La fase 3 se cerró el
-2026-08-22: los cuatro canales verificados contra el bus.
+**Current phase: 4, Home Assistant.** Phase 3 closed on 2026-08-22 with all four
+channels verified against the bus. Phase 2 closed on 2026-08-06: the protocol is
+decoded and the height is read off the bus, verified against the handset screen.
 
-*(Antes decía: fase 3 — Accionar.)* La fase 2 quedó cerrada el 2026-08-06: el
-protocolo está descifrado y la altura se lee del bus, verificada contra la
-pantalla del mando.
+⚠️ **Tidied on 2026-09-02, and it needed it.** This file had accumulated
+unchecked boxes for work finished a month earlier ("solder the taps ← we are
+here", with the taps soldered since 2026-08-06), a summary table still giving the
+pulse width as 300 ms when [ADR-027](DECISIONS.md) raised it to 800, and a
+sentence severed mid-clause. Nothing has been deleted: the phase history is
+below, with the boxes now reflecting reality. **The stale entries are called out
+where they were wrong** rather than quietly ticked.
 
 ---
 
-## Siguiente acción concreta
+## Where things stand
 
-✅ **Los recordatorios de postura funcionan de punta a punta** (verificado el
-2026-08-24: 45 min sentado → aviso → margen → re-verificación de presencia →
-el escritorio sube solo a 117 → botón para deshacer). Es lo primero que el
-sistema hace útil por su cuenta.
+Everything essential in phase 4 works: 21 entities in HA, travel with limits and
+verified braking, automatic give-way to the handset, monitoring with phone
+alerts, over-the-air updates, and the public repository on GitHub.
 
-**El sistema está estable y en periodo de observación (decisión del
-propietario, 2026-08-23).** Todo lo esencial de la fase 4 funciona: 21
-entidades en HA, viajes con límites y freno verificado, cesión al mando manual,
-monitoreo con alertas al móvil, OTA, y el repositorio público en GitHub.
+✅ **Posture reminders work end to end**, verified on 2026-09-02 at 12:30: it
+warned, waited, re-checked presence and **raised the desk from 80 to 117 with no
+manual intervention**. That is the first thing the system does usefully on its
+own.
 
-**Al retomar, por orden de valor:**
+✅ **Adversarial review of 2026-08-23: 16 findings, 16 fixed and verified live**
+([REVISION_FIRMWARE_2026-08-23.md](REVISION_FIRMWARE_2026-08-23.md)). Among
+them: the [ADR-024](DECISIONS.md) watchdog that had never been implemented,
+three HA buttons that never worked, the transient-height filter, limits in both
+directions, verified braking with retry, and `parar` on its own channel so it
+cannot be lost. A copy of the previous firmware is in `firmware/backups/`.
 
-1. **Presets con nombre** ("de pie", "sentado") — el alcance ya está decidido
-   en la sección de fase 4; es configuración sobre lo que ya funciona
-2. **Fabricar la placa definitiva** — especificación completa y esquema listos
-   en [hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md) y
-   los planos en [hardware/](hardware/) (tres láminas `plano_pcb_*.svg`). **Incluye el buffer
-   de aislamiento** ([ADR-031](DECISIONS.md)), que es la razón principal de
-   rehacerla: la protoboard fue el eslabón frágil del proyecto entero.
+## Next concrete steps
 
-   ⚠️ **Antes de encargarla, montar el buffer en protoboard y probarlo**: es la
-   única parte del diseño que nunca se ha probado
-3. **Estadísticas de uso en HA** (tiempo de pie/sentado — falta decidir el
-   umbral en cm) e InfluxDB para histórico largo
-4. Cabos sueltos menores: los cinco bytes de reposo sin identificar, y las
-   fotografías del chip pendientes de archivar
+**Step 5, trusting the reminders end to end. ⬜ IN PROGRESS since 2026-09-02.**
 
-✅ **Revisión adversarial del 2026-08-23: 16 hallazgos, 16 arreglados y
-verificados en vivo** ([REVISION_FIRMWARE_2026-08-23.md](REVISION_FIRMWARE_2026-08-23.md)).
-Entre ellos: el watchdog de [ADR-024](DECISIONS.md) que nunca se había
-implementado, tres botones de HA que nunca funcionaron, el filtro de alturas
-transitorias del display, límites en ambas direcciones, freno verificado con
-reintento, y `parar` en un canal propio que no puede perderse. **La fase 4 queda
-desbloqueada.** Copia del firmware previo en `firmware/backups/`.
+Phase 4 is built and running, but **the reminders have failed silently three
+times** (2026-08-24, 08-31 and 09-02), each time for a different reason and
+**none of them visible from the Home Assistant interface**. The last two, the
+presence sensor flickering and the counter being wiped on every restart, are
+fixed and verified on 2026-09-02.
 
+What remains is to **watch a couple of days of real use**: one good cycle does
+not rule out intermittent faults, which is exactly what the previous three were.
+A warning that does not end in movement is this system's characteristic failure.
 
-✅ **RESUELTO el 2026-08-23: el mando está sano.** Lo que parecía un chip
-dañado era un **cortocircuito entre el hilo verde (DIO) y el amarillo (5 V)**,
-un puente de estaño de las soldaduras al cerrar la tapa. Deshecho el corto, el
-mando funciona con normalidad — se grabaron y recuperaron dos memorias.
+⚠️ **And there is a second open matter, a different one:** on 2026-09-02 **nine
+warnings fired** (07:15, 07:45, 08:20, 08:55, 09:30, 10:50, 11:25, 12:00 and
+12:30) and the owner **saw no notification at all**. The notification is sent
+before the 110 s wait, so they were sent. **Whether they reached the phone could
+not be checked, because the logs for that window had already rotated.**
 
-⚠️ **EL MANDO VA Y VUELVE, Y NO SE SABE POR QUÉ (2026-08-23).** Deja de
-funcionar y vuelve, al menos cinco veces en un día, siempre alrededor de
-manipulaciones. **Causa desconocida**: se propusieron cuatro explicaciones y
-ninguna está comprobada. Detalle en la [bitácora](BITACORA.md).
+**On resuming, look at this first**, with fresh logs: if the
+`notify.mobile_app_icesar_pro` channel is not delivering, the system can move
+the desk without warning you first, which is worse than not moving it.
 
-⚠️ **Mientras siga yendo y viniendo, ninguna prueba vale.** Un resultado sobre un
-montaje intermitente no distingue un fallo real de una casualidad, y así se
-perdieron dos días.
+**How to check without guessing:** the `recorder` database queries are in
+[INTEGRACION_HA.md](INTEGRACION_HA.md). That section exists because on
+2026-09-02 a whole session was spent issuing plausible and wrong diagnoses with
+30 days of records sitting there unread.
 
-**Reconectado por pasos el 2026-08-23 y verificado en un momento en que
-funcionaba: el bus se lee y tres de los cuatro canales responden.**
+**Step 5b, deciding about the 2800 ms window.** The long pulse cannot be aborted
+and, if the opposite key is pressed while it lasts, the box sees UP and DOWN at
+once. **What it does with that is not verified.** The check is cheap, pressing
+both on the handset with the ESP32 disconnected, and it decides whether a fix is
+needed. Detail in [SEGURIDAD.md](SEGURIDAD.md). If the decision is to use M1 and
+M2 for the posture targets, **an ADR is required**: it contradicts a decision
+already taken.
 
-✅ **El canal 3 quedó resuelto el 2026-08-23: era el optoacoplador flojo en la
-protoboard.** Asentado bien, responde `0x67` a la primera. **Los cuatro canales
-verificados.**
+**Step 6, the board.** Specification and schematics ready in
+[hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md). Two things
+**before** ordering anything:
 
-**En curso: rehacer el cableado** en placa perforada en vez de protoboard. La
-protoboard fue el eslabón frágil del 2026-08-23 — el cortocircuito
-verde-amarillo y el canal 3 suelto salieron de ahí. Ya estaba en la
-[lista de compras](COMPRAS.md).
+1. **Identify the original cable connector** (pitch, latch, marking). Without
+   that the JST cannot be chosen.
+2. **Test the 74HC14 buffer on breadboard.** It goes on the board and has never
+   been built. It is the main reason for rebuilding the board
+   ([ADR-031](DECISIONS.md)): the breadboard was the fragile link of the whole
+   project.
 
-⚠️ **Reglas que no cambian:** **USB primero, hilos del bus después**
-([ADR-019](DECISIONS.md), [ADR-031](DECISIONS.md)), y **mandar `h` y comprobar
-que responde antes de fiarse de cualquier prueba de canal**
-([ADR-026](DECISIONS.md)).
+**Step 7, layer 1 of electrical protection.** The ESP32 charger and the desk on
+the same power strip. It costs nothing and is still pending
+([SEGURIDAD.md](SEGURIDAD.md)).
 
+**Then, by value:** named presets ("standing", "sitting"), which is configuration
+on top of what already works; usage statistics in HA, where the threshold in cm
+still has to be chosen, plus InfluxDB for long-term history; and the minor loose
+ends, meaning the unidentified idle bytes and the chip photographs still to be
+archived.
 
-La sonda está montada y funcionando, y **el protocolo está descifrado**. Detalle
-completo en [PROTOCOLO.md](PROTOCOLO.md); capturas crudas en
-[capturas/](capturas/).
+### Rules that do not change
 
-**La fase 2 está cerrada.** Todas sus preguntas tienen respuesta medida.
+⚠️ **USB first, bus wires second** ([ADR-019](DECISIONS.md),
+[ADR-031](DECISIONS.md)), and **send `h` and check it answers before trusting
+any channel test** ([ADR-026](DECISIONS.md)).
 
-**La fase 3 ya está desbloqueada.** La decisión de seguridad que la frenaba
-quedó cerrada en [ADR-023](DECISIONS.md) el 2026-08-06: **los cuatro canales
-llevan el mismo limitador de ancho de pulso de 300 ms**, y el firmware solo
-emite toques.
+### Known and unexplained
 
-Todos los tiempos están medidos:
+- **The handset came and went, and nobody knows why (2026-08-23).** It stopped
+  working and came back at least five times in one day, always around handling
+  it. Four explanations were proposed and **none was verified**. Detail in the
+  [log](BITACORA.md). ⚠️ **While it comes and goes, no test is worth anything**:
+  a result on an intermittent build cannot tell a real fault from a
+  coincidence, and that is how two days were lost.
+- **The five idle keyboard bytes**: `0x07`, `0x17`, `0x27`, `0x2E`, `0x2F`.
+  **None carries the `0x40` bit**, so none is a pressed key and they get in the
+  way of nothing. They probably indicate which column is being scanned.
+- ⚠️ **The Zigbee sensor delay is at 30 s.** It does not block anything, since
+  the real protection is `binary_sensor.escritorio_presencia_sostenida`. Mostly
+  explained on 2026-09-02, see [INTEGRACION_HA.md](INTEGRACION_HA.md); one row
+  of that table is still unexplained.
 
-| | Duración |
+### Resolved, kept because they cost time
+
+✅ **2026-08-23: the handset was healthy.** What looked like a damaged chip was a
+**short between the green wire (DIO) and the yellow one (5 V)**, a solder bridge
+made while closing the case. With the short removed, the handset worked
+normally.
+
+✅ **Channel 3, resolved 2026-08-23: it was a loose optocoupler on the
+breadboard.** Seated properly, it answers `0x67` first time.
+
+---
+
+## Physical state of the build
+
+Everything assembled and running since 2026-08-06:
+
+| | |
 |---|---|
-| Mínimo para que el chip vea la pulsación | 160 ms |
-| **Ancho de pulso elegido** | **300 ms** |
-| Toque → movimiento continuo | 2.2 – 2.6 s |
-| Toque → grabar preset | 3.0 s |
+| Taps | Three wires soldered to the handset's JST connector, original connector left in place. The yellow one was **not** soldered |
+| Probe | On breadboard, 9.1 k + 7.4 k on top and 27 kΩ below, per channel ([ADR-022](DECISIONS.md)) |
+| Connection | P18 = CLK (red), P4 = DIO (green), common GND |
+| ESP32 | On a wall charger since 2026-08-23, running the **burst sampling** build of `desk_sniffer` |
+| Levels | Bus 4.7 V, GPIO node 2.9 V |
+| The handset | **Works normally** with everything connected |
 
-**Y el limitador ya está resuelto sin comprar nada:** lo hace el **watchdog del
-ESP32** a 1 segundo ([ADR-024](DECISIONS.md)). El monoestable independiente queda
-aplazado, en la [lista acumulada de COMPRAS.md](COMPRAS.md).
+**If it has to be disconnected and reconnected:** USB first, bus wires second
+([ADR-019](DECISIONS.md)); reverse order when taking it apart. And the divider is
+only checked **with the blue wire out**, or the handset provides a parallel path
+of ~34 kΩ and the number means nothing.
 
-### Siguiente paso concreto
+## How to capture
 
-**Al retomar, empezar por aquí. Un paso cada vez, sin adelantar.**
+The sniffer dumps over serial at **115200**. *(It was 921600, then 460800, and
+ended at 115200 on 2026-08-21: it is the only speed at which commands have been
+verified end to end as received while the bus reads correctly. **The receive
+failure is unexplained**, see [ADR-026](DECISIONS.md).)*
 
-**Paso 1 — Los cuatro canales en protoboard ✅ HECHO el 2026-08-20.**
+To record to a file without fighting the IDE's Serial Monitor, which has to be
+closed first because only one program can hold the port:
 
-Los cuatro montados y verificados uno a uno, 40 pulsos encadenados cada uno:
-**OL en reposo, ~150 Ω al pulsar, 300 ms exactos**. Y con los cuatro
-optoacopladores puestos, los cuatro pines siguen leyendo **0 al arrancar** — que
-es lo que sostiene [ADR-024](DECISIONS.md). Detalle en la
-[bitácora](BITACORA.md).
+```
+exec 3</dev/cu.usbserial-0001
+stty -f /dev/cu.usbserial-0001 115200 raw -echo
+cat <&3 >> docs/capturas/YYYY-MM-DD-description.log
+```
 
-| Canal | Pin |
-|---|---|
-| 1 | GPIO 27 |
-| 2 | GPIO 26 |
-| 3 | GPIO 25 |
-| 4 | GPIO 33 |
+⚠️ **That is for listening only.** To *send* commands (`1` to `4`, `h`, `s`) you
+need a single read-write descriptor with the speed set by the native macOS
+ioctl; with shell redirection the bytes never arrive. Ready-made script in
+[../tools/serial_talk.py](../tools/serial_talk.py).
 
-⚠️ **Cargar con `arduino-cli`, no con el IDE.** El Arduino IDE cargaba
-sistemáticamente el sketch equivocado:
+The descriptor is opened **before** setting the speed: the other way round,
+macOS resets the configuration on open and the output is unreadable.
+
+A context header is mandatory on every capture, format in
+[capturas/README.md](capturas/README.md).
+
+## Loose tasks
+
+- [x] **Time the preset-store threshold, 3.0 s.** Measured on the bus on
+      2026-08-06 without risking any preset ([ADR-010](DECISIONS.md))
+- [x] **Install the Arduino IDE, compile and flash the sniffer**, done
+      2026-08-03
+- [x] **Which preset is M1 and which is M2**, resolved 2026-08-22.
+      **M1 → channel 3 → `0x67` → 80 cm. M2 → channel 4 → `0x6F` → 117 cm.**
+
+      *Two different sources, and they are worth keeping apart:* the
+      **channel → height** relation is **measured on the bus**, since channel 3
+      ran 073→080 and channel 4 ran 081→117; the **button → channel** relation
+      comes from whoever soldered the wires, because the handset's label is not
+      visible from the bus. Both matched what he predicted before testing.
+
+      *⚠️ A severed sentence used to sit here, reading in full: "physical is
+      which. Trivial, and only needed when wiring." Its beginning was lost in
+      some earlier edit and what remained said nothing. Removed on 2026-09-02;
+      recorded rather than silently dropped.*
+- [ ] Archive the macro photographs of the chip and the silkscreen in
+      [hardware/fotografias/](hardware/fotografias/), which already has an index
+      of which are missing
+- [ ] Identify the **five idle bytes**, listed above
+
+## Pending decisions
+
+*None open right now.*
+
+Closed on 2026-08-06:
+
+- ~~Whether up and down get bounded in hardware~~ → **Yes, and with the same
+  circuit as M1 and M2** ([ADR-023](DECISIONS.md)). The measurement revealed
+  that up and down have two regimes and that the dangerous one, continuous
+  travel, **cannot be stopped by opening a contact**, only prevented from
+  starting.
+
+Closed on 2026-08-03:
+
+- ~~Whether to buy the logic analyser~~ → **No.** The project's founding
+  constraint stands: the ESP32 acts as the instrument. It would only be bought
+  if the capture came out dirty and could not be diagnosed blind. See
+  [COMPRAS.md](COMPRAS.md).
+- ~~What to use for actuation~~ → **Neither photoMOS nor mechanical relays to
+  begin with:** PC817 first, the inventory relays if that does not fit
+  ([ADR-021](DECISIONS.md)). PhotoMOS cost around $120,000 COP in Colombia and
+  the cost premise of ADR-017 does not hold here.
+
+---
+
+## Phase 1, reconnaissance ✅
+
+Identify the hardware and the intervention point.
+
+- [x] Identify the handset: `JK-CH506 Rev1.2`, Jiecang
+- [x] Identify the chip: AiP650EO, TM1650 family, no MCU in the handset
+- [x] Verify the cable pinout with a multimeter
+- [x] Confirm the buttons sit at 5 V
+- [x] Inventory the resistors
+- [x] Identify the function of the 5 buttons: up, down, M1, M2, reset
+- [x] **Identify the 4 wires: red SCL, green SDA, blue GND, yellow 5 V.**
+      Corrects the handover's assumption, which gave red as VCC
+- [x] Work out how a preset is **stored**: by holding M1 or M2
+
+### A. Identify the 4 wires by continuity to the chip ✅ DONE
+
+**Result: red = SCL, green = SDA, blue = GND, yellow = VDD (5 V).** Verified at
+0.2 Ω on 2026-08-02. See [HARDWARE.md](HARDWARE.md).
+
+<details>
+<summary>Procedure (already carried out)</summary>
+
+With the connector unplugged from the control box, multimeter in **ohms** (not
+continuity, since the beeper does not pass through series components and its
+threshold can be permissive), measure each wire against the chip pins.
+
+Numbering: pin 1 at the corner with the dimple, pin 16 opposite.
+
+A reading of ~0.2 Ω is a direct trace. Anything above a few ohms is not a
+connection, it is something else.
+
+The pins are 1.27 mm pitch. Fine tip, and mind bridging neighbours.
+
+</details>
+
+### B. Measure the bus pull-up, NO LONGER NEEDED
+
+**Resolved by the datasheet, not by measurement.** The pull-up is **internal to
+the chip**: 550 µA typical, about 9.1 kΩ at 5 V. Any external resistors on top
+would only make it stronger. See [ADR-013](DECISIONS.md).
+
+*Measured anyway on 2026-08-23, from a different angle: with the handset
+disconnected, the box shows 21 kΩ on CLK and 22 kΩ on DIO against the 5 V. See
+[HARDWARE.md](HARDWARE.md).*
+
+### C. Look at the control box from outside ❌ RULED OUT, there is no shortcut
+
+**Checked by visual inspection on 2026-08-03. There is no accessory port.** All
+the control box has is the 29 V adapter input, the 4-wire handset connector, and
+the 6-wire motor cable. **No accessory RJ11, RJ12 or RJ45.**
+
+The shortcut being sought, those Jiecang boxes with an extra port for Bluetooth
+or a second handset, with a documented 9600 8N1 serial protocol and ready-made
+ESPHome implementations, **does not apply to this desk**. That was to be
+expected: a handset with an AiP650E/TM1650 indicates a budget-range box.
+
+**Consequence: the plan stands exactly as it is.** The handset bus is the only
+way in, and by the same token there is no longer an alternative left to explore.
+References for the discarded shortcut in [REFERENCIAS.md](REFERENCIAS.md).
+
+## Phase 2, sniffing ✅
+
+Listen to the bus without disturbing it and decode the height.
+
+- [x] Bus pull-up: resolved by datasheet, 9.1 kΩ internal
+- [x] Design the probe: 15 kΩ / 33 kΩ divider ([ADR-013](DECISIONS.md))
+- [x] Measure the whole resistor drawer with a multimeter, 30 pieces
+- [x] Final probe defined: 9.1 kΩ / 27 kΩ ([ADR-016](DECISIONS.md))
+- [x] Probe verification criterion corrected: judged by ratio, not absolute
+      value ([ADR-018](DECISIONS.md))
+- [x] **Obtain two 27 kΩ resistors**, received and measured 2026-08-03
+- [x] **Solder the taps to the handset's JST connector (AWG 28)**
+      *⚠️ This box was unticked and marked "← we are here" until 2026-09-02, with
+      the taps soldered since 2026-08-06 and the desk running off them.*
+- [x] CLK moved from P16 to **P18**, free on both WROOM and WROVER, so the
+      module cannot be identified with certainty and it stops mattering
+      ([ADR-020](DECISIONS.md))
+- [x] **P18 confirmed on the terminal block**, with the full map of both columns
+      recorded in [HARDWARE.md](HARDWARE.md)
+- [x] **Verify the handset still works with the taps fitted, before connecting
+      the ESP32** *(⚠️ also unticked until 2026-09-02; it was done on
+      2026-08-06)*
+- [x] Reference reading of the bus **without the probe**, for the ratio
+      *(⚠️ likewise)*
+- [x] Fit the probe on breadboard and **verify the bus level by ratio**
+      *(⚠️ likewise; bus at 4.7 V, GPIO at 2.9 V)*
+- [x] **Write the sniffer**, in
+      [firmware/desk_sniffer/](../firmware/desk_sniffer/)
+- [x] **Compile and flash the sniffer on the real ESP32**, done 2026-08-03
+- [x] **Probe fitted and verified**, 2026-08-06. The real pull-up turned out to
+      be 2.4 kΩ rather than 9.1 kΩ, which forced the divider to be redone
+      ([ADR-022](DECISIONS.md))
+- [x] **First bus capture**: the sniffer reads commands matching the datasheet,
+      `48`, `6A`, `6C`, `6E`, `4F`
+- [x] **Fix the framing.** The bus runs at ~202 kHz, above the ceiling of
+      interrupt capture. A histogram of intervals ruled out double-counted
+      edges. The sniffer moved to **burst sampling** at 4 MHz
+- [x] Capture traffic with the desk idle (display refresh)
+- [x] **Correlate bytes with the number on screen → height decoded.** Verified
+      in four cases, including a three-digit one
+- [x] Capture each button separately. **Up `0x47`, down `0x57`, presets `0x6F`
+      and `0x67`.** Reset was not pressed and never will be
+- [x] **Check whether the height refreshes during movement: YES.** Every
+      centimetre, ~1.2 s. **Closed-loop control is viable**
+- [x] **Check whether the chip ever sleeps: NO.** 15 minutes idle, 4505 arms and
+      **not one with the bus silent**. Bounds [ADR-012](DECISIONS.md)
+- [x] **Real range measured: 73 to 118 cm.** Hitting the stop produces nothing
+      distinguishable from standing still
+- [x] Document the protocol in [PROTOCOLO.md](PROTOCOLO.md)
+- [x] **Speed confirmed: 8.5 mm/s**, ~1.2 s per centimetre, with a 2.5 to 3 s
+      ramp over the first few centimetres
+
+## Phase 3, actuation ✅
+
+Read height over the bus, actuate four buttons through optocouplers: up, down,
+M1, M2. The reset stays out of the circuit ([ADR-008](DECISIONS.md)). With
+closed-loop height this reaches any height, not only the presets
+([ADR-009](DECISIONS.md)).
+
+**Ruled out: bus injection.** Electrically impossible,
+[ADR-011](DECISIONS.md). The bus is read-only for good.
+
+- [x] Verify the state of the actuation GPIOs at boot and reset **before**
+      connecting them ([ADR-010](DECISIONS.md)) *(⚠️ unticked until 2026-09-02;
+      done on 2026-08-20, and it is what `test_output_channels` exists for)*
+- [x] M1 and M2 pulses bounded independently of the main loop *(the ESP32 task
+      watchdog, [ADR-024](DECISIONS.md), implemented 2026-08-23)*
+- [x] Abort movement on any incoherent height reading *(stale height, stall,
+      reversed direction and maximum time, all in `superviseTravel`)*
+
+### Timing, all measured
+
+| | Duration | Source |
+|---|---|---|
+| Minimum for the chip to see the press | 160 ms | Two scan periods [datasheet] |
+| **Chosen pulse width** | **800 ms** | [ADR-027](DECISIONS.md) |
+| Long pulse, to start continuous travel | **2800 ms** | [ADR-028](DECISIONS.md) |
+| Tap → continuous travel | 2.2 to 2.6 s | Measured 2026-08-06 |
+| Tap → store preset | 3.0 s | Measured 2026-08-06 |
+
+⚠️ **Corrected on 2026-09-02.** This table gave the chosen pulse width as
+**300 ms**, the value from [ADR-023](DECISIONS.md), which
+[ADR-027](DECISIONS.md) superseded on 2026-08-21 after measuring that **at
+300 ms the desk does not move at all**. The firmware has emitted 800 ms taps
+since then. The old figure survived here for twelve days.
+
+### Channel map, verified 2026-08-22
+
+| Channel | Pin | Button | Code |
+|---|---|---|---|
+| 1 | GPIO 27 | Up | `0x47` |
+| 2 | GPIO 26 | Down | `0x57` |
+| 3 | GPIO 25 | Preset 80 cm | `0x67` |
+| 4 | GPIO 33 | Preset 117 cm | `0x6F` |
+
+**All four match what [PROTOCOLO.md](PROTOCOLO.md) predicted** back on
+2026-08-06. Capture:
+[cuatro-canales-verificados](capturas/2026-08-22-cuatro-canales-verificados.log).
+
+⚠️ **Load with `arduino-cli`, not with the IDE.** The Arduino IDE consistently
+uploaded the wrong sketch:
 
 ```
 CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
@@ -134,568 +393,109 @@ CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/
 "$CLI" upload -p /dev/cu.usbserial-0001 --fqbn esp32:esp32:esp32 firmware/<sketch>
 ```
 
-<details>
-<summary>Cómo era el paso 1</summary>
-
-Montar un solo PC817 con el ESP32, comprobar que se enciende y se apaga cuando
-el firmware lo manda, y que **no se enciende solo al arrancar ni al reiniciar**.
-El mando no interviene en este paso: el optoacoplador no está conectado a nada
-por su lado de salida.
-
-**Plano del montaje:
-[hardware/plano_canal_pc817.svg](hardware/plano_canal_pc817.svg).** Razonamiento
-en [SEGURIDAD.md](SEGURIDAD.md) y [ADR-024](DECISIONS.md). Pines propuestos:
-**P27, P26, P25 y P33**, cuatro seguidos en la columna derecha de la bornera.
-
-El sketch está en
-[firmware/test_output_channels/](../firmware/test_output_channels/). Pone los
-cuatro pines bajos como primera instrucción de `setup()`, permite activarlos de
-uno en uno escribiendo `1`, `2`, `3` o `4`, y **acota cada pulso a 300 ms**
-informando de cuánto duró en realidad.
-
-**Al medir, usar ohmios y no continuidad.** Un fototransistor saturado se queda
-en unos cientos de ohmios y los zumbadores solo pitan por debajo de 30 o 50, así
-que el modo continuidad hace parecer que el canal no funciona cuando sí lo hace.
-
-</details>
-
-**Paso 2 — Identificar los pulsadores del mando ✅ HECHO el 2026-08-20.**
-Los cinco localizados y el reset identificado, que es el que **no se cablea
-nunca** ([ADR-008](DECISIONS.md)).
-
-**Paso 3 — Cablear un solo canal** a un pulsador y comprobarlo. ✅ **HECHO el
-2026-08-21.**
-
-**Canal 2 (GPIO 26) → pulsador de BAJAR. Verificado en el bus:**
-
-```
-[2.597976] >>> KEY PRESSED KI3 / DIG4   <== CHANNEL 2 answered with 0x57
-```
-
-`0x57` es bajar, justo lo que predecía [PROTOCOLO.md](PROTOCOLO.md). Captura:
-[canal2-verificado-0x57](capturas/2026-08-21-canal2-verificado-0x57.log).
-
-⚠️ **Costó una tarde entera por un fallo del sniffer, no del montaje.** El bucle
-del pulso estaba **vacío**: el firmware quedaba ciego durante los 300 ms en que
-la tecla estaba pulsada, así que el canal funcionaba y la captura decía que no.
-Ya está corregido —el bucle captura mientras el contacto está cerrado— pero
-conviene saberlo porque **las capturas de esa tarde que dicen "el canal no
-responde" están marcadas como engañosas**, no borradas.
-
-**Dos reglas que salieron de ahí, y que valen para el paso 4:**
-
-1. ⚠️ **Mandar `h` y comprobar que el sketch responde antes de cada prueba**
-   ([ADR-026](DECISIONS.md)). El puerto serie dejó de recibir sin causa
-   identificada.
-2. ⚠️ **Si el escritorio se mueve y la captura dice que no ha pasado nada, el
-   sospechoso es la captura.** Es exactamente lo que ocurrió.
-
-<details>
-<summary>Cómo se cableó, para repetirlo en el paso 4</summary>
-
-⚠️ **Los cables del pulsador van a las patas 3 y 4 del PC817, nunca a la 1 y 2.**
-Las 1 y 2 ya llevan el ESP32 —resistencia de 320 Ω y masa—; son el LED interno.
-Las 3 y 4 son el interruptor, el lado del mando. **Esa separación es el
-aislamiento**: soldar el pulsador a las patas 1 y 2 uniría los 5 V del mando con
-el GPIO, que es justo lo que el optoacoplador existe para impedir.
-
-Del pulsador se cogen sus **dos patas en diagonal**, que son el par que cierra
-al apretar. Las de un mismo lado están unidas por dentro.
-
-**Comprobar a qué canal va el cable antes de disparar.** El 2026-08-21 estuvo
-conectado al canal 1 mientras se disparaba el canal 2 durante buena parte de la
-tarde. Disparar los cuatro canales seguidos lo destapa en un minuto.
-
-**La polaridad no importó.** Se invirtieron los dos cables de las patas 3 y 4 y
-el comportamiento fue idéntico — el fallo era del firmware. Si un canal nuevo no
-responde, invertirlos sigue siendo barato de probar, pero **no es la primera
-sospecha**: antes va comprobar el puerto con `h` y a qué canal está conectado.
-
-**Si hace falta medir**, `tools/pulse_loop.py` dispara un canal en bucle —toques
-de 300 ms, nunca un cierre largo— para que dé tiempo a leer el multímetro.
-Validar el aparato midiendo 3V3 contra GND antes de fiarse de un cero.
-
-Plano: [hardware/plano_canal_pc817.svg](hardware/plano_canal_pc817.svg).
-
-</details>
-
-### Lo que ya se puede hacer con un solo canal
-
-Verificado el 2026-08-21, moviendo el escritorio de verdad:
-
-| Modo | Cómo | Velocidad | Riesgo |
-|---|---|---|---|
-| **Toques** (`2`) | Pulsos de 800 ms ([ADR-027](DECISIONS.md)) | ~1 cm cada 3 pulsos | Ninguno nuevo |
-| **Continuo** (`B`) | Pulso de 2.8 s, frena con un toque ([ADR-028](DECISIONS.md)) | 6 cm en 7 s | ⚠️ Solo con supervisión |
-
-**Los viajes viven en el firmware desde la fase 4**: `ir:N` por MQTT o el
-campo "Ir a altura" de Home Assistant. Los guiones Python de viaje quedaron
-retirados en [../tools/legacy/](../tools/legacy/) — compiten con la máquina de
-estados del firmware (revisión del 2026-08-23, ronda 2).
-
-⚠️ **El movimiento continuo solo con supervisión.** Un cuelgue durante el viaje
-deja el escritorio moviéndose y **el watchdog no ayuda** —abre el canal, y abrir
-no frena—. Detalle en [SEGURIDAD.md](SEGURIDAD.md).
-
-**Paso 4 — Repetir para los otros tres.** ✅ **HECHO el 2026-08-22.**
-
-Los cuatro verificados en el bus, a la primera:
-
-| Canal | Pin | Botón | Código | Efecto observado |
-|---|---|---|---|---|
-| 1 | GPIO 27 | **Subir** | `0x47` | No movió con 300 ms |
-| 2 | GPIO 26 | **Bajar** | `0x57` | Verificado el 2026-08-21 |
-| 3 | GPIO 25 | **Memoria 80 cm** | `0x67` | Viajó 073 → 080 |
-| 4 | GPIO 33 | **Memoria 117 cm** | `0x6F` | Viajó 080 → 117 |
-
-**Los cuatro coinciden con lo predicho por [PROTOCOLO.md](PROTOCOLO.md)** desde
-el 2026-08-06. El reset sigue sin cablear ([ADR-008](DECISIONS.md)).
-
-Captura: [cuatro-canales-verificados](capturas/2026-08-22-cuatro-canales-verificados.log).
-
-**La fase 3 queda cerrada.**
-
-**Comprobación tras tocar el hardware:** `tools/verificar_canales.py` dispara los
-cuatro y contrasta el código que ve la caja contra el esperado. Los canales de
-memoria se frenan en cuanto delatan su código, así que no hay viajes largos y el
-escritorio se queda donde estaba. **Requiere `PULSE_MS = 300`** para que subir y
-bajar no muevan nada durante el barrido.
-
-Pasado limpio el 2026-08-22 después de cerrar la tapa del mando: los cuatro OK,
-94 cm antes y después.
-
-Los **PC817 ya están comprobados** y no necesitan nada más: son chips sueltos en
-DIP-4, sin jumper ni circuitería que neutralizar.
-
-El pin de CLK ya está resuelto: **P18**, confirmado presente en la bornera
-([ADR-020](DECISIONS.md)). Mapa completo de la bornera en
-[HARDWARE.md](HARDWARE.md).
-
-**El atajo del puerto de accesorios está descartado** (paso C, abajo): la caja de
-control solo tiene la entrada de corriente, el conector del mando y el cable de
-los motores. El bus del mando es el único camino.
-
-### Estado físico del montaje
-
-Todo montado y funcionando desde el 2026-08-06:
-
-| | |
-|---|---|
-| Derivaciones | Tres hilos soldados al conector JST del mando, con el conector original puesto. El amarillo **no** se soldó |
-| Sonda | En protoboard, 9.1 k + 7.4 k arriba y 27 kΩ abajo, por canal ([ADR-022](DECISIONS.md)) |
-| Conexión | P18 = CLK (rojo), P4 = DIO (verde), GND común |
-| ESP32 | Por USB al Mac, con la versión de **muestreo por ráfagas** de `desk_sniffer` cargada |
-| Niveles | Bus 4.7 V, nodo del GPIO 2.9 V |
-| El mando | **Funciona con normalidad** con todo conectado |
-
-**Si hay que desconectar y volver:** USB primero, hilos del bus después
-([ADR-019](DECISIONS.md)); al desmontar, al revés. Y el divisor solo se
-comprueba **con el cable azul fuera**, o el mando aporta un camino paralelo de
-~34 kΩ y el número no significa nada.
-
-### Cómo capturar
-
-El sniffer vuelca por serie a **115200**. *(Fue 921600, luego 460800, y acabó en
-115200 el 2026-08-21: es la única velocidad en la que se ha comprobado de punta a
-punta que se reciben comandos y se lee bien el bus. **El fallo de recepción no
-está explicado** — [ADR-026](DECISIONS.md).)*
-Para grabar a archivo sin pelearse con el Serial Monitor del IDE —que hay que
-cerrar antes, porque solo un programa puede tener el puerto—:
-
-```
-exec 3</dev/cu.usbserial-0001
-stty -f /dev/cu.usbserial-0001 115200 raw -echo
-cat <&3 >> docs/capturas/AAAA-MM-DD-descripcion.log
-```
-
-⚠️ **Esto solo sirve para escuchar.** Para *mandar* comandos (`1`–`4`, `h`, `s`)
-hace falta un solo descriptor de lectura y escritura con la velocidad fijada por
-el ioctl nativo de macOS; con redirecciones de shell los bytes no llegan. Script
-listo en [../tools/serial_talk.py](../tools/serial_talk.py).
-
-El descriptor se abre **antes** de fijar la velocidad: si se hace al revés,
-macOS reinicia la configuración al abrir el puerto y sale ilegible.
-
-Cabecera de contexto obligatoria en cada captura, formato en
-[capturas/README.md](capturas/README.md).
-
-### Tareas sueltas, sin dependencias
-
-- [x] **Cronometrar el umbral de grabar preset — 3.0 s.** Medido en el bus el
-      2026-08-06, sin arriesgar ningún preset. Desbloquea el cableado de M1/M2
-      ([ADR-010](DECISIONS.md))
-- [x] **Instalar Arduino IDE, compilar y cargar el sniffer** — hecho el
-      2026-08-03. Compila, arranca y la autocomprobación reporta bien
-- [ ] Guardar las fotografías macro del chip y de la serigrafía en
-      [hardware/fotografias/](hardware/fotografias/), que ya tiene el índice de
-      cuáles faltan
-- [x] **Cuál de las dos memorias es M1 y cuál M2** — resuelto el 2026-08-22.
-      **M1 → canal 3 → `0x67` → 80 cm. M2 → canal 4 → `0x6F` → 117 cm.**
-
-      *Dos fuentes distintas, y conviene no mezclarlas:* la relación
-      **canal → altura** está **medida en el bus** —el canal 3 recorrió 073→080
-      y el canal 4, 081→117—; la relación **botón → canal** la aporta quien
-      soldó los cables, porque la etiqueta del mando no se ve desde el bus.
-      Las dos coincidieron con lo que él predijo antes de probar
-- [ ] Identificar los **cinco bytes de reposo**: `0x07`, `0x17`, `0x27`, `0x2E`,
-      `0x2F`. **Ninguno lleva el bit `0x40`**, así que ninguno es una tecla
-      pulsada y no estorban. Probablemente indican qué columna se escanea. En
-      [cuatro-canales-verificados](capturas/2026-08-22-cuatro-canales-verificados.log)
-- [ ] Identificar el byte de teclado **`0x27`**, visto el 2026-08-21. **No es una
-      tecla pulsada** —le falta el bit `0x40`, así que el decodificador lo trata
-      como reposo, igual que `0x17`— pero no se sabe en qué se diferencia de
-      `0x17`. Aparece en
-      [capturas/2026-08-21-canal2-verificado-0x57.log](capturas/2026-08-21-canal2-verificado-0x57.log)
-      y alrededores
-      físico es cuál. Trivial, y solo hace falta al cablear
-
-<a id="decisiones-pendientes"></a>
-
-### Decisiones pendientes
-
-*Ninguna abierta ahora mismo.*
-
-Cerradas el 2026-08-06:
-
-- ~~Si subir y bajar se acotan por hardware~~ → **Sí, y con el mismo circuito
-  que M1 y M2**: limitador de ancho de pulso a 300 ms en los cuatro canales
-  ([ADR-023](DECISIONS.md)). La medición reveló que subir/bajar tienen dos
-  regímenes y que el peligroso —el movimiento continuo— **no se puede parar
-  abriendo un contacto**, solo evitar que arranque.
-
-Cerradas el 2026-08-03:
-
-- ~~Si se compra el analizador lógico~~ → **No.** La restricción de partida del
-  proyecto se mantiene: el ESP32 hace de instrumento. Se compraría solo si la
-  captura sale sucia y no se puede diagnosticar a ciegas. Ver
-  [COMPRAS.md](COMPRAS.md).
-- ~~Qué se usa para accionar~~ → **Ni photoMOS ni relés mecánicos de entrada:**
-  PC817 primero, los relés del inventario si no encaja
-  ([ADR-021](DECISIONS.md)). Los photoMOS cuestan ~$120.000 COP en Colombia y la
-  premisa de coste de ADR-017 no se sostiene aquí.
-
-Los pasos A, B y C de abajo se conservan como registro de cómo se llegó aquí.
-
-### A. Identificar los 4 hilos por continuidad al chip ✅ HECHO
-
-**Resultado: rojo = SCL, verde = SDA, azul = GND, amarillo = VDD (5 V).**
-Verificado a 0.2 Ω el 2026-08-02. Ver [HARDWARE.md](HARDWARE.md).
-
-El procedimiento original se conserva abajo por si hay que repetirlo, con el
-pinout ya corregido: patas **2 = SCL, 3 = SDA, 4 = GND, 10 = VDD**.
-
-<details>
-<summary>Procedimiento (ya ejecutado)</summary>
-
-Con el conector desenchufado de la caja de control, multímetro en **ohmios**
-(no en continuidad — el pitido no atraviesa componentes en serie y su umbral
-puede ser permisivo), medir cada hilo contra las patas del chip.
-
-Numeración: pata 1 en la esquina del punto hundido, pata 16 la de enfrente.
-
-Una lectura de ~0.2 Ω es pista directa. Cualquier cosa por encima de unos pocos
-ohmios no es conexión, es otra cosa.
-
-Los pines son de paso 1.27 mm. Punta fina y cuidado con puentear contiguos.
-
-</details>
-
-### B. Medir el pull-up del bus — YA NO HACE FALTA
-
-**Resuelto por el datasheet, no por medición.** El pull-up es **interno al
-chip**: 550 µA típicos, unos 9.1 kΩ a 5 V. Si además hubiera resistencias
-externas, el pull-up solo sería más fuerte. Ver [ADR-013](DECISIONS.md).
-
-La medición sigue siendo informativa —diría si existen los 10 kΩ externos del
-circuito recomendado— pero no cambia el diseño en ninguno de los dos
-resultados posibles. Opcional, por curiosidad.
-
-<details>
-<summary>Procedimiento (opcional)</summary>
-
-Con el mando conectado a la caja de control y todo **desenchufado de la
-corriente**, multímetro en ohmios:
-
-| Entre | Se espera | Qué significa |
+**Check after touching the hardware:** `tools/verificar_canales.py` fires all
+four and compares the code the box sees against the expected one. The preset
+channels brake as soon as they reveal their code, so there are no long trips and
+the desk stays where it was. **It requires `PULSE_MS = 300`** so that up and
+down move nothing during the sweep.
+
+⚠️ **Two rules that came out of phase 3, and they still apply:**
+
+1. **Send `h` and check the sketch answers before every test**
+   ([ADR-026](DECISIONS.md)). The serial port stopped receiving for no
+   identified cause.
+2. **If the desk moves and the capture says nothing happened, the suspect is the
+   capture.** That is exactly what happened, and it cost an afternoon: the pulse
+   loop was **empty**, so the firmware was blind for the 300 ms the key was
+   held. The captures from that afternoon saying "the channel does not respond"
+   are **marked as misleading**, not deleted.
+
+⚠️ **Button wires go to pins 3 and 4 of the PC817, never to 1 and 2.** Pins 1
+and 2 already carry the ESP32, its 330 Ω resistor and ground: they are the
+internal LED. Pins 3 and 4 are the switch, the handset side. **That separation
+is the isolation.**
+
+## Phase 4, Home Assistant 🔶 in progress
+
+Target: HA on Ultron (Raspberry Pi 5). **Full catalogue of what gets exposed,
+covering state, usage, events, controls and diagnostics, in
+[INTEGRACION_HA.md](INTEGRACION_HA.md)**, opened 2026-08-22.
+
+Software height limits and safe-movement conditions belong here. See
+[SEGURIDAD.md](SEGURIDAD.md).
+
+### The risk that was blocking the phase, measured and dismissed
+
+**The WiFi radio had never been switched on with this board.** The sniffer
+samples at 4 MHz with interrupts off for 2 ms per burst, and the WiFi stack
+needs CPU: they could have spoiled each other, and this board **had already hung
+twice on 2026-08-03** from interrupt saturation.
+
+**Measured on 2026-08-22, two 60 s runs identical except for the radio:**
+
+| | No WiFi | With WiFi |
 |---|---|---|
-| Rojo (SCL) ↔ Amarillo (5 V) | 1–10 kΩ | El pull-up de la línea de reloj |
-| Verde (SDA) ↔ Amarillo (5 V) | 1–10 kΩ | El pull-up de la línea de datos |
-| Rojo ↔ Verde | Alta | Confirma que son dos señales independientes |
-| Rojo ↔ Azul (GND) | Alta | Confirma que no hay pull-down |
+| Bursts | 299 | 298 |
+| Transactions | 1502 | 1499 |
+| **Malformed** | **0.67%** | **0.93%** |
+| Late samples | 15 | 17 |
+| Clock | 137 kHz | 137 kHz |
 
-Anotar los cuatro números en la bitácora aunque alguno salga raro —
-especialmente si sale raro.
+**The radio does not degrade the capture.** The difference falls inside the
+already documented noise floor (~0.8%). Cost: the program goes from 21% to 67%
+of flash and RAM from 9% to 16%. Capture:
+[wifi-impacto](capturas/2026-08-22-wifi-impacto.log).
 
-Conviene medir **dos veces**: con el mando conectado a la caja y con el mando
-suelto. Si el valor solo aparece con el mando conectado, los pull-ups están
-dentro de la caja de control; si aparece con el mando suelto, están en la placa
-del mando.
+⚠️ **Assumed, not verified:** this is **AP mode with no clients**, the gentlest
+case. **It still needs measuring in STA mode with real traffic** before calling
+the architecture sound.
 
-</details>
+### Software presets, scope decided 2026-08-22
 
-### C. Mirar la caja de control por fuera ❌ DESCARTADO — no hay atajo
+**Named heights, defined in software, independent of the handset's two
+presets.** `{"standing": 117, "sitting": 75, "meeting": 95}`, with the height
+reached by the height control that already works.
 
-**Comprobado por inspección visual el 2026-08-03. No existe puerto de
-accesorios.** Lo único que hay en la caja de control es:
+**Nothing new is needed.** It is demonstrated: in the full-travel test of
+2026-08-22 the desk went to **95 cm, which is not one of the handset presets**.
+Reading the height (phase 2) plus actuating (phase 3) plus braking on height
+(tested) is all it takes.
 
-1. La entrada del **adaptador de corriente** (29 V).
-2. El conector del **mando**, 4 hilos.
-3. El cable de **6 hilos** de los motores.
+**Advantage over the handset presets:** there are two of them, unnamed, and
+changing one requires a 3 s press with the risk of overwriting what was there.
+Software presets are unlimited and edited in a file. **And they cannot collide:**
+the long pulse is bounded at 2800 ms ([ADR-028](DECISIONS.md)), below the 3.0 s
+that store a preset, so **software cannot overwrite a handset preset even by
+accident**.
 
-Nada más. **Ningún RJ11, RJ12 ni RJ45 de accesorios.**
+**Limits, and they are real:**
 
-El atajo que se buscaba —esas cajas Jiecang que llevan un puerto adicional para
-Bluetooth o segundo mando, con protocolo serie 9600 8N1 ya documentado e
-implementaciones ESPHome listas— **no aplica a este escritorio**. Era lo
-esperable: un mando con AiP650E/TM1650 indica una caja de gama sencilla.
+- **1 cm resolution.** The display gives whole centimetres and about 1 cm of
+  coasting remains after braking. It is anticipated and trimmed with taps, and
+  all three targets on 2026-08-22 were hit exactly, but **below a centimetre
+  there is no information**.
+- **The ESP32 has to survive the trip.** A hang during continuous travel is
+  stopped by nobody ([ADR-028](DECISIONS.md)). **Under supervision** until the
+  software limits exist.
+- **The display sleeps** on inactivity: it has to be woken with a tap before the
+  first reading can be trusted.
 
-**Consecuencia: el plan sigue exactamente como está.** El bus del mando es el
-único camino, y por eso mismo deja de haber una alternativa pendiente de
-explorar. Referencias del atajo descartado en [REFERENCIAS.md](REFERENCIAS.md).
+### Work order
 
----
+1. ⚠️ **Software height limits, first.** That is the condition
+   [ADR-028](DECISIONS.md) sets for removing supervision from continuous travel.
+   **It comes before any button reachable from a phone**, because today the
+   brake depends on the ESP32 still being alive.
+2. Repeat the WiFi measurement **in STA mode with traffic**.
+3. ~~Choose a transport~~ → **closed 2026-08-22, MQTT with Discovery**
+   ([ADR-030](DECISIONS.md)).
+4. Controls and named presets.
+5. Diagnostics and usage statistics.
 
-## Fase 1 — Reconocimiento ✅
+## Phase 5, app ⬜
 
-Identificar el hardware y el punto de intervención.
+A custom frontend against the HA WebSocket API. JARVIS-style HUD aesthetic
+(cyan, JetBrains Mono), consistent with Aitri Hub.
 
-- [x] Identificar el mando: `JK-CH506 Rev1.2`, Jiecang
-- [x] Identificar el chip: AiP650EO, familia TM1650, sin MCU en el mando
-- [x] Verificar el pinout del cable con multímetro
-- [x] Confirmar que los pulsadores están a 5 V
-- [x] Inventariar resistencias
-- [x] Identificar la función de los 5 pulsadores: subir, bajar, M1, M2, reset
-- [x] **Identificar los 4 hilos: rojo SCL, verde SDA, azul GND, amarillo 5 V.**
-      Corrige el supuesto del handover, que daba el rojo como VCC
-- [x] Averiguar cómo se **graba** un preset: manteniendo pulsado M1 o M2.
-      Falta cronometrar el umbral, abajo
-
-## Fase 2 — Sniffing ✅
-
-Escuchar el bus sin perturbarlo y decodificar la altura.
-
-- [x] Pull-up del bus: resuelto por datasheet, 9.1 kΩ internos
-- [x] Diseñar la sonda: divisor 15 kΩ / 33 kΩ ([ADR-013](DECISIONS.md))
-- [x] Medir con multímetro todo el cajón de resistencias — 30 piezas
-- [x] Sonda final definida: 9.1 kΩ / 27 kΩ ([ADR-016](DECISIONS.md))
-- [x] Criterio de verificación de la sonda corregido: se juzga por cociente, no
-      por valor absoluto ([ADR-018](DECISIONS.md))
-- [x] **Conseguir dos resistencias de 27 kΩ** — recibidas y medidas el
-      2026-08-03, junto con las de 10 kΩ y 330 Ω de la fase 3
-- [ ] **Soldar las derivaciones al conector JST del mando (AWG 28)** ← aquí estamos
-- [x] CLK movido de P16 a **P18**, libre en WROOM y en WROVER: el módulo no se
-      puede identificar con certeza y así deja de importar
-      ([ADR-020](DECISIONS.md))
-- [x] **P18 confirmado en la bornera**, y mapa completo de las dos columnas
-      anotado en [HARDWARE.md](HARDWARE.md)
-- [ ] **Verificar que el mando sigue funcionando con las derivaciones puestas,
-      antes de conectar el ESP32.** Si algo cambió, el problema es de soldadura.
-- [ ] Lectura de referencia del bus **sin la sonda**, para el cociente
-- [ ] Montar la sonda en protoboard y **verificar el nivel del bus por cociente**
-      (≈0.80 esperado; por debajo de 0.70, desconectar)
-- [x] **Escribir el sniffer** — hecho, en
-      [firmware/desk_sniffer/](../firmware/desk_sniffer/). Decodifica altura,
-      teclas y control de display contra el datasheet
-- [x] **Compilar y cargar el sniffer en el ESP32 real** — hecho el 2026-08-03.
-      Compila, arranca, el serie a 921600 va y la autocomprobación de líneas
-      reporta correctamente. Falta probarlo **con datos en el bus**
-- [x] **Sonda montada y verificada** — 2026-08-06. Bus a 4.7 V, GPIO a 2.9 V,
-      mando funcionando con normalidad. El pull-up real resultó ser de 2.4 kΩ y
-      no de 9.1 kΩ, lo que obligó a rehacer el divisor
-      ([ADR-022](DECISIONS.md))
-- [x] **Primera captura del bus** — el sniffer lee comandos que coinciden con el
-      datasheet: `48`, `6A`, `6C`, `6E`, `4F`
-- [x] **Arreglar el encuadre.** El bus corre a ~202 kHz, por encima del techo de
-      la captura por interrupción. Un histograma de intervalos descartó que
-      fueran flancos contados dos veces. El sniffer pasa a **muestreo por
-      ráfagas** a 4 MHz
-- [x] Capturar tráfico con el escritorio quieto (refresco del display)
-- [x] **Correlacionar bytes con el número visible en pantalla → altura
-      decodificada.** Verificado en cuatro casos, incluido uno de tres dígitos
-- [x] Capturar cada pulsador por separado. **Subir `0x47`, bajar `0x57`,
-      memorias `0x6F` y `0x67`.** El reset no se pulsó ni se pulsará
-- [x] **Comprobar que la altura se refresca durante el movimiento — SÍ.** Cada
-      centímetro, ~1.2 s. **El lazo cerrado es viable**
-- [x] **Comprobado si el chip llega a dormirse: NO.** 15 minutos de reposo,
-      4505 armados y **ninguno con el bus en silencio**. El display se apaga
-      escribiendo ceros, pero el refresco no se detiene nunca y el control
-      siempre dice `sleep=no`. Acota [ADR-012](DECISIONS.md)
-- [x] **Rango real medido: 73 a 118 cm.** Al topar no ocurre nada distinguible
-      de estar parado
-- [x] Documentar el protocolo en [PROTOCOLO.md](PROTOCOLO.md)
-
-Medición aparte, sin instrumentos y sin riesgo, que puede hacerse cuando sea:
-
-- [x] **Umbral de mantener M1/M2 hasta que graba: 3.0 s.** Medido en el bus el
-      2026-08-06 ([ADR-010](DECISIONS.md) desbloqueado)
-- [x] **Velocidad confirmada: 8.5 mm/s**, ~1.2 s por centímetro, con rampa de
-      2.5–3 s en los primeros centímetros
-
-### Sobre el sniffer
-
-Escrito y revisado, en [firmware/desk_sniffer/](../firmware/desk_sniffer/), con
-sus instrucciones en [firmware/README.md](../firmware/README.md).
-
-Captura pasiva por interrupción en ambas líneas, decodificado fuera de la
-interrupción, y volcado por serie con marcas de tiempo. No asume
-direccionamiento I2C ([ADR-006](DECISIONS.md)).
-
-Si al conectarlo se pierden flancos —lo dirá el contador de descartes con el
-volcado crudo apagado— la alternativa robusta es capturar con el periférico RMT
-o I2S en vez de por interrupción.
-
-## Fase 3 — Accionar ✅
-
-**Camino base: relés.** Leer altura por el bus, accionar por relés sobre cuatro
-pulsadores — subir, bajar, M1, M2. El reset queda fuera del circuito
-([ADR-008](DECISIONS.md)). Con la altura en lazo cerrado esto alcanza cualquier
-altura, no solo los presets ([ADR-009](DECISIONS.md)).
-
-- [ ] Verificar el estado de los GPIO de relé en arranque y reset **antes** de
-      conectarlos ([ADR-010](DECISIONS.md))
-- [ ] Pulsos de M1/M2 acotados por temporizador independiente
-- [ ] Abortar movimiento ante cualquier lectura de altura incoherente
-
-**Descartada: inyección en el bus.** Imposible eléctricamente —
-[ADR-011](DECISIONS.md). El bus queda de solo lectura para siempre.
-
-## Fase 4 — ESPHome / Home Assistant 🔶 en curso
-
-Destino: HA sobre Ultron (Raspberry Pi 5). **Catálogo completo de lo que se va a
-exponer —estado, uso, eventos, controles y diagnóstico— en
-[INTEGRACION_HA.md](INTEGRACION_HA.md)**, abierto el 2026-08-22.
-
-Aquí entran los límites de altura por software y las condiciones de movimiento
-seguro. Ver [SEGURIDAD.md](SEGURIDAD.md).
-
-### El riesgo que bloqueaba la fase, medido y descartado
-
-**La radio WiFi nunca se había encendido en esta placa.** El sniffer muestrea a
-4 MHz con las interrupciones apagadas 2 ms por ráfaga, y el stack de WiFi
-necesita CPU: podían estropearse mutuamente, y esta placa **ya se colgó dos veces
-el 2026-08-03** por saturación de interrupciones.
-
-**Medido el 2026-08-22, dos corridas de 60 s idénticas salvo la radio:**
-
-| | Sin WiFi | Con WiFi |
-|---|---|---|
-| Ráfagas | 299 | 298 |
-| Transacciones | 1502 | 1499 |
-| **Malformadas** | **0.67%** | **0.93%** |
-| Muestras tardías | 15 | 17 |
-| Reloj | 137 kHz | 137 kHz |
-
-**La radio no degrada la captura.** La diferencia cae dentro del ruido de fondo
-ya documentado (~0.8%). Coste: el programa pasa del 21% al 67% de la flash y la
-RAM del 9% al 16%. Captura:
-[wifi-impacto](capturas/2026-08-22-wifi-impacto.log). Sketch:
-[../firmware/test_wifi_impact/](../firmware/test_wifi_impact/).
-
-⚠️ **Supuesto, no verificado:** esto es **modo AP sin clientes**, el caso más
-suave. **Falta medirlo en modo STA con tráfico real** antes de dar la
-arquitectura por buena. Hace falta el SSID y la contraseña de la red.
-
-### Orden de trabajo
-
-1. ⚠️ **Los límites de altura por software, primero.** Es la condición que
-   [ADR-028](DECISIONS.md) pone para quitar la supervisión del movimiento
-   continuo. **Va antes que cualquier botón accesible desde el móvil**: hoy el
-   freno depende de que el ESP32 siga vivo.
-2. Repetir la medida de WiFi **en modo STA con tráfico**.
-3. Elegir transporte —**MQTT con Discovery** es la recomendación, razonada en
-   [INTEGRACION_HA.md](INTEGRACION_HA.md)— y publicar el estado.
-4. Controles y presets con nombre.
-5. Diagnóstico y estadísticas de uso.
-
-### Presets propios por software — decidido el alcance el 2026-08-22
-
-**Alturas con nombre, definidas en software, independientes de las dos memorias
-del mando.** `{"de pie": 117, "sentado": 75, "reunión": 95}` y la altura se
-alcanza con el control por altura que ya funciona.
-
-**No hace falta nada nuevo.** Está demostrado: en la prueba de recorrido del
-2026-08-22 el escritorio fue a **95 cm, que no es ninguna memoria del mando**.
-Leer la altura (fase 2) + accionar (fase 3) + frenar por altura (probado) es todo
-lo que se necesita.
-
-**Ventaja sobre las memorias del mando:** son dos y sin nombre, y cambiarlas
-exige una pulsación de 3 s con riesgo de sobrescribir la que había. Los presets
-por software son ilimitados y se editan en un fichero. **Y no se pisan entre
-sí:** el pulso largo está acotado a 2800 ms ([ADR-028](DECISIONS.md)), por debajo
-de los 3.0 s que graban un preset, así que **el software no puede sobrescribir
-una memoria del mando ni por error**.
-
-**Límites, que son reales:**
-
-- **Resolución de 1 cm.** El display da centímetros enteros y tras frenar quedan
-  ~1 cm de inercia. Se anticipa y se ajusta con toques —los tres objetivos del
-  2026-08-22 se clavaron— pero **por debajo del centímetro no hay información**.
-- **El ESP32 debe sobrevivir al viaje.** Un cuelgue en movimiento continuo no lo
-  para nadie ([ADR-028](DECISIONS.md)). **Con supervisión** hasta que existan los
-  límites por software.
-- **El display se duerme** por inactividad: hay que despertarlo con un toque
-  antes de fiarse de la primera lectura.
-
-**Paso 5 — Confiar en los recordatorios de extremo a extremo. ⬜ EN CURSO
-desde el 2026-09-02.**
-
-La fase 4 está montada y funcionando, pero **los recordatorios han fallado en
-silencio tres veces** (2026-08-24, 08-31 y 09-02), siempre por motivos distintos
-y **ninguno visible desde la interfaz de Home Assistant**. Los dos últimos —el
-parpadeo del sensor de presencia y el contador que se borraba en cada reinicio—
-están corregidos y verificados el 2026-09-02.
-
-✅ **Primera verificación completa el 2026-09-02 a las 12:30**: avisó, esperó,
-re-verificó y **subió de 80 a 117 sin intervención manual**. Detalle en la
-[bitácora](BITACORA.md).
-
-Falta **observar un par de días de uso real**: un ciclo bueno no descarta los
-fallos intermitentes, que es exactamente lo que han sido los tres anteriores. Un
-aviso que no acaba en movimiento es el fallo característico de este sistema.
-
-⚠️ **Y hay un segundo asunto abierto, distinto:** el 2026-09-02 se dispararon
-**nueve avisos** —07:15, 07:45, 08:20, 08:55, 09:30, 10:50, 11:25, 12:00 y
-12:30— y el propietario **no vio ninguna notificación**. La notificación se
-manda antes de la espera de 110 s, así que se enviaron. **No se pudo comprobar
-si llegaron al móvil porque los logs de esa franja ya se habían rotado.**
-
-**Al retomar, mirar esto primero**, y con los logs frescos: si el canal
-`notify.mobile_app_icesar_pro` no entrega, el sistema puede mover el escritorio
-sin avisar antes — que es peor que no moverlo.
-
-**Cómo comprobarlo sin adivinar:** las consultas a la base de datos del
-`recorder` están en [INTEGRACION_HA.md](INTEGRACION_HA.md). Esa sección existe
-porque el 2026-09-02 emití diagnósticos plausibles y equivocados durante toda una
-sesión teniendo 30 días de registros a mano sin mirarlos.
-
-Suelto conocido, **sin explicar**: el sensor Zigbee revierte su retardo a 30 s
-por su cuenta. No bloquea nada —la protección real es
-`binary_sensor.escritorio_presencia_sostenida`— pero está sin entender.
-
-**Paso 5b — Decidir sobre la ventana de 2800 ms.** El pulso largo no se puede
-abortar y, si se pulsa la tecla contraria mientras dura, la caja ve SUBIR y
-BAJAR a la vez. **Qué hace con eso no está verificado.** La comprobación es
-barata —pulsar ambas en el mando, sin el ESP32— y decide si hace falta arreglo.
-Detalle en [SEGURIDAD.md](SEGURIDAD.md). Si se decide usar M1/M2 para los
-objetivos de postura, **hace falta un ADR**: contradice una decisión ya tomada.
-
-**Paso 6 — La placa.** Especificación y planos listos en
-[hardware/PCB_ESPECIFICACION.md](hardware/PCB_ESPECIFICACION.md). Dos cosas
-**antes** de encargar nada:
-
-1. **Identificar el conector del cable original** (paso, anclaje, marca). Sin eso
-   no se puede elegir el JST.
-2. **Probar el buffer 74HC14 en protoboard.** Va en la placa y nunca se ha
-   montado.
-
-**Paso 7 — Capa 1 de protección eléctrica.** El cargador del ESP32 y el
-escritorio en la misma regleta. Cuesta cero y sigue pendiente
-([SEGURIDAD.md](SEGURIDAD.md)).
-
-## Fase 5 — App ⬜
-
-Frontend propio contra la API WebSocket de HA. Estética HUD tipo JARVIS (cyan,
-JetBrains Mono), consistente con Aitri Hub.
-
-Métricas: horas sentado vs. de pie, recordatorio de cambio de postura, subir
-automáticamente al arrancar la primera reunión de la tarde.
+Metrics: hours sitting versus standing, posture change reminders, raising the
+desk automatically when the first afternoon meeting starts.

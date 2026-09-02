@@ -309,7 +309,7 @@ The byte following `0x48`:
 
 | Bit | Name | Meaning |
 |---|---|---|
-| 6–4 | BR[2:0] | Brightness. `000` = 8 levels, `001` = 1 level … `111` = 7 levels |
+| 6-4 | BR[2:0] | Brightness. `000` = 8 levels, `001` = 1 level … `111` = 7 levels |
 | 3 | S | `1` = 7-segment mode, `0` = 8-segment mode |
 | **2** | **W** | **`1` = sleep mode on**, `0` = off |
 | 0 | D | `1` = display on, `0` = off |
@@ -352,8 +352,8 @@ On a `Get key` command the chip answers with one byte. Official table:
 | KI7 | `0x74` | `0x75` | `0x76` | `0x77` |
 | KI1+KI2 | `0x7C` | `0x7D` | `0x7E` | `0x7F` |
 
-Structure: **bit 6 = key pressed**, bits 5–3 = KI column, bit 2 = always 1, bits
-1–0 = DIG row.
+Structure: **bit 6 = key pressed**, bits 5-3 = KI column, bit 2 = always 1, bits
+1-0 = DIG row.
 
 Behavioural rules [datasheet]:
 

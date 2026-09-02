@@ -115,6 +115,8 @@ gets recorded.
 | [capturas/](docs/capturas/) | Raw bus dumps, with their context | English |
 | [DECISIONS.md](docs/DECISIONS.md) | 34 ADRs with their reasoning | Spanish |
 | [BITACORA.md](docs/BITACORA.md) | Session diary, mistakes included | Spanish |
+| [POLITICA_DOCUMENTACION.md](docs/POLITICA_DOCUMENTACION.md) | The documentation rules themselves | Spanish |
+| [COMPRAS.md](docs/COMPRAS.md) · [REFERENCIAS.md](docs/REFERENCIAS.md) | Shopping list and sources | Spanish |
 
 The log keeps the wrong turns on purpose. A handset written off as burnt that
 turned out to be a solder bridge. A channel reported dead that was a bug in the
