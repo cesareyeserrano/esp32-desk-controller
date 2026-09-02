@@ -1,283 +1,287 @@
 # Hardware
 
-> Hechos físicos verificados. Cada afirmación indica si está **verificada**
-> (medida u observada) o es un **supuesto**.
+> Verified physical facts. Every claim states whether it is **verified**
+> (measured or observed) or an **assumption**.
+>
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md).*
 
 ---
 
-## Inventario
+## Inventory
 
-- **ESP32 DevKit 38 pines** sobre placa de expansión con borneras de tornillo.
-  Serigrafía: `HW-395 V0.0.3` / `DT-Y6593`.
-- **Módulo de 4 relés** Songle SRD-05VDC-SL-C, con optoacopladores y jumper
-  JD-VCC.
-- Resistencias surtidas de 1/4 W, ver tabla abajo.
-- Multímetro. Cautín y estaño.
-- **No hay** osciloscopio ni analizador lógico. Esto condiciona todo: el propio
-  ESP32 tiene que hacer de instrumento de medida.
-- MacBook Air M4 para programar por USB.
+- **38-pin ESP32 DevKit** on an expansion board with screw terminals.
+  Silkscreen: `HW-395 V0.0.3` / `DT-Y6593`.
+- **4-relay module**, Songle SRD-05VDC-SL-C, with optocouplers and a JD-VCC
+  jumper.
+- Assorted ¼ W resistors, see the table below.
+- Multimeter. Soldering iron and solder.
+- **There is no** oscilloscope and no logic analyser. This shapes everything:
+  the ESP32 itself has to serve as the measuring instrument.
+- MacBook Air M4 for programming over USB.
 
 ---
 
-## El escritorio y su mando
+## The desk and its handset
 
-Escritorio elevable de columna motorizada, marca comercial **Cougar**. Cougar es
-marca de periféricos, no fabricante de actuadores: el mecanismo es maquilado, y
-la serigrafía `JK-CH506` del mando apunta a **Jiecang**. Buscar documentación
-por "Cougar" no lleva a ninguna parte; por Jiecang o por TM1650, sí.
+A motorised-column standing desk, sold under the **Cougar** brand. Cougar makes
+peripherals, not actuators: the mechanism is white-labelled, and the `JK-CH506`
+silkscreen on the handset points to **Jiecang**. Searching for documentation
+under "Cougar" leads nowhere; under Jiecang or TM1650, it does.
 
-**Dos columnas motorizadas**, unidas entre sí por un cable de **6 hilos**. El
-cerebro está en la caja de control. **No se ha abierto y no hace falta
-abrirla.**
+**Two motorised columns**, joined to each other by a **6-wire** cable. The brain
+sits in the control box. **It has not been opened and does not need opening.**
 
-Alimentación: adaptador externo de **29 V** *(verificado, leído en la etiqueta
-del adaptador)*. La caja de control baja esos 29 V a los 5 V que alimentan el
-mando.
+Power: an external **29 V** adapter *(verified, read off the adapter label)*.
+The control box steps those 29 V down to the 5 V that powers the handset.
 
-Ese cable de 6 hilos entre motores lleva con toda probabilidad **los 29 V** y
-los sensores Hall. **No se toca**: los Hall darían posición contando pulsos, que
-es justo lo que descartó [ADR-001](DECISIONS.md), y hacerlo obligaría a pinchar
-cableado con corriente de motor a 29 V. El display ya da altura absoluta y en
-centímetros.
+That 6-wire cable between motors most likely carries **the 29 V** and the Hall
+sensors. **It is not touched**: the Hall sensors would give position by counting
+pulses, which is exactly what [ADR-001](DECISIONS.md) ruled out, and doing so
+would mean tapping wiring carrying motor current at 29 V. The display already
+gives absolute height, in centimetres.
 
-### Conectores externos de la caja de control — VERIFICADO
+### External connectors on the control box, VERIFIED
 
-*Comprobado por inspección visual el 2026-08-03, sin desmontar nada.*
+*Checked by visual inspection on 2026-08-03, without disassembling anything.*
 
-| Conector | Qué es |
+| Connector | What it is |
 |---|---|
-| Entrada del adaptador | 29 V |
-| Conector del mando | 4 hilos |
-| Cable de motores | 6 hilos |
+| Adapter input | 29 V |
+| Handset connector | 4 wires |
+| Motor cable | 6 wires |
 
-### El pull-up del bus vive en la caja de control — VERIFICADO 2026-08-23
+### The bus pull-up lives in the control box, VERIFIED 2026-08-23
 
-Medido **con el mando desconectado**, sobre el cable que sale de la caja:
+Measured **with the handset disconnected**, on the cable coming out of the box:
 
-| Entre | Resistencia |
+| Between | Resistance |
 |---|---|
-| Rojo (CLK) ↔ amarillo (5 V) | **21 kΩ** |
-| Verde (DIO) ↔ amarillo (5 V) | **22 kΩ** |
+| Red (CLK) ↔ yellow (5 V) | **21 kΩ** |
+| Green (DIO) ↔ yellow (5 V) | **22 kΩ** |
 
-**Las dos líneas tienen pull-up en la caja.** Encaja con los 2.4 kΩ medidos el
-2026-08-06 *con el mando conectado*: eran estos ~21 kΩ en paralelo con otro más
-fuerte dentro del mando.
+**Both lines have a pull-up in the box.** That fits the 2.4 kΩ measured on
+2026-08-06 *with the handset connected*: those were these ~21 kΩ in parallel
+with a stronger one inside the handset.
 
-**Consecuencia:** un sustituto del mando **solo necesita tirar de las líneas hacia
-abajo**; el nivel alto lo pone la caja. Es la condición que hacía falta para que
-el ESP32 pueda ocupar el sitio del mando. Ver [ADR-032](DECISIONS.md).
+**Consequence:** a handset replacement **only needs to pull the lines low**; the
+high level is set by the box. That was the condition needed for the ESP32 to be
+able to take the handset's place. See [ADR-032](DECISIONS.md).
 
-**Referencia leída en el motor el 2026-08-23: `FELV3-F4.0`.** Buscada sin
-resultado: no aparece en catálogos públicos ni en distribuidores. **Es código de
-fabricación, como `JK-CH506`** — el mismo patrón. No sirve para localizar
-repuestos por referencia.
+**Reference read off the motor on 2026-08-23: `FELV3-F4.0`.** Searched for with
+no result: it appears in no public catalogue and at no distributor. **It is a
+manufacturing code, like `JK-CH506`**, the same pattern. It is no use for
+finding spares by part number.
 
-**No hay ningún otro.** En concreto, **no existe puerto de accesorios**
-RJ11/RJ12/RJ45. Eso descarta el atajo del paso C de [PLAN.md](PLAN.md) —esas
-cajas Jiecang con puerto serie 9600 8N1 y componentes ESPHome ya hechos— y
-confirma que **el bus del mando es el único camino**. Era lo esperable: un mando
-con AiP650E indica una caja de gama sencilla.
+**There is no other connector.** In particular, **there is no accessory port**,
+RJ11, RJ12 or RJ45. That rules out the shortcut of path C in
+[PLAN.md](PLAN.md), those Jiecang boxes with a 9600 8N1 serial port and
+ready-made ESPHome components, and confirms that **the handset bus is the only
+way in**. It was to be expected: a handset with an AiP650E indicates a
+budget-range box.
 
-Que sean dos motores tiene otra consecuencia:
-- Las dos columnas **pueden desincronizarse** tras un corte de luz o una
-  sobrecarga, y el escritorio queda torcido. Recalibrar es para lo que sirve el
-  botón de reset. Refuerza [ADR-008](DECISIONS.md): ese botón se queda fuera del
-  circuito y la recalibración es siempre manual, mirando debajo del escritorio.
+Having two motors has another consequence:
 
-### Mando / handset
+- The two columns **can fall out of sync** after a power cut or an overload,
+  leaving the desk crooked. Recalibrating is what the reset button is for. That
+  reinforces [ADR-008](DECISIONS.md): the button stays out of the circuit and
+  recalibration is always manual, looking under the desk.
 
-- PCB marcada `JK-CH506 Rev1.2` y `G0088-30-4137-202518` (segunda lectura sobre
-  fotografía; el handover original transcribió `G9008B-3E-4137-202518`). El
-  sufijo `202518` encaja con un código de fecha: **semana 18 de 2025**.
-  "JK" apunta a **Jiecang**, fabricante chino de actuadores para escritorios.
-- `JK-CH506` **no aparece en el catálogo público de Jiecang**, cuyos mandos se
-  llaman `JCHT35Kxx`. Es referencia de fabricación o de cliente, no de catálogo:
-  no hay documentación oficial que buscar. La documentación útil es la del chip.
-- 5 pulsadores táctiles y un display de 7 segmentos con matriz de LEDs que
-  muestra la altura actual del escritorio.
-- Chip único: **AiP650EO**, marcado `19BT450`, SOP-16. `19BT450` es código de
-  lote, no variante. Clon funcional del **TM1650** de Titan Micro; el fabricante
-  del clon es I-CORE (Wuxi), que es el logotipo de barras verticales del
-  encapsulado. Driver de display de **8 segmentos × 4 dígitos, cátodo común**,
-  con escáner de teclado 7×4 integrado y soporte de algunas combinaciones.
-  Interfaz de dos hilos tipo I2C. Alimentación 3–5.5 V. Pinout y protocolo
-  completos en [PROTOCOLO.md](PROTOCOLO.md).
-- **No hay microcontrolador en el mando.** *Verificado por inspección: el
-  AiP650EO es el único chip de la placa.* Esto es lo que hace viable todo el
-  proyecto — significa que la caja de control envía por el cable los dígitos
-  literales que se ven en pantalla.
-- Se conecta a la caja de control con un cable de **4 hilos**, conector JST
-  blanco de 4 pines, paso pequeño (tipo PH o ZH).
+### Handset
+
+- PCB marked `JK-CH506 Rev1.2` and `G0088-30-4137-202518` (a second reading off
+  a photograph; the original handover transcribed `G9008B-3E-4137-202518`). The
+  `202518` suffix fits a date code: **week 18 of 2025**. "JK" points to
+  **Jiecang**, a Chinese manufacturer of desk actuators.
+- `JK-CH506` **does not appear in Jiecang's public catalogue**, whose handsets
+  are called `JCHT35Kxx`. It is a manufacturing or customer reference, not a
+  catalogue one: there is no official documentation to find. The useful
+  documentation is the chip's.
+- 5 tactile buttons and a 7-segment LED matrix display showing the desk's
+  current height.
+- A single chip: **AiP650EO**, marked `19BT450`, SOP-16. `19BT450` is a lot
+  code, not a variant. A functional clone of Titan Micro's **TM1650**; the clone
+  maker is I-CORE (Wuxi), which is the vertical-bars logo on the package. An LED
+  display driver for **8 segments × 4 digits, common cathode**, with an
+  integrated 7×4 keyboard scanner and support for some combinations. Two-wire
+  I2C-like interface. Supply 3 to 5.5 V. Full pinout and protocol in
+  [PROTOCOLO.md](PROTOCOLO.md).
+- **There is no microcontroller in the handset.** *Verified by inspection: the
+  AiP650EO is the only chip on the board.* This is what makes the whole project
+  viable, because it means the control box sends the literal on-screen digits
+  down the cable.
+- It connects to the control box with a **4-wire** cable, a white 4-pin JST
+  connector, small pitch (PH or ZH type).
 
 ---
 
-## Pinout del cable — VERIFICADO
+## Cable pinout, VERIFIED
 
-*Verificado el 2026-08-02 por continuidad, con el conector desenchufado de la
-caja de control y el multímetro en ohmios. Las cuatro lecturas dieron 0.2 Ω, que
-es resistencia de pista: son conexiones directas, no caminos indirectos.*
+*Verified on 2026-08-02 by continuity, with the connector unplugged from the
+control box and the multimeter in ohms. All four readings gave 0.2 Ω, which is
+trace resistance: these are direct connections, not indirect paths.*
 
-| Color | Pata del AiP650 | Función | Estado |
+| Colour | AiP650 pin | Function | Status |
 |---|---|---|---|
-| **Rojo** | 2 | **CLK** (SCL) — reloj del bus | **Verificado** |
-| **Verde** | 3 | **DIO** (SDA) — datos del bus | **Verificado** |
-| **Azul** | 4 | **GND** — tierra | **Verificado** |
-| **Amarillo** | 10 | **VDD** — 5 V | **Verificado** |
+| **Red** | 2 | **CLK** (SCL), bus clock | **Verified** |
+| **Green** | 3 | **DIO** (SDA), bus data | **Verified** |
+| **Blue** | 4 | **GND**, ground | **Verified** |
+| **Yellow** | 10 | **VDD**, 5 V | **Verified** |
 
-Los cuatro hilos caen exactamente sobre las cuatro funciones que un cable de
-mando tiene que llevar, y coinciden con el pinout del datasheet de I-CORE. El
-fabricante llama a las líneas **CLK** y **DIO**, no SCL/SDA.
+All four wires land exactly on the four functions a handset cable has to carry,
+and they match the pinout in the I-CORE datasheet. The manufacturer calls the
+lines **CLK** and **DIO**, not SCL/SDA.
 
-### Corrección: el handover se equivocaba con el rojo y el amarillo
+### Correction: the handover had red and yellow wrong
 
-El [handover original](historia/HANDOVER-2026-07-27.md) daba el **rojo** como
-"VCC (5 V) probable" y el amarillo y el verde como las líneas de datos. Es al
-revés en dos de los cuatro:
+The [original handover](historia/HANDOVER-2026-07-27.md) gave **red** as "VCC
+(5 V) probable" and yellow and green as the data lines. Two of the four are the
+other way round:
 
-| Hilo | Handover decía | Es en realidad |
+| Wire | Handover said | It actually is |
 |---|---|---|
-| Rojo | VCC (supuesto) | **SCL** |
-| Amarillo | Datos | **VDD, 5 V** |
-| Verde | Datos | SDA — acertado |
-| Azul | GND | GND — acertado |
+| Red | VCC (assumed) | **SCL** |
+| Yellow | Data | **VDD, 5 V** |
+| Green | Data | SDA, correct |
+| Blue | GND | GND, correct |
 
-Consecuencia si se hubiera montado el plan viejo: el **reloj habría quedado sin
-conectar** —el sniffer no habría capturado nada— y la **línea de 5 V habría ido
-a un GPIO** por un divisor. Dos fallos a la vez, y el síntoma (no se ve tráfico)
-no apuntaba a ninguno de los dos.
+Consequence had the old plan been built: the **clock would have been left
+unconnected**, so the sniffer would have captured nothing, and the **5 V line
+would have gone to a GPIO** through a divider. Two faults at once, and the
+symptom (no traffic visible) pointed at neither of them.
 
-El error venía de que un multímetro no distingue una línea de datos en reposo
-alto de una línea de alimentación: las tres no-azul miden ~4.x V igual. Por eso
-el handover lo marcaba como *supuesto*, y por eso no se montó.
+The error came from a multimeter being unable to tell an idle-high data line
+from a supply line: all three non-blue wires read ~4.x V alike. That is why the
+handover marked it as *assumed*, and why it was never built.
 
-**Por tanto:** los divisores van en **rojo** y **verde**. El hilo que **no se
-conecta** es el **amarillo**. El azul sigue yendo a GND.
+**Therefore:** the dividers go on **red** and **green**. The wire that is **not
+connected** is the **yellow** one. Blue still goes to GND.
 
-Nota: continuidad al chasis metálico del motor, ninguno de los 4 hilos da
-continuidad. Normal — fuente flotante o chasis pintado.
+Note: none of the 4 wires shows continuity to the motor's metal chassis. Normal,
+whether from a floating supply or a painted chassis.
 
 ---
 
-## Los pulsadores
+## The buttons
 
-*Función verificada por uso del mando.*
+*Function verified by using the handset.*
 
-| Botón | Función | ¿Automatizable? |
+| Button | Function | Automatable? |
 |---|---|---|
-| Subir | Sube mientras se mantiene pulsado | Sí |
-| Bajar | Baja mientras se mantiene pulsado | Sí |
-| M1 | Va a la altura guardada 1 | Sí — es la vía preferente |
-| M2 | Va a la altura guardada 2 | Sí — es la vía preferente |
-| Reset | Recalibración | **No. Nunca.** Ver [ADR-008](DECISIONS.md) |
+| Up | Rises while held | Yes |
+| Down | Descends while held | Yes |
+| M1 | Goes to stored height 1 | Yes, the preferred route |
+| M2 | Goes to stored height 2 | Yes, the preferred route |
+| Reset | Recalibration | **No. Never.** See [ADR-008](DECISIONS.md) |
 
-### Comportamiento de los botones
+### Button behaviour
 
-*Verificado por uso del mando. **Los tiempos ya están medidos** — ver
-[Tiempos de accionamiento por relé](#tiempos-de-accionamiento-por-relé) más
-abajo: recuperar un preset dura < 0.2 s y grabarlo exige 3.0 s.*
+*Verified by using the handset. **The timings are now measured**, see
+[Relay actuation timing](#relay-actuation-timing) below: recalling a preset
+takes < 0.2 s and storing one requires 3.0 s.*
 
-| Acción | Resultado |
+| Action | Result |
 |---|---|
-| Pulso corto en subir/bajar | Mueve ≈ 1 cm y para |
-| Mantener subir/bajar | Mueve hasta el límite físico |
-| Cualquier botón durante el movimiento | **Detiene el movimiento** |
-| Pulso corto en M1/M2 | Va a la altura guardada |
-| **Mantener M1/M2** | **Graba la altura actual en ese preset** |
+| Short press on up/down | Moves ≈ 1 cm and stops |
+| Hold up/down | Moves to the physical limit |
+| Any button during movement | **Stops the movement** |
+| Short press on M1/M2 | Goes to the stored height |
+| **Hold M1/M2** | **Stores the current height in that preset** |
 
-Dos consecuencias que gobiernan el diseño del accionamiento:
+Two consequences that govern the actuation design:
 
-**El mismo botón que recupera un preset lo sobrescribe si se mantiene.** Un relé
-que cierre de más no va a la posición guardada: la destruye. El umbral de tiempo
-que separa "ir a" de "grabar" **hay que medirlo** y los pulsos deben quedar muy
-por debajo. Ver [ADR-010](DECISIONS.md).
+**The same button that recalls a preset overwrites it if held.** A relay that
+closes for too long does not go to the stored position: it destroys it. The time
+threshold separating "go to" from "store" **has to be measured** and pulses must
+stay well below it. See [ADR-010](DECISIONS.md).
 
-**"Cualquier botón detiene" es un freno.** Cualquier relé disponible sirve para
-abortar un movimiento en curso.
+**"Any button stops it" is a brake.** Any available relay serves to abort a
+movement in progress.
 
-Detalle físico:
+Physical detail:
 
-- Pulsadores táctiles de 4 patas. Las patas del mismo lado están unidas
-  internamente; las **diagonales** son el par que el botón cierra al presionar.
-- **Verificado: entre las patas de un pulsador hay 5 V.**
-- Consecuencia: no pueden conectarse a un GPIO del ESP32, que tolera 3.6 V.
-  Ver [ADR-004](DECISIONS.md).
+- 4-pin tactile buttons. The pins on the same side are internally joined; the
+  **diagonal** pair is what the button closes when pressed.
+- **Verified: there are 5 V across a button's pins.**
+- Consequence: they cannot be connected to an ESP32 GPIO, which tolerates 3.6 V.
+  See [ADR-004](DECISIONS.md).
 
 ---
 
-## Punto de derivación
+## Tap point
 
-En la placa del mando, los 4 pines del conector JST están soldados y accesibles
-por el reverso. Se sueldan cablecitos finos (AWG 28–30) **dejando el conector
-original puesto**, para que el mando siga funcionando durante todo el proceso.
+On the handset board, the 4 pins of the JST connector are soldered and reachable
+from the back. Thin wires (AWG 28 to 30) are soldered on **leaving the original
+connector in place**, so the handset keeps working throughout.
 
-**Solo tres hilos. El amarillo no se suelda.**
+**Only three wires. The yellow one is not soldered.**
 
-| Pin del conector | Función | A dónde va |
+| Connector pin | Function | Where it goes |
 |---|---|---|
-| Donde entra el **rojo** | CLK | Divisor → P18 |
-| Donde entra el **verde** | DIO | Divisor → P4 |
-| Donde entra el **azul** | GND | GND del ESP32 |
-| Donde entra el **amarillo** | VDD 5 V | **Nada. No se suelda.** |
+| Where **red** enters | CLK | Divider → P18 |
+| Where **green** enters | DIO | Divider → P4 |
+| Where **blue** enters | GND | ESP32 GND |
+| Where **yellow** enters | VDD 5 V | **Nowhere. Not soldered.** |
 
-Dejar el amarillo sin soldar no es solo ahorrarse una junta: evita tener un hilo
-suelto con 5 V cerca de una protoboard llena de GPIO que toleran 3.6 V.
+Leaving yellow unsoldered is not just one joint saved: it avoids having a loose
+5 V wire near a breadboard full of GPIOs that tolerate 3.6 V.
 
-### Procedimiento
+### Procedure
 
-**Preparación.** Escritorio desenchufado de la corriente. Placa fuera de la
-carcasa y sujeta a la mesa. Tres hilos de 20–30 cm, de colores distintos,
-**anotando qué color va a qué pin** — una vez en la protoboard ya no se
-distinguen.
+**Preparation.** Desk unplugged from mains. Board out of its case and secured to
+the table. Three wires of 20 to 30 cm in different colours, **noting which
+colour goes to which pin**, because once on the breadboard they are
+indistinguishable.
 
-Las juntas del conector ya tienen estaño, así que basta refundirlas y apoyar el
-hilo estañado. Poco tiempo de cautín por junta: insistir con la punta apoyada es
-como se levanta una pista.
+The connector joints already carry solder, so it is enough to reflow them and
+rest the tinned wire on top. Little iron time per joint: pressing on with the
+tip is how a trace gets lifted.
 
-### Alivio de tracción — no es opcional
+### Strain relief, not optional
 
-El fallo que arruina el mando no es la soldadura, es el tirón: un hilo fino
-soldado a una pista, si alguien lo estira, **arranca la pista**. Nada de lo que
-viene después sirve si eso pasa.
+The failure that ruins the handset is not the solder, it is the tug: a thin wire
+soldered to a trace, if somebody pulls it, **rips the trace off**. Nothing that
+comes afterwards matters if that happens.
 
-En cuanto estén los tres hilos, **fijarlos a la placa con cinta a un par de
-centímetros de las soldaduras**, de modo que cualquier tirón lo aguante la cinta
-y no el cobre.
+As soon as all three wires are on, **tape them to the board a couple of
+centimetres from the joints**, so any pull is taken by the tape and not by the
+copper.
 
-### Verificación antes de cerrar
+### Check before closing up
 
-Se aprovecha que el mapa del chip ya está verificado:
+This takes advantage of the chip map already being verified:
 
-| Hilo nuevo | Debe dar continuidad con la pata |
+| New wire | Must show continuity to pin |
 |---|---|
-| El del pin rojo | 2 (CLK) |
-| El del pin verde | 3 (DIO) |
-| El del pin azul | 4 (GND) |
+| The one on the red pin | 2 (CLK) |
+| The one on the green pin | 3 (DIO) |
+| The one on the blue pin | 4 (GND) |
 
-Sin continuidad → soldadura fría. Y comprobar además que **no** hay continuidad
-entre hilos vecinos: un puente de estaño entre dos pines del conector es fácil
-de hacer y no se ve a simple vista.
+No continuity means a cold joint. And also check there is **no** continuity
+between neighbouring wires: a solder bridge between two connector pins is easy
+to make and invisible to the eye.
 
-**Después, montar la carcasa y usar el mando normalmente.** Subir, bajar, mirar
-el display. Si funciona igual que antes, las derivaciones están bien. Si algo
-cambió, se resuelve **antes** de conectar el ESP32 — después ya no se sabría a
-quién culpar.
+**Afterwards, reassemble the case and use the handset normally.** Up, down, look
+at the display. If it works as before, the taps are fine. If anything changed,
+it gets resolved **before** connecting the ESP32, because afterwards there would
+be no telling who to blame.
 
-### Si se levanta una pista
+### If a trace lifts
 
-No es el fin. La pista del conector va a la pata del chip, así que se puede
-soldar el hilo directamente a la pata correspondiente del AiP650E. Es más
-difícil —paso de 1.27 mm— pero es la misma señal. Antes de intentarlo, verificar
-con el multímetro adónde llega lo que quede de pista.
+Not the end. The connector trace runs to the chip pin, so the wire can be
+soldered directly to the corresponding AiP650E pin. It is harder, at 1.27 mm
+pitch, but it is the same signal. Before trying, check with the multimeter where
+whatever remains of the trace actually goes.
 
 ---
 
-## Resistencias disponibles
+## Available resistors
 
-**Todas medidas con multímetro el 2026-08-02.** Sustituye por completo al
-inventario anterior, que estaba leído del código de colores y tenía al menos
-tres valores equivocados. 30 piezas.
+**All measured with a multimeter on 2026-08-02.** This entirely replaces the
+previous inventory, which was read off colour codes and had at least three wrong
+values. 30 pieces.
 
-| Valor medido | Cantidad |
+| Measured value | Quantity |
 |---|---|
 | 2 Ω | 2 |
 | 4.5 Ω | 3 |
@@ -297,385 +301,335 @@ tres valores equivocados. 30 piezas.
 | 240 kΩ | 1 |
 | 2.2 MΩ | 1 |
 
-**Compradas y recibidas el 2026-08-03**, medidas con multímetro antes de usarse
-según exige [ADR-015](DECISIONS.md):
+**Bought and received on 2026-08-03**, measured with a multimeter before use as
+[ADR-015](DECISIONS.md) requires:
 
-| Valor medido | Para qué |
+| Measured value | What for |
 |---|---|
-| **26.79 – 27.01 kΩ** (lote) | Abajo del divisor de la sonda ([ADR-016](DECISIONS.md)) — **desbloquea la fase 2** |
-| 10 kΩ | Pull-downs de los GPIO de control, fase 3 |
-| 330 Ω | LED de entrada de los optoacopladores, fase 3 |
+| **26.79 to 27.01 kΩ** (batch) | Lower leg of the probe divider ([ADR-016](DECISIONS.md)), **unblocks phase 2** |
+| 10 kΩ | Pull-downs for the control GPIOs, phase 3 |
+| 330 Ω | Optocoupler input LEDs, phase 3 |
 
-**Las de 27 kΩ, medidas pieza a pieza, caen entre 26.79 y 27.01 kΩ.** Con las
-9.1 kΩ del cajón arriba, el divisor queda:
+**The 27 kΩ ones, measured piece by piece, fall between 26.79 and 27.01 kΩ.**
+With the 9.1 kΩ from the drawer on top, the divider comes out as:
 
-| Con R abajo de | Nivel alto del bus | Tensión en el GPIO |
+| With lower R of | Bus high level | Voltage at the GPIO |
 |---|---|---|
 | 26.79 kΩ | 3.99 V | 2.98 V |
 | 27.01 kΩ | 3.99 V | 2.99 V |
 
-Clavado en el diseño de ADR-016. Los extremos del lote se separan 10 mV en el
-GPIO, así que **da igual qué dos piezas se usen** — y como difieren un 0.8% entre
-sí, los dos canales se comportan igual. Impedancia en flanco de subida: 10.8 kΩ.
+Exactly on the ADR-016 design. The extremes of the batch differ by 10 mV at the
+GPIO, so **it makes no difference which two pieces are used**, and since they
+differ by 0.8% between themselves, both channels behave alike. Rising-edge
+impedance: 10.8 kΩ.
 
-Confirma además el cociente esperado en la comprobación de
-[ADR-018](DECISIONS.md): 3.99 / 5 = **0.80**.
+It also confirms the ratio expected by the [ADR-018](DECISIONS.md) check:
+3.99 / 5 = **0.80**.
 
-### De dónde venía la confusión
+### Where the confusion came from
 
-Las dos piezas que se leyeron como marrón-verde-naranja (15 kΩ) y luego como
-violeta-verde-naranja (75 kΩ) son en realidad **violeta-verde-rojo, 7.4 kΩ**.
-De 74 kΩ solo hay una, la que ya estaba contada.
+The two pieces read as brown-green-orange (15 kΩ) and then as
+violet-green-orange (75 kΩ) are actually **violet-green-red, 7.4 kΩ**. There is
+only one 74 kΩ, the one already counted.
 
-Tres lecturas de color resultaron equivocadas antes de medir, y dos de ellas
-cambiaron el diseño de la sonda — una lo desbloqueó y otra lo anuló. La causa no
-es descuido: el código de colores **no tiene redundancia**, y un color mal leído
-mueve el valor un factor de mil. De ahí la regla de [ADR-015](DECISIONS.md): los
-valores se miden, no se leen.
+Three colour readings turned out wrong before measuring, and two of them changed
+the probe design, one unblocking it and one voiding it. The cause is not
+carelessness: the colour code **has no redundancy**, and one misread colour
+moves the value by a factor of a thousand. Hence the rule in
+[ADR-015](DECISIONS.md): values get measured, not read.
 
-### Por qué no alcanza, y por cuánto
+### Why there are not enough, and by how much
 
-Cada divisor necesita sumar unos **26 kΩ** para que el nivel alto del bus quede
-por encima de 3.7 V con el pull-up interno de 9.1 kΩ. Dos divisores: 52 kΩ.
+Each divider needs to add up to about **26 kΩ** for the bus high level to stay
+above 3.7 V with the internal 9.1 kΩ pull-up. Two dividers: 52 kΩ.
 
-Todo el material entre 1 kΩ y 10 kΩ suma **41.7 kΩ** — 3 × 1.8 k, 1 × 3.3 k,
-2 × 7.4 k y 2 × 9.1 k. Faltan unos diez.
+All the stock between 1 kΩ and 10 kΩ adds up to **41.7 kΩ**: 3 × 1.8 k, 1 × 3.3
+k, 2 × 7.4 k and 2 × 9.1 k. About ten short.
 
-*Precisión registrada: antes aquí ponía 43 kΩ. Esa cifra incluía las de 800 Ω y
-555 Ω, que están por debajo de 1 kΩ y no sirven para esto. La conclusión —no
-alcanza— no cambia.*
+*Precision on record: this used to say 43 kΩ. That figure included the 800 Ω and
+555 Ω pieces, which are below 1 kΩ and are no use here. The conclusion, that
+there are not enough, does not change.*
 
-La de 74 kΩ no rescata la situación: permite armar una línea correcta —74 kΩ
-abajo con 36 kΩ arriba hechos de 9.1 + 9.1 + 7.4 + 7.4 + 3.3— pero consume todo
-el material medio, y la segunda línea se queda con 7 kΩ, que dejan el bus en
-2.2 V. Inservible.
+The 74 kΩ does not rescue the situation: it allows one correct line to be built,
+74 kΩ below with 36 kΩ above made of 9.1 + 9.1 + 7.4 + 7.4 + 3.3, but it
+consumes all the mid-range stock, and the second line is left with 7 kΩ, which
+puts the bus at 2.2 V. Useless.
 
-### Qué comprar
+### What to buy
 
-⚠️ **Corregido el 2026-08-22: el diagrama de abajo decía 9.1 kΩ arriba, y lo
-montado son 16.3 kΩ** ([ADR-022](DECISIONS.md), que reemplazó al ADR-016 el
-2026-08-06). El texto no se actualizó entonces, y el error se propagó a las
-cabeceras de las capturas escritas ese día. **Medido sobre el montaje real: 16.5
-kΩ entre el hilo del bus y el GPIO, y 43.5 kΩ del bus a masa** — que es
-16.3 + 27, las dos en serie. El valor bueno es el del ADR-022.
+⚠️ **Corrected on 2026-08-22: the diagram below said 9.1 kΩ on top, and what is
+built is 16.3 kΩ** ([ADR-022](DECISIONS.md), which superseded ADR-016 on
+2026-08-06). The text was not updated then, and the error propagated into the
+headers of the captures written that day. **Measured on the real build: 16.5 kΩ
+between the bus wire and the GPIO, and 43.5 kΩ from bus to ground**, which is
+16.3 + 27 in series. The good value is ADR-022's.
 
-**Dos resistencias, y se monta.** Las medidas van arriba en ambas líneas;
-solo faltan las de abajo.
+**Two resistors and it can be built.** The measured ones go on top of both
+lines; only the lower ones are missing.
 
-| Compra | Nivel alto del bus | Tensión en el GPIO |
+| Purchase | Bus high level | Voltage at the GPIO |
 |---|---|---|
-| **2 × 27 kΩ** ← preferida | 3.99 V | 2.99 V |
+| **2 × 27 kΩ** ← preferred | 3.99 V | 2.99 V |
 | 2 × 22 kΩ | 3.87 V | 2.74 V |
 | 2 × 33 kΩ | 4.12 V | 3.23 V |
 
-Las tres cumplen (bus ≥ 3.5 V, GPIO entre 2.5 y 3.6 V). La de 27 kΩ deja ambas
-tensiones más centradas.
+All three meet the requirement (bus ≥ 3.5 V, GPIO between 2.5 and 3.6 V). The
+27 kΩ leaves both voltages better centred.
 
-Sigue mereciendo la pena un **surtido etiquetado** (600–1000 piezas, 5–8 €): las
-fases 3 y 4 pedirán más resistencias.
+A **labelled assortment** is still worth it (600 to 1000 pieces, 5 to 8 €):
+phases 3 and 4 will ask for more resistors.
 
 ---
 
-## Circuito de sonda
+## Probe circuit
 
-### Diseño válido — [ADR-016](DECISIONS.md)
+### Valid design, [ADR-016](DECISIONS.md)
 
-Pendiente de dos resistencias de 27 kΩ. El resto ya está.
+Pending two 27 kΩ resistors. Everything else is in hand.
 
-**Plano: [hardware/plano_sonda_v2.svg](hardware/plano_sonda_v2.svg)** — es el
-único que se monta.
+**Schematic: [hardware/plano_sonda_v2.svg](hardware/plano_sonda_v2.svg)**, the
+only one that gets built.
 
 ```
-ROJO  (CLK) ──[16.3k]─┬──> P18 del ESP32
+RED   (CLK) ──[16.3k]─┬──> ESP32 P18
                       └──[27k]──> GND
 
-VERDE (DIO) ──[16.3k]─┬──> P4 del ESP32
+GREEN (DIO) ──[16.3k]─┬──> ESP32 P4
                       └──[27k]──> GND
 
-AZUL  (GND) ──────────────> GND del ESP32
+BLUE  (GND) ──────────────> ESP32 GND
 
-AMARILLO (5 V) ───────────  NO SE CONECTA
+YELLOW (5 V) ─────────────  NOT CONNECTED
 ```
 
-| | Valor | Exigido |
+| | Value | Required |
 |---|---|---|
-| Carga sobre el bus | 36.1 kΩ | — |
-| Nivel alto del bus | 3.99 V | ≥ 3.5 V |
-| Tensión en el GPIO | 2.99 V | ≥ 2.5 V y ≤ 3.6 V |
-| Impedancia vista por el GPIO, flanco de **bajada** | 6.8 kΩ | — |
-| Impedancia vista por el GPIO, flanco de **subida** | **10.9 kΩ** | — |
+| Load on the bus | 36.1 kΩ | |
+| Bus high level | 3.99 V | ≥ 3.5 V |
+| Voltage at the GPIO | 2.99 V | ≥ 2.5 V and ≤ 3.6 V |
+| Impedance seen by the GPIO, **falling** edge | 6.8 kΩ | |
+| Impedance seen by the GPIO, **rising** edge | **10.9 kΩ** | |
 
-El GPIO va **al nodo entre las dos resistencias**, nunca a un extremo.
+The GPIO goes **to the node between the two resistors**, never to an end.
 
-**Corrección registrada.** ADR-016 y este archivo daban 6.8 kΩ como impedancia,
-sin más. Ese valor solo vale mientras el chip tira la línea abajo; en el flanco
-de subida la fuente es el pull-up interno, que queda en serie con la resistencia
-de arriba, y la impedancia real es (9.1 + 9.1) ∥ 27 = **10.9 kΩ**. El flanco
-lento de un bus open-drain es siempre el de subida, así que ese es el número que
-manda. No cambia el diseño ni el orden de preferencia entre las versiones de la
-sonda. Detalle en [ADR-018](DECISIONS.md).
+**Correction on record.** ADR-016 and this file gave 6.8 kΩ as the impedance,
+full stop. That value only holds while the chip pulls the line low; on the
+rising edge the source is the internal pull-up, which sits in series with the
+upper resistor, and the real impedance is (9.1 + 9.1) ∥ 27 = **10.9 kΩ**. The
+slow edge on an open-drain bus is always the rising one, so that is the number
+that governs. It changes neither the design nor the order of preference between
+probe versions. Detail in [ADR-018](DECISIONS.md).
 
-### Comprobación al conectarlo — por cociente, no por valor absoluto
+### Check on connecting it: by ratio, not absolute value
 
-**Un multímetro promedia, y el bus está conmutando.** Las dos lecturas van a
-salir por debajo de lo calculado, en una cantidad que depende del ciclo de
-trabajo del bus y que no se conoce hasta la primera captura. Por eso el criterio
-no es un umbral absoluto sino la relación entre las dos medidas
+**A multimeter averages, and the bus is switching.** Both readings will come out
+below the calculated value, by an amount that depends on the bus duty cycle and
+is not known until the first capture. So the criterion is not an absolute
+threshold but the relationship between the two measurements
 ([ADR-018](DECISIONS.md)):
 
-1. **Sin la sonda conectada**, escritorio encendido y quieto, display mostrando
-   un número estable: medir rojo↔azul y verde↔azul. Anotar.
-2. **Con la sonda conectada**, sin tocar ningún botón y con el display mostrando
-   el mismo número: medir los mismos dos puntos. Anotar.
-3. Dividir la segunda lectura entre la primera, en cada línea.
+1. **With the probe disconnected**, desk powered and still, display showing a
+   stable number: measure red to blue and green to blue. Write it down.
+2. **With the probe connected**, without touching any button and with the
+   display showing the same number: measure the same two points. Write it down.
+3. Divide the second reading by the first, on each line.
 
-| Cociente | Nivel alto real del bus | Qué hacer |
+| Ratio | Real bus high level | What to do |
 |---|---|---|
-| **≥ 0.75** | ≥ 3.75 V | Correcto, seguir. Lo esperado es 0.80 |
-| 0.70 – 0.75 | 3.50 – 3.75 V | Funciona, margen fino. Parar y pensar |
-| **< 0.70** | **< 3.50 V** | **Desconectar.** Por debajo del VIH del chip |
+| **≥ 0.75** | ≥ 3.75 V | Correct, carry on. 0.80 is what to expect |
+| 0.70 to 0.75 | 3.50 to 3.75 V | Works, thin margin. Stop and think |
+| **< 0.70** | **< 3.50 V** | **Disconnect.** Below the chip's VIH |
 
-Si entre las dos medidas el escritorio se movió o se pulsó algo, el ciclo de
-trabajo cambió y el cociente no significa nada: repetir.
+If the desk moved or something was pressed between the two measurements, the
+duty cycle changed and the ratio means nothing: repeat it.
 
-De propina, el cociente da el pull-up interno real, que hasta ahora solo se tenía
-del datasheet y como valor típico: `Rpull-up = 36.1 kΩ · (1 - cociente) / cociente`.
+As a bonus, the ratio gives the real internal pull-up, which so far was only
+known from the datasheet as a typical value:
+`Rpull-up = 36.1 kΩ · (1 - ratio) / ratio`.
 
-**El ESP32 tiene que estar alimentado por USB antes de conectar los hilos al
-divisor** ([ADR-019](DECISIONS.md)). Con el ESP32 sin corriente y la sonda
-puesta, el bus se hunde hasta ~2.85 V y el mando falla — sin daño, pero con un
-síntoma que apunta a las soldaduras.
+**The ESP32 has to be USB powered before the wires reach the divider**
+([ADR-019](DECISIONS.md)). With the ESP32 unpowered and the probe attached, the
+bus sags to about 2.85 V and the handset fails. No damage, but with a symptom
+that points at the solder joints.
 
-Diseños anteriores, conservados como historia: [ADR-013](DECISIONS.md) (15 k /
-33 k, válido pero sin componentes), [ADR-014](DECISIONS.md) (anulado, se apoyaba
-en resistencias mal identificadas) y el original del handover de 800 Ω / 1.72 kΩ,
-descartado por [ADR-005](DECISIONS.md).
+Earlier designs, kept as history: [ADR-013](DECISIONS.md) (15 k / 33 k, valid
+but with no parts), [ADR-014](DECISIONS.md) (voided, it rested on misidentified
+resistors) and the handover's original 800 Ω / 1.72 kΩ, ruled out by
+[ADR-005](DECISIONS.md).
 
-⚠️ El plano de ese último diseño se renombró el 2026-08-03 a
+⚠️ The schematic for that last design was renamed on 2026-08-03 to
 [hardware/plano_divisores_v1_NO_MONTAR.svg](hardware/plano_divisores_v1_NO_MONTAR.svg),
-porque convivía con el vigente bajo un nombre parecido y el riesgo de abrir el
-equivocado era real justo antes de montar. **No se monta por dos motivos
-independientes:** los valores están descartados por [ADR-005](DECISIONS.md), y
-además manda el divisor al hilo **amarillo**, que resultó ser los 5 V, dejando el
-reloj sin conectar.
+because it coexisted with the current one under a similar name and the risk of
+opening the wrong one right before building was real. **It is not built for two
+independent reasons:** the values are ruled out by [ADR-005](DECISIONS.md), and
+it also sends the divider to the **yellow** wire, which turned out to be the
+5 V, leaving the clock unconnected.
 
-En el nombre antiguo queda un archivo redirector, porque ADR-005 enlaza el plano
-por nombre y los ADR no se editan.
+A redirect file remains under the old name, because ADR-005 links the schematic
+by name and ADRs are not edited.
 
-**Solo hay un plano vigente:
+**There is only one current schematic:
 [plano_sonda_v2.svg](hardware/plano_sonda_v2.svg).**
 
 ---
 
-## Tiempos de accionamiento por relé
+## Relay actuation timing
 
-Del datasheet, y son los que acotan el pulso de un relé por los dos lados:
+From the datasheet, and these bound a relay pulse on both sides:
 
-| Límite | Valor | De dónde sale |
+| Limit | Value | Where it comes from |
 |---|---|---|
-| **Mínimo** para que la caja vea la pulsación | **~160 ms** | El chip exige que dure al menos dos periodos de escaneo, y el periodo llega a 80 ms [datasheet] |
-| **Máximo** en M1/M2, antes de que grabe el preset | **3.0 s** | **Medido en el bus el 2026-08-06** |
+| **Minimum** for the box to see the press | **~160 ms** | The chip requires it to last at least two scan periods, and the period reaches 80 ms [datasheet] |
+| **Maximum** on M1/M2, before it stores the preset | **3.0 s** | **Measured on the bus on 2026-08-06** |
 
-Un pulso demasiado corto no hace nada y parece un fallo de cableado. Uno
-demasiado largo en M1 o M2 sobrescribe el preset en silencio.
+A pulse that is too short does nothing and looks like a wiring fault. One too
+long on M1 or M2 overwrites the preset silently.
 
-### El umbral de grabación, medido — VERIFICADO
+### The storage threshold, measured, VERIFIED
 
-*Captura [2026-08-06-umbral-grabar-memoria.log](capturas/2026-08-06-umbral-grabar-memoria.log).
-Se midió manteniendo pulsada la memoria cuyo preset **ya valía la altura actual**,
-para que grabar no destruyera nada.*
+*Capture
+[2026-08-06-umbral-grabar-memoria.log](capturas/2026-08-06-umbral-grabar-memoria.log).
+It was measured by holding down the preset whose stored value **already equalled
+the current height**, so that storing destroyed nothing.*
 
-Contado sobre el bus, no con cronómetro: la caja lee el teclado cada ~200 ms, así
-que esa es la resolución.
+Counted on the bus, not with a stopwatch: the box reads the keyboard every
+~200 ms, so that is the resolution.
 
 ```
-16.781 s   primera lectura con la tecla pulsada
-   ...     15 lecturas seguidas, display fijo en '080'
-19.778 s   el display se apaga por primera vez  <- HA GRABADO
-20.378 s   parpadeo
-20.977 s   parpadeo
-21.576 s   parpadeo
-22.175 s   parpadeo
+16.781 s   first read with the key pressed
+   ...     15 consecutive reads, display fixed at '080'
+19.778 s   the display goes off for the first time  <- IT HAS STORED
+20.378 s   blink
+20.977 s   blink
+21.576 s   blink
+22.175 s   blink
 ```
 
-**Del inicio de la pulsación al primer parpadeo: 2.997 s.** La confirmación de
-grabado son **cinco parpadeos cada 0.6 s**, y siguen aunque se suelte el botón.
+**From the start of the press to the first blink: 2.997 s.** The storage
+confirmation is **five blinks every 0.6 s**, and they continue even after the
+button is released.
 
-### Rango de alturas — VERIFICADO
+### Height range, VERIFIED
 
-*Captura [2026-08-06-topes-fisicos.log](capturas/2026-08-06-topes-fisicos.log),
-recorriendo hasta los dos topes mecánicos.*
+*Capture
+[2026-08-06-topes-fisicos.log](capturas/2026-08-06-topes-fisicos.log), running
+to both mechanical stops.*
 
 | | |
 |---|---|
-| Tope inferior | **73 cm** |
-| Tope superior | **118 cm** |
-| Recorrido | **45 cm** |
+| Bottom stop | **73 cm** |
+| Top stop | **118 cm** |
+| Travel | **45 cm** |
 
-**Al topar no ocurre nada especial:** el display sigue mostrando un número, no
-parpadea, no aparece ningún comando nuevo en el bus, y apenas frena — mantiene
-~1.2 s por centímetro hasta el final. **Llegar al tope es indistinguible de estar
-parado**, salvo porque la altura deja de cambiar.
+**Nothing special happens at the stop:** the display keeps showing a number,
+does not blink, no new command appears on the bus, and it barely slows, holding
+~1.2 s per centimetre to the end. **Reaching the stop is indistinguishable from
+standing still**, except that the height stops changing.
 
-Estos son los números para los límites por software de la fase 4
+These are the numbers for the phase 4 software limits
 ([SEGURIDAD.md](SEGURIDAD.md)).
 
-### Subir y bajar: toque contra movimiento continuo — VERIFICADO
+### Up and down: tap versus continuous travel, VERIFIED
 
-*Captura [2026-08-06-umbral-toque-vs-continuo.log](capturas/2026-08-06-umbral-toque-vs-continuo.log).*
+*Capture
+[2026-08-06-umbral-toque-vs-continuo.log](capturas/2026-08-06-umbral-toque-vs-continuo.log).*
 
-Subir y bajar tienen **dos regímenes**, y solo uno es seguro:
+Up and down have **two regimes**, and only one is safe:
 
-| | Qué hace | ¿Se para solo? |
+| | What it does | Does it stop by itself? |
 |---|---|---|
-| **Toque corto** | Mueve ~1 cm | **Sí** |
-| **Mantener y soltar** | Arranca movimiento continuo | **No.** Sigue hasta que se pulse cualquier botón |
+| **Short tap** | Moves ~1 cm | **Yes** |
+| **Hold and release** | Starts continuous travel | **No.** It carries on until any button is pressed |
 
-**El umbral está entre 2.2 y 2.6 s**, acotado pulsando cada vez más largo:
+**The threshold is between 2.2 and 2.6 s**, bracketed by pressing for
+progressively longer:
 
-| Duración | Resultado |
+| Duration | Result |
 |---|---|
-| 200 ms · 1.0 s · 1.6 s · 1.8 s | Toque |
-| **2.2 s** | Toque — la más larga que se paró sola |
-| **2.6 s** | **Continuo** — la más corta que se disparó |
-| 2.8 s | Continuo |
+| 200 ms · 1.0 s · 1.6 s · 1.8 s | Tap |
+| **2.2 s** | Tap, the longest that stopped by itself |
+| **2.6 s** | **Continuous**, the shortest that triggered it |
+| 2.8 s | Continuous |
 
-⚠️ **Soltar no para el movimiento continuo.** Medido: siguió **5 cm en 5 s**
-subiendo y **6 cm en 6.6 s** bajando después de soltar. Para detenerlo hay que
-**cerrar** un contacto, no abrirlo.
+⚠️ **Releasing does not stop continuous travel.** Measured: it carried on **5 cm
+in 5 s** rising and **6 cm in 6.6 s** descending after release. Stopping it
+requires **closing** a contact, not opening one.
 
-**Corregido el 2026-08-21:** esta frase decía *"solo paró al pulsar **otra**
-tecla"*, mientras la tabla de arriba decía *"cualquier botón"*. La imprecisa era
-esta. **Medido bajando, con un solo canal cableado: un toque corto en el MISMO
-botón para su propio movimiento continuo** — paró en 76 cm y siguió quieto 8 s.
-Importa porque, si hiciera falta un botón distinto, un solo canal no podría
-frenar nunca. Ver [ADR-028](DECISIONS.md).
+**Corrected on 2026-08-21:** this sentence used to say *"it only stopped on
+pressing **another** key"*, while the table above said *"any button"*. The
+imprecise one was this. **Measured descending, with a single channel wired: a
+short tap on the SAME button stops its own continuous travel.** It stopped at
+76 cm and stayed still for 8 s. It matters because, if a different button were
+required, a single channel could never brake. See [ADR-028](DECISIONS.md).
 
-**Los toques que "mueven ~1 cm" son de 1.0 s o más.** El más corto que se
-cronometró el 2026-08-06 fue de 200 ms y **no se anotó cuánto movía**. Medido el
-2026-08-21: **con 300 ms el escritorio no se mueve** —siete pulsos, cero
-centímetros— aunque la caja sí registra la tecla. Con **800 ms** baja cerca de
-1 cm cada tres pulsos. Ver [ADR-027](DECISIONS.md).
+**The taps that "move ~1 cm" are 1.0 s or longer.** The shortest one timed on
+2026-08-06 was 200 ms and **how far it moved was not recorded**. Measured on
+2026-08-21: **at 300 ms the desk does not move**, seven pulses, zero
+centimetres, although the box does register the key. At **800 ms** it descends
+close to 1 cm every three pulses. See [ADR-027](DECISIONS.md).
 
-**El display parpadea cuando arranca movimiento continuo.** Observado a ojo y
-confirmado en el bus: 0 parpadeos tras el toque de 2.2 s, 2 y 3 tras los
-continuos. Sirve para que el firmware detecte un movimiento que no pidió.
+**The display blinks when continuous travel starts.** Observed by eye and
+confirmed on the bus: 0 blinks after the 2.2 s tap, 2 and 3 after the continuous
+ones. It gives the firmware a way to detect a movement it did not request.
 
-### Ventana de trabajo para el accionamiento
+### Working window for actuation
 
-| | Duración | Fuente |
+| | Duration | Source |
 |---|---|---|
-| Mínimo para que el chip la vea | **160 ms** | Dos periodos de escaneo [datasheet] |
-| **Ancho de pulso elegido** | **800 ms** | [ADR-027](DECISIONS.md), corrige los 300 ms de [ADR-023](DECISIONS.md) |
-| Pulso largo, para arrancar continuo | **2800 ms** | [ADR-028](DECISIONS.md) |
+| Minimum for the chip to see it | **160 ms** | Two scan periods [datasheet] |
+| **Chosen pulse width** | **800 ms** | [ADR-027](DECISIONS.md), correcting the 300 ms of [ADR-023](DECISIONS.md) |
+| Long pulse, to start continuous travel | **2800 ms** | [ADR-028](DECISIONS.md) |
 
-### Qué sobrevive a un corte de corriente — VERIFICADO 2026-08-22
+### Summary of the four measured thresholds
 
-Se desenchufó el escritorio y se volvió a enchufar, con el ESP32 alimentado por
-USB todo el rato.
+⚠️ **Rebuilt on 2026-09-02.** These rows existed as an orphan table fragment,
+severed from its header and stranded mid-section after an unrelated paragraph,
+so they rendered as loose text. No figure has been changed.
 
-| | Resultado |
-|---|---|
-| **La altura** | **Se conserva.** Estaba en 117 cm y siguió en 117 |
-| **Las memorias del mando** | **Se conservan.** M1 llevó el escritorio a 80 cm, exacto |
-| **El display** | Estaba dormido al volver a mirar |
+| | Duration | Source |
+|---|---|---|
+| Recall a preset (tap) | < 0.2 s | A single keyboard read |
+| Tap → **continuous travel** | **2.2 to 2.6 s** | Measured above |
+| Tap → **store preset** | **3.0 s** | Measured above |
 
-### Corte de corriente EN PLENO MOVIMIENTO — VERIFICADO 2026-08-22
+**Both thresholds land around 2 to 3 seconds**, so the box seems to have a
+single notion of "long press" and apply it identically to all four buttons.
 
-La prueba anterior se hizo con el escritorio quieto. Esta se hizo **cortando la
-corriente de los dos —escritorio y ESP32— mientras el escritorio bajaba**, a los
-95 cm. Bajando a propósito: si reanudara el movimiento, el tope de 73 cm lo
-detiene.
-
-| | Resultado |
-|---|---|
-| **¿Reanuda el movimiento al volver la luz?** | **NO.** Se queda quieto |
-| **¿Conserva la altura?** | **Sí**, 95 cm — la posición no se pierde ni en marcha |
-| **¿Revive el bus solo?** | **Sí**, 475 transacciones en 18 s sin intervención |
-| **¿El display arranca encendido?** | **No.** Arranca **apagado** |
-
-**Que no reanude el movimiento es el resultado importante.** Si lo hiciera, al
-volver la luz el escritorio arrancaría solo con el ESP32 todavía arrancando y
-**nadie capaz de frenarlo**. No ocurre.
-
-**Anotado sin explicación:** tras un arranque en frío el byte de teclado en
-reposo es `0x2E` (`KEY_NONE`) de forma constante, mientras que en caliente
-alterna entre `0x07`, `0x17`, `0x27` y `0x2F`.
-
-Captura:
-[capturas/2026-08-22-corte-luz-en-movimiento.log](capturas/2026-08-22-corte-luz-en-movimiento.log).
-
-### Despertar el display sin mover el escritorio — VERIFICADO
-
-**Un toque de 300 ms enciende el display sin deriva medible.** Medido en tres
-tandas: siete toques el 2026-08-21 y seis el 2026-08-22 dieron **cero
-centímetros** de deriva, y un toque encendió un display dormido mostrando 117 cm
-sin mover el escritorio.
-
-⚠️ **Un caso quedó sin explicar.** Al refrescar tras el corte de corriente en
-movimiento, el display mostró `095` y enseguida `094`. Se sospechó que el toque
-movía 1 cm; **se midió y no**: seis toques seguidos, cero deriva. Lo más probable
-es que el escritorio quedara en 94 y pico —se cortó bajando— y que el `095` fuera
-el display asentándose tras el arranque en frío. **No se puede afirmar con lo
-medido, y queda como no determinado.**
-
-**Consecuencia práctica:** el refresco se puede usar tantas veces como haga falta
-sin que el escritorio derive. Trece toques no movieron nada.
-
-**Por qué importa:** con el display dormido los cuatro dígitos valen `0x00` y
-**la altura sencillamente no está en el bus**. Sin este toque, el ESP32 no puede
-saber dónde está el escritorio tras un rato de inactividad o un corte.
-
-Implementado como el comando `w` de `desk_sniffer`. ⚠️ **Nunca sobre un canal de
-memoria**: cualquier toque en M1 o M2 arranca un viaje al preset.
-
-**Velocidad de desplazamiento: 0.68 cm/s** — VERIFICADO el 2026-08-22 sobre el
-recorrido completo, igual en los dos sentidos: 44 cm en 65 s bajando y 43 cm en
-64 s subiendo. Tras frenar quedan **~1 cm de inercia**, así que un control por
-altura debe anticipar ese centímetro. Captura:
-[capturas/2026-08-22-recorrido-completo.log](capturas/2026-08-22-recorrido-completo.log).
-| Recuperar un preset (toque) | < 0.2 s | Una sola lectura de teclado |
-| Toque → **movimiento continuo** | **2.2 – 2.6 s** | Medido arriba |
-| Toque → **grabar preset** | **3.0 s** | Medido arriba |
-
-**Los dos umbrales rondan los 2–3 segundos**, así que la caja parece tener un
-único concepto de "pulsación larga" y aplicarlo igual a los cuatro botones.
-
-**Diseño que sale de aquí ([ADR-023](DECISIONS.md)):** el firmware **solo emite
-toques**, y un limitador de ancho de pulso por hardware corta cualquier pulso a
-los **300 ms** en los cuatro canales.
+**The design that follows from this ([ADR-023](DECISIONS.md)):** the firmware
+**only emits taps**, and a hardware pulse-width limiter cuts any pulse at
+**300 ms** on all four channels.
 
 ```
 160 ms          300 ms                      2200 ms
  |---------------|---------------------------|
- mínimo       elegido                    empieza
- del chip                                el peligro
+ chip's        chosen                     danger
+ minimum                                  starts
 ```
 
-Con eso, un contacto pegado **no puede arrancar movimiento continuo ni
-sobrescribir un preset**: como mucho mueve un centímetro o recupera una memoria.
+With that, a stuck contact **cannot start continuous travel or overwrite a
+preset**: at worst it moves a centimetre or recalls a memory.
 
-El chip admite además **combinaciones de KI1 y KI2 sobre el mismo DIG**, con
-prioridad máxima. Si alguna función del mando usa combinación, un solo relé no
-la reproduce. La captura lo dirá.
+The chip also supports **combinations of KI1 and KI2 on the same DIG**, with top
+priority. If any handset function uses a combination, a single relay cannot
+reproduce it. The capture will tell.
 
 ---
 
-## Elección de GPIO
+## GPIO selection
 
-Las líneas van a **P18** (CLK, rojo) y **P4** (DIO, verde), con **GND** común.
-**Ambos verificados presentes en la bornera** — ver el mapa de abajo.
+The lines go to **P18** (CLK, red) and **P4** (DIO, green), with a common
+**GND**. **Both verified present on the terminal block**, see the map below.
 
-**P18 se eligió para no depender de qué módulo sea esta placa**
-([ADR-020](DECISIONS.md)). La asignación anterior era P16, y en los módulos
-**WROVER** los GPIO 16 y 17 están cableados a la PSRAM y no sirven.
+**P18 was chosen so as not to depend on which module this board carries**
+([ADR-020](DECISIONS.md)). The previous assignment was P16, and on **WROVER**
+modules GPIO 16 and 17 are wired to the PSRAM and are unusable.
 
-### Mapa de la bornera — VERIFICADO por fotografía
+### Terminal block map, VERIFIED by photograph
 
-*Placa de expansión `FOR ESP32 TERMINAL ADAPTER`, leída de la fotografía del
-producto con la serigrafía en horizontal y legible.*
+*Expansion board `FOR ESP32 TERMINAL ADAPTER`, read off the product photograph
+with the silkscreen horizontal and legible.*
 
-| Columna izquierda | Columna derecha |
+| Left column | Right column |
 |---|---|
 | CLK | 5V |
 | SD0 | GND |
@@ -683,13 +637,13 @@ producto con la serigrafía en horizontal y legible.*
 | P15 | SD2 |
 | P2 | P13 |
 | P0 | GND |
-| **P4** ← DIO, verde | P12 |
+| **P4** ← DIO, green | P12 |
 | P16 | P14 |
 | P17 | P27 |
 | P5 | P26 |
-| **P18** ← CLK, rojo | P25 |
+| **P18** ← CLK, red | P25 |
 | P19 | P33 |
-| **GND** ← el más cómodo | P32 |
+| **GND** ← the handiest one | P32 |
 | P21 | P35 |
 | RX | P34 |
 | TX | SVN |
@@ -697,60 +651,70 @@ producto con la serigrafía en horizontal y legible.*
 | P23 | EN |
 | GND | 3V3 |
 
-**Cómo encontrarlos sin depender de cómo esté orientada la placa:** desde **P4**,
-contando en el sentido que aleja de P0, vienen **P16, P17, P5 y P18**. Dos
-posiciones más allá de P18, pasando P19, hay un **GND** — ese es el más cómodo
-para el retorno de los divisores, más que el de la esquina.
+**How to find them without depending on the board's orientation:** from **P4**,
+counting in the direction away from P0, come **P16, P17, P5 and P18**. Two
+positions past P18, beyond P19, there is a **GND**, and that is the handiest one
+for the divider returns, more so than the corner one.
 
-**No tocar `CLK`, `SD0`, `SD1`, `SD2` ni `SD3`.** Son los GPIO 6 a 11, cableados
-a la memoria flash interna del módulo. Están sacados a la bornera pero usarlos
-impide que el ESP32 arranque. Se suman a los pines de arranque (0, 2, 5, 12, 15)
-en la lista de lo que no se toca.
+**Do not touch `CLK`, `SD0`, `SD1`, `SD2` or `SD3`.** They are GPIO 6 to 11,
+wired to the module's internal flash. They are brought out to the terminal block
+but using them stops the ESP32 booting. They join the boot pins (0, 2, 5, 12,
+15) on the list of what is never touched.
 
-### El módulo
+### The module
 
-**Datos leídos del propio chip por esptool el 2026-08-03**, durante una carga.
-Es la mejor evidencia disponible: la reporta el silicio, no una etiqueta ni un
-vendedor.
+**Data read off the chip itself by esptool on 2026-08-03**, during an upload. It
+is the best evidence available: reported by the silicon, not by a label or a
+seller.
 
 | | |
 |---|---|
-| Chip | **ESP32-D0WD-V3**, revisión **v3.1** |
-| Núcleos | Dual core + LP core, **240 MHz** |
-| Cristal | 40 MHz |
-| Características | Wi-Fi, BT, calibración de Vref en eFuse, *Coding Scheme None* |
+| Chip | **ESP32-D0WD-V3**, revision **v3.1** |
+| Cores | Dual core + LP core, **240 MHz** |
+| Crystal | 40 MHz |
+| Features | Wi-Fi, BT, Vref calibration in eFuse, *Coding Scheme None* |
 | MAC | `b4:bf:e9:0f:06:9c` |
-| Flash usable | ≥ 1.310.720 bytes de programa, 327.680 de RAM |
-| Core de Arduino | esp32 **3.3.11** |
+| Usable flash | ≥ 1,310,720 bytes of program, 327,680 of RAM |
+| Arduino core | esp32 **3.3.11** |
 
-*El D0WD-V3 es el chip que llevan tanto los WROOM-32E como los WROVER-E, así que
-esto **no** decide por sí solo cuál es el módulo. Da igual: desde
-[ADR-020](DECISIONS.md) el proyecto no depende de esa distinción.*
+*The D0WD-V3 is the chip in both the WROOM-32E and the WROVER-E, so this does
+**not** by itself decide which module it is. It does not matter: since
+[ADR-020](DECISIONS.md) the project does not depend on that distinction.*
 
-Serigrafía del blindaje: **`ESP-32`**, con marcado CE, `ISM 2.4G 802.11 b/g/n` y
-**`FCC ID: 28B77-ESP32-32X`**. USB-serie **CP2102** de Silicon Labs.
+Shield silkscreen: **`ESP-32`**, with CE marking, `ISM 2.4G 802.11 b/g/n` and
+**`FCC ID: 28B77-ESP32-32X`**. **CP2102** USB-serial from Silicon Labs.
 
-- **Verificado:** no lleva marcado `WROVER` por ninguna parte, y el formato es el
-  **corto**: el blindaje ocupa poco más de la mitad de la placa, con sitio de
-  sobra debajo para el USB-C, los dos pulsadores y el regulador. Un WROVER mide
-  6 mm más y no dejaría ese hueco. Es un módulo **de clase WROOM-32, sin PSRAM**.
-- **Supuesto:** que sea un WROOM-32 original de Espressif. El marcado `ESP-32` y
-  ese FCC ID no son los de un módulo Espressif de catálogo; es un módulo
-  compatible. Para este proyecto da igual: **con CLK en P18 la distinción no
-  tiene ninguna consecuencia**, y por eso se decidió así.
-- Consecuencia práctica del CP2102: el puerto aparecerá como
-  `/dev/cu.usbserial-XXXX`. macOS trae el driver desde Big Sur, no hay que
-  instalar nada.
-- Se evitan a propósito los GPIO de arranque: **0, 2, 12 y 15**. Un nivel
-  inesperado en cualquiera de ellos durante el reset deja el ESP32 sin
-  arrancar, o arrancando en modo de flasheo.
-- El GPIO se conecta **al nodo intermedio** del divisor, nunca a un extremo.
-- Todos los GND van juntos: retornos del divisor, hilo azul y GND del ESP32.
-  Sin referencia común no hay medición válida.
+- **Verified:** it carries no `WROVER` marking anywhere, and the format is the
+  **short** one: the shield takes up little more than half the board, with room
+  to spare underneath for the USB-C, the two buttons and the regulator. A WROVER
+  is 6 mm longer and would not leave that gap. It is a **WROOM-32 class module,
+  with no PSRAM**.
+- **Assumed:** that it is a genuine Espressif WROOM-32. The `ESP-32` marking and
+  that FCC ID are not those of a catalogue Espressif module; it is a compatible
+  one. For this project it makes no difference: **with CLK on P18 the
+  distinction has no consequences**, which is why it was decided that way.
+- Practical consequence of the CP2102: the port will show up as
+  `/dev/cu.usbserial-XXXX`. macOS has shipped the driver since Big Sur, nothing
+  to install.
+- The boot GPIOs are avoided on purpose: **0, 2, 12 and 15**. An unexpected
+  level on any of them during reset leaves the ESP32 unable to boot, or booting
+  into flash mode.
+- The GPIO connects **to the middle node** of the divider, never to an end.
+- All the grounds go together: divider returns, blue wire and ESP32 GND. Without
+  a common reference there is no valid measurement.
 
 ---
 
-## Alimentación
+## Power
 
-ESP32 por **USB desde el Mac**. El hilo rojo del escritorio no se conecta.
-Ver [ADR-007](DECISIONS.md).
+ESP32 over **USB from the Mac**.
+
+⚠️ **Corrected on 2026-09-02.** This line used to read *"the desk's red wire is
+not connected"*. **Wrong, and in the one place it is most dangerous to be
+wrong.** Red is CLK and it *is* connected, through its divider. The wire that is
+never connected is the **yellow** one, which is the 5 V. The rest of this
+document says so correctly in four separate places, including the pinout table
+and the probe schematic; this single line contradicted all of them, and it was
+the last line of the file.
+
+See [ADR-007](DECISIONS.md).

@@ -141,6 +141,50 @@ el riesgo de ADR-028, un cuelgue del ESP32 en viaje continuo—. Contradice la
 decisión de no acoplar las memorias al sistema, así que **necesita ADR**. El
 propietario cerró la sesión antes de decidir.
 
+### Traducir obligó a releer, y releer encontró tres mentiras
+
+El propietario pidió pasar la documentación de cara al público a inglés. Efecto
+lateral no buscado: **traducir obliga a leer cada frase**, y aparecieron tres
+afirmaciones falsas que llevaban semanas ahí.
+
+**1. `HARDWARE.md` decía, en su última línea:** *"ESP32 por USB desde el Mac. El
+hilo rojo del escritorio no se conecta."* **El rojo es CLK y sí se conecta**,
+por su divisor. El que no se conecta nunca es el **amarillo**, que son los 5 V.
+El resto del documento lo dice bien en cuatro sitios —la tabla de pinout, el
+punto de derivación, el plano de la sonda y la corrección del handover— y esa
+línea sola los contradecía a todos.
+
+Es exactamente el error que la [política](POLITICA_DOCUMENTACION.md) pone como
+ejemplo de por qué existe la regla 5. Y es más peligroso de lo que parece: quien
+lo leyera y actuara al revés conectaría **5 V a un GPIO de 3.6 V**.
+
+**2. `firmware/README.md` decía:** *"Qué está sin verificar: todo. Este firmware
+está escrito contra el datasheet, no contra el bus real. Nunca se ha ejecutado
+con hardware conectado."* Llevaba **desde el 2026-08-06** siendo falso, con el
+firmware gobernando el escritorio.
+
+**3. `INTEGRACION_HA.md` describía la postura con un umbral único en 95 cm**,
+dos secciones más abajo de la sección que explica por qué ese umbral se eliminó
+el 2026-08-28.
+
+**El patrón es el mismo en los tres:** se corrigió algo en un sitio y no se
+releyó el documento entero. Ninguna de las tres es un descuido de escritura; las
+tres son documentos que envejecieron sin que nada obligara a revisarlos.
+
+Todas corregidas dejando el texto viejo citado, como pide la política.
+
+### El repositorio pasa a dos idiomas
+
+La documentación de cara al exterior queda en inglés; **la bitácora y los ADR se
+quedan en español**, y eso es deliberado: son un diario escrito mientras pasaban
+las cosas, con la distinción entre medido y supuesto incrustada en el modo de
+decirlo, y los ADR además son inmutables —traducir es editar—. La regla queda
+escrita en [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md) y la tabla del
+README dice el idioma de cada documento.
+
+Los nombres de archivo no se renombran aunque el contenido esté en inglés:
+romperían los enlaces desde la bitácora y los ADR, que no se tocan.
+
 ### Estado
 
 Escritorio operativo. Firmware sin tocar. Contador de postura restaurado y
