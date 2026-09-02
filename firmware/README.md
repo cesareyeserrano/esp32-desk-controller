@@ -1,65 +1,67 @@
 # Firmware
 
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](../docs/POLITICA_DOCUMENTACION.md).*
+
 ## `desk_sniffer/`
 
-Sniffer pasivo del bus del mando. **Solo escucha, nunca escribe** — los dos
-pines quedan como entrada de principio a fin, que es lo que exige
-[ADR-011](../docs/DECISIONS.md).
+A passive sniffer for the handset bus. **It only listens, it never writes.** Both
+pins stay configured as inputs from beginning to end, which is what
+[ADR-011](../docs/DECISIONS.md) requires.
 
-### Antes de conectarlo
+### Before connecting it
 
-1. Divisores montados en rojo y en verde: **9.1 kΩ arriba, 27 kΩ abajo**
-   ([ADR-016](../docs/DECISIONS.md)). Esquema en
+1. Dividers fitted on red and on green: **9.1 kΩ upper, 27 kΩ lower**
+   ([ADR-016](../docs/DECISIONS.md)). Schematic in
    [HARDWARE.md](../docs/HARDWARE.md).
-2. Derivaciones soldadas al conector del mando **con el conector original
-   puesto**.
-3. **Comprobar que el mando sigue funcionando** con las derivaciones soldadas,
-   antes de conectar el ESP32. Si no se comprueba en ese orden, un fallo
-   posterior es imposible de atribuir.
-4. **CLK va a P18 y DIO a P4**, los dos en la misma columna de la bornera
-   ([ADR-020](../docs/DECISIONS.md)). Desde P4, alejándose de P0: P16, P17, P5,
-   P18. El GND más cómodo está dos posiciones más allá de P18, pasando P19.
-   Mapa completo en [HARDWARE.md](../docs/HARDWARE.md). **Cuidado con `CLK`,
-   `SD0`, `SD1`, `SD2` y `SD3` de esa misma bornera: son la flash interna y
-   usarlos impide arrancar.**
-5. **ESP32 alimentado por USB desde el Mac, y alimentado ANTES de conectar los
-   hilos al divisor.** Con el ESP32 sin corriente y la sonda sobre un bus
-   encendido, el bus se hunde a ~2.85 V y el mando falla
-   ([ADR-019](../docs/DECISIONS.md)). Al desmontar, los hilos primero y el USB
-   después. El hilo amarillo no se conecta nunca.
-6. **Medir el nivel del bus, y juzgarlo por el cociente**, no por el valor
-   absoluto: un multímetro promedia y el bus está conmutando. Se mide rojo↔azul
-   y verde↔azul sin la sonda y con ella, con el escritorio quieto y el mismo
-   número en pantalla. El cociente debe rondar **0.80**; por debajo de **0.70**
-   hay que desconectar. Tabla completa en [HARDWARE.md](../docs/HARDWARE.md),
-   razonamiento en [ADR-018](../docs/DECISIONS.md).
+2. Taps soldered to the handset connector **with the original connector in
+   place**.
+3. **Check that the handset still works** with the taps soldered on, before
+   connecting the ESP32. Skip that order and any later fault becomes impossible
+   to attribute.
+4. **CLK goes to P18 and DIO to P4**, both in the same terminal column
+   ([ADR-020](../docs/DECISIONS.md)). From P4, moving away from P0: P16, P17,
+   P5, P18. The handiest GND is two positions past P18, beyond P19. Full map in
+   [HARDWARE.md](../docs/HARDWARE.md). **Watch out for `CLK`, `SD0`, `SD1`,
+   `SD2` and `SD3` on that same terminal block: they are the internal flash and
+   using them stops the chip booting.**
+5. **ESP32 powered over USB from the Mac, and powered BEFORE connecting the
+   wires to the divider.** With the ESP32 unpowered and the probe on a live bus,
+   the bus sags to about 2.85 V and the handset fails
+   ([ADR-019](../docs/DECISIONS.md)). When taking it apart, wires first and USB
+   second. The yellow wire is never connected.
+6. **Measure the bus level, and judge it by the ratio**, not the absolute value:
+   a multimeter averages and the bus is switching. Measure red to blue and green
+   to blue without the probe and then with it, desk still and the same number on
+   screen. The ratio should sit around **0.80**; below **0.70**, disconnect.
+   Full table in [HARDWARE.md](../docs/HARDWARE.md), reasoning in
+   [ADR-018](../docs/DECISIONS.md).
 
-### Compilar y cargar
+### Building and flashing
 
-Arduino IDE con soporte ESP32 instalado:
+Arduino IDE with ESP32 support installed:
 
-- Placa: **ESP32 Dev Module**
-- Puerto: **`/dev/cu.usbserial-XXXX`**. La placa lleva un USB-serie **CP2102**,
-  para el que macOS trae driver desde Big Sur — no hay que instalar nada.
-  Confirmar con `ls /dev/cu.*` antes y después de enchufar.
-- Abrir `desk_sniffer/desk_sniffer.ino` y cargar
+- Board: **ESP32 Dev Module**
+- Port: **`/dev/cu.usbserial-XXXX`**. The board carries a **CP2102** USB-serial
+  chip, for which macOS has shipped a driver since Big Sur, so nothing needs
+  installing. Confirm with `ls /dev/cu.*` before and after plugging it in.
+- Open `desk_sniffer/desk_sniffer.ino` and upload
 
-**Por qué CLK está en GPIO18 y no en GPIO16.** Una versión anterior de este
-archivo afirmaba que el módulo es un WROOM-32. **Eso nunca se comprobó**: el
-blindaje no es legible y lo único que hay es la ficha del vendedor. Y en los
-módulos **WROVER**, los GPIO 16 y 17 están cableados a la PSRAM y no sirven.
+**Why CLK is on GPIO18 and not GPIO16.** An earlier version of this file claimed
+the module is a WROOM-32. **That was never checked**: the shield is not legible
+and all we have is the seller's listing. And on **WROVER** modules, GPIO 16 and
+17 are wired to the PSRAM and are unusable.
 
-En vez de resolver la duda se eliminó: **GPIO18 y GPIO4 están libres en los dos
-módulos**, no son pines de arranque y no son de la flash. La pregunta "¿WROOM o
-WROVER?" ya no tiene consecuencias aquí. Ver
-[ADR-020](../docs/DECISIONS.md).
+Rather than settle the question it was removed: **GPIO18 and GPIO4 are free on
+both modules**, are not boot pins, and are not flash pins. "WROOM or WROVER?" no
+longer has consequences here. See [ADR-020](../docs/DECISIONS.md).
 
-**Compilado y ejecutado por primera vez el 2026-08-03.** ✅
+**Compiled and run for the first time on 2026-08-03.** ✅
 
-Arduino IDE con el core de Espressif, placa *ESP32 Dev Module*, sobre el DevKit
-real. **Compila sin errores, carga y arranca.** La autocomprobación de líneas
-corre y reporta correctamente, con el ESP32 alimentado solo por USB y **nada
-conectado al escritorio**:
+Arduino IDE with the Espressif core, board *ESP32 Dev Module*, on the real
+DevKit. **It compiles cleanly, uploads and boots.** The line self-check runs and
+reports correctly, with the ESP32 powered by USB alone and **nothing connected
+to the desk**:
 
 ```
 Identifying lines (2 s)...
@@ -68,10 +70,9 @@ Identifying lines (2 s)...
   !! No activity on either line.
 ```
 
-Cero flancos en las dos líneas es **el resultado esperado sin nada conectado**.
+Zero edges on both lines is **the expected result with nothing connected**.
 
-Después se le inyectó ruido tocando GPIO18 con el dedo, con los contadores
-reiniciados:
+Noise was then injected by touching GPIO18 with a finger, counters reset:
 
 ```
   edges captured : 197548
@@ -79,102 +80,102 @@ reiniciados:
   transactions   : 0 (0 malformed, 0 ended by repeated START)
 ```
 
-**Qué queda demostrado:** que compila con la toolchain de verdad, que arranca,
-que el serie a 921600 funciona, que las interrupciones se enganchan y disparan,
-que la cola aguanta ~200.000 flancos **sin perder ninguno**, y que el
-decodificador **no inventa transacciones a partir de ruido** — la detección de
-START/STOP no alucina protocolo donde no lo hay.
+**What that demonstrates:** that it compiles with the real toolchain, that it
+boots, that serial at 921600 works, that interrupts attach and fire, that the
+queue absorbs ~200,000 edges **without losing one**, and that the decoder **does
+not invent transactions out of noise**, since START/STOP detection does not
+hallucinate protocol where there is none.
 
-**Qué no:** el decodificador contra datos reales. Necesita bus, y eso es la
-fase 2.
+**What it does not:** the decoder against real data. That needs a bus, and that
+was phase 2.
 
-**Truco de depuración:** la ventana del comando `l` son 2 segundos y hay que
-estar ya generando flancos al pulsarlo. Para comprobar un pin sin prisa: `c`,
-generar actividad, `s`, y mirar `edges captured`.
+**Debugging tip:** the window for command `l` is 2 seconds, and edges have to
+already be happening when it is pressed. To check a pin without rushing: `c`,
+generate activity, `s`, and look at `edges captured`.
 
-## ⚠️ Qué contador vigilar: `malformed`, no `dropped`
+## ⚠️ Which counter to watch: `malformed`, not `dropped`
 
-Medido el 2026-08-03 con
+Measured on 2026-08-03 with
 [test_capture_ceiling](test_capture_ceiling/test_capture_ceiling.ino):
 
-| Onda cuadrada | Flancos esperados | Capturados | `dropped` |
+| Square wave | Edges expected | Captured | `dropped` |
 |---|---|---|---|
-| 125 kHz | 250.000 | 250.000 | 0 |
-| **150 kHz** | 300.000 | **299.613** | **0** |
+| 125 kHz | 250,000 | 250,000 | 0 |
+| **150 kHz** | 300,000 | **299,613** | **0** |
 
-**A 150 kHz se pierden flancos y `dropped` marca cero.** La causa: cuando dos
-flancos llegan más juntos que la duración del ISR, el registro de estado del
-GPIO anota *que hubo* interrupción pero no *cuántas*. Los dos colapsan en una
-sola llamada y el segundo desaparece sin incrementar ningún contador.
+**At 150 kHz edges are lost and `dropped` reads zero.** The cause: when two
+edges arrive closer together than the ISR takes to run, the GPIO status register
+records *that* an interrupt happened but not *how many*. The two collapse into a
+single call and the second vanishes without incrementing any counter.
 
-`dropped` solo cuenta los flancos que **llegaron al ISR y no cupieron en la
-cola**. No ve los que nunca lo dispararon.
+`dropped` only counts edges that **reached the ISR and did not fit in the
+queue**. It cannot see the ones that never fired it.
 
-**Regla operativa:** `dropped` en cero **no es** prueba de captura sana. El
-canario es **`malformed`**: un flanco perdido a mitad de transacción descuadra la
-cuenta de bits y la marca. Ese sí detecta la pérdida silenciosa.
+**Operating rule:** `dropped` at zero **is not** proof of healthy capture. The
+canary is **`malformed`**: an edge lost mid-transaction throws off the bit count
+and flags it. That one does catch silent loss.
 
-### Corrección: `malformed` no llegó a cero con el muestreo por ráfagas
+### Correction: `malformed` never reached zero with burst sampling
 
-Se afirmó que el cambio a ráfagas hacía desaparecer las transacciones
-malformadas. **No fue así:** quedaba un **0.7–1 %** en todas las capturas del
-2026-08-06, y **las 171 tenían exactamente cero bytes**.
+It was claimed that moving to bursts made malformed transactions disappear.
+**That was not so:** a stubborn **0.7 to 1%** remained across every capture of
+2026-08-06, and **all 171 of them had exactly zero bytes**.
 
-No eran tráfico roto: eran **nuestras**. Entre ráfaga y ráfaga el bus sigue
-moviéndose sin que nadie mire, y el decodificador —cuyo estado es global—
-comparaba el primer cambio de la ráfaga nueva contra un nivel de milisegundos
-antes, inventando un START o un STOP en la costura.
+They were not broken traffic. They were **ours**. Between one burst and the next
+the bus keeps moving with nobody watching, and the decoder, whose state is
+global, compared the first change of the new burst against a level from
+milliseconds earlier, inventing a START or a STOP at the seam.
 
-Corregido: `decodeBurst()` **resiembra el decodificador** con la primera muestra
-de cada grabación y descarta lo que creyera tener a medias, contándolo aparte en
-`cut by burst`. Así **`malformed` vuelve a significar "el bus dijo algo que no
-supimos leer"** en vez de medir nuestro propio instrumento.
+Fixed: `decodeBurst()` **reseeds the decoder** with the first sample of every
+recording and discards whatever it thought it had half-finished, counting that
+separately under `cut by burst`. So **`malformed` means "the bus said something
+we could not read"** again, instead of measuring our own instrument.
 
-Es la tercera vez en este proyecto que un contador mide la herramienta y no el
-mundo. Merece la pena desconfiar de ellos por defecto.
+That is the third time in this project a counter measured the tool rather than
+the world. Distrusting them by default is worth the effort.
 
-**Pero no llegó a cero: el suelo de ruido es ~0.8 %.** En 15 minutos de reposo
-quedaron 175 malformadas de 22.731 transacciones, todas del tipo `S P` sin
-bytes, repartidas de forma irregular y con `cut by burst` en cero.
+**But it did not reach zero: the noise floor is ~0.8%.** Across 15 minutes of
+idle, 175 malformed out of 22,731 transactions remained, all of the `S P` kind
+with no bytes, spread irregularly and with `cut by burst` at zero.
 
-**No son pérdidas: son transacciones de más.** La prueba es que la cuenta de
-ciclos cuadra exacta — 18.020 escrituras de dígito ÷ 4 = 4.505 ciclos = 4.505
-lecturas de teclado. Ningún ciclo llegó incompleto.
+**They are not losses, they are extra transactions.** The proof is that the
+cycle count works out exactly: 18,020 digit writes ÷ 4 = 4,505 cycles = 4,505
+keyboard reads. No cycle arrived incomplete.
 
-*Hipótesis sin verificar:* a 4 MHz cada muestra dura 250 ns; si DIO cambia dentro
-de esa ventana respecto al flanco de bajada de CLK, se ve un cambio de DIO con
-CLK aún alto, que por definición es un START o un STOP. Sería resolución de
-muestreo. Si algún día estorba, la vía es exigir que CLK lleve varias muestras
-estable antes de declarar START o STOP.
+*Unverified hypothesis:* at 4 MHz each sample lasts 250 ns, so if DIO changes
+inside that window relative to the CLK falling edge, what gets seen is a DIO
+change with CLK still high, which by definition is a START or a STOP. That would
+be sampling resolution. If it ever gets in the way, the route is to require CLK
+to hold steady for several samples before declaring a START or STOP.
 
-**Al interpretar `malformed`, el cero de referencia es ~0.8 %, no 0.**
+**When reading `malformed`, the reference zero is ~0.8%, not 0.**
 
-### Y antes de creerse cualquier contador en cero
+### And before believing any counter that reads zero
 
-El sketch de la prueba nació con el criterio de éxito puesto en `dropped == 0`,
-y **daba "clean up to 400 kHz" con el cable desconectado**: sin señal no hay nada
-que descartar, así que el contador de fallos se queda en cero y todo parece
-perfecto. Corregido el 2026-08-03 — ahora exige que los flancos esperados hayan
-llegado de verdad.
+The test sketch was born with its success criterion set to `dropped == 0`, and
+**it reported "clean up to 400 kHz" with the cable unplugged**: with no signal
+there is nothing to discard, so the failure counter stays at zero and everything
+looks perfect. Fixed on 2026-08-03, and it now requires the expected edges to
+have actually arrived.
 
-Es la misma trampa que la revisión del 2026-08-02 encontró en `checkLines()`, que
-daba OK con un cable cortado. **Un contador de errores en cero puede significar
-"todo bien" o "no hay nadie ahí".** Al interpretar una captura de la fase 2, antes
-de dar por buena cualquier estadística: comprobar que hubo tráfico que contar.
+It is the same trap the review of 2026-08-02 found in `checkLines()`, which
+reported OK with a cut cable. **A zero error counter can mean "all good" or "no
+one is there."** When reading any phase 2 capture, before trusting a statistic:
+check there was traffic to count.
 
-**Techo medido:** limpio hasta **125 kHz de onda cuadrada = 250.000 flancos/s**.
-Como los flancos llegan al doble de la frecuencia del reloj del bus, eso cubre un
-bus de hasta ~125 kHz. Esta familia de chips suele correr muy por debajo.
+**Measured ceiling:** clean up to **125 kHz square wave = 250,000 edges/s**.
+Since edges arrive at twice the bus clock frequency, that covers a bus up to
+about 125 kHz. This chip family usually runs well below that.
 
-*Antes de esto solo había pasado un análisis sintáctico con clang y cabeceras
-simuladas (`-fsyntax-only -Wall -Wextra`, cero avisos), que descartaba erratas y
-errores de tipo pero no desajustes con las firmas reales del core.*
+*Before this there had only been a syntax pass with clang and simulated headers
+(`-fsyntax-only -Wall -Wextra`, zero warnings), which ruled out typos and type
+errors but not mismatches against the real core signatures.*
 
-### Actualizar por red (OTA) — desde el 2026-08-23
+### Over-the-air updates, since 2026-08-23
 
-**El ESP32 vive en un cargador de pared: no hace falta el cable.** La IP está
-publicada como entidad `IP` en Home Assistant (a día de hoy `192.168.1.23`), y
-la contraseña, en `secrets.h`.
+**The ESP32 lives in a wall charger, so the cable is not needed.** The IP is
+published as the `IP` entity in Home Assistant (currently `192.168.1.23`), and
+the password lives in `secrets.h`.
 
 ```
 CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
@@ -182,64 +183,64 @@ CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/
   --upload-field password=<OTA_PASSWORD> firmware/desk_sniffer
 ```
 
-⚠️ **La actualización se rechaza si el escritorio está en movimiento**
-([ADR-034](../docs/DECISIONS.md)): reiniciar abre los canales, y abrir un
-contacto no detiene el movimiento continuo.
+⚠️ **The update is refused while the desk is moving**
+([ADR-034](../docs/DECISIONS.md)): rebooting opens the channels, and opening a
+contact does not stop continuous travel.
 
-Un `[WARNING]: Unexpected response from device: '256'` al final es cosmético del
-script de subida; si se vio `100% Done`, la actualización se aplicó — se
-confirma mirando que el `uptime` en HA vuelve a empezar.
+A `[WARNING]: Unexpected response from device: '256'` at the end is cosmetic,
+from the upload script. If `100% Done` appeared, the update was applied, which
+can be confirmed by watching the `uptime` in HA start over.
 
-**El cable sigue haciendo falta para:** el primer flasheo de una placa nueva, y
-para leer el puerto serie.
+**The cable is still needed for:** the first flash of a new board, and reading
+the serial port.
 
-### Monitor serie
+### Serial monitor
 
-**115200 baudios.** *(Corregido dos veces el 2026-08-21: decía 921600, pasó a
-460800 y acabó aquí. A 921600 la placa transmite bien pero no recibe ni un
-comando; a 460800 tampoco recibió, pese a lo que dice el
-[ADR-025](../docs/DECISIONS.md). **La causa del fallo de recepción sigue sin
-identificarse** — la tabla completa de lo que se descartó está en el
+**115200 baud.** *(Corrected twice on 2026-08-21: it said 921600, moved to
+460800 and ended up here. At 921600 the board transmits fine but receives not a
+single command; at 460800 it did not receive either, despite what
+[ADR-025](../docs/DECISIONS.md) says. **The cause of the receive failure remains
+unidentified**, and the full table of what was ruled out is in
 [ADR-026](../docs/DECISIONS.md).)*
 
-⚠️ **Corregido también el argumento, que estaba mal.** Este párrafo decía que
-*"el display se refresca cada ~8 ms, así que a 115200 el puerto sería el cuello
-de botella"*. **Medido el 2026-08-21 sobre las capturas: el ciclo de refresco es
-de 200 ms, no de 8.** Los cinco mensajes de un ciclo salen en 1.5 ms y después
-la línea queda en silencio hasta los 200 ms.
+⚠️ **The argument was corrected too, because it was wrong.** This paragraph used
+to say that *"the display refreshes every ~8 ms, so at 115200 the port would be
+the bottleneck"*. **Measured on 2026-08-21 against the captures: the refresh
+cycle is 200 ms, not 8.** The five messages of a cycle go out in 1.5 ms and then
+the line stays silent until the 200 ms mark.
 
-El caudal real en reposo son **1.4 KB/s de los 11.5 KB/s que da 115200**, un 12%.
-Sobra de largo, y el margen que se creía necesario nunca lo fue.
+Real idle throughput is **1.4 KB/s out of the 11.5 KB/s that 115200 provides**,
+about 12%. Plenty of room, and the margin once believed necessary never was.
 
-**Donde sí aprieta es con el volcado crudo (`r`) activo**, que es el modo que más
-escupe. Si al usarlo aparecen líneas perdidas, la respuesta no es subir la
-velocidad a ciegas: primero comprobar que a esa velocidad se siguen recibiendo
-comandos, mandando `h`.
+**Where it does get tight is with the raw dump (`r`) on**, which is the mode that
+spits out the most. If lines start going missing there, the answer is not to
+raise the baud rate blindly: first check that commands are still received at
+that speed, by sending `h`.
 
-Para capturar a archivo:
+To capture to a file:
 
 ```
 screen -L -Logfile docs/capturas/2026-08-02-reposo.log /dev/cu.usbserial-XXXX 115200
 ```
 
-Salir de `screen`: `Ctrl-A` y luego `K`.
+Leave `screen` with `Ctrl-A` then `K`.
 
-Después de capturar, **añadir la cabecera de contexto al archivo** — formato en
-[capturas/README.md](../docs/capturas/README.md). Una captura sin contexto no
-sirve.
+After capturing, **add the context header to the file**, format in
+[capturas/README.md](../docs/capturas/README.md). A capture without context is
+useless.
 
-### Qué hace al arrancar
+### What it does at boot
 
-Cuenta flancos en las dos líneas durante 2 segundos y dice si el cableado
-tiene sentido. CLK lleva una ráfaga de pulsos por transacción y DIO cambia como
-mucho una vez por bit, así que si DIO tiene más flancos que CLK, los cables
-están cruzados. Es el error de montaje más probable y produce basura que parece
-un problema de protocolo.
+It counts edges on both lines for 2 seconds and says whether the wiring makes
+sense. CLK carries a burst of pulses per transaction and DIO changes at most
+once per bit, so if DIO shows more edges than CLK, the wires are crossed. That is
+the most likely wiring mistake and it produces garbage that looks like a
+protocol problem.
 
-Si no ve actividad en ninguna línea: revisar GND, los divisores, y que el
-escritorio esté encendido.
+If it sees no activity on either line: check GND, the dividers, and that the
+desk is powered on.
 
-### Formato de salida
+### Output format
 
 ```
 [     3.482910] S 68a 07a P  | DIG1 seg=0x07 '7'
@@ -249,145 +250,159 @@ escritorio esté encendido.
 [     3.520044] S 49a 2E- P  | KEY none
 ```
 
-- `S` … `P` son START y STOP.
-- Cada byte lleva su ACK: `a` = reconocido (línea baja), `-` = línea alta.
-- **En las lecturas de teclado, el `-` del segundo byte es normal**, no un
-  fallo: el datasheet dice que en una lectura el noveno bit del comando es 0 y
-  el del dato es 1. En las escrituras los dos bytes deberían salir con `a`.
-- Las líneas `>>>` son eventos: cambio de lo que muestra la pantalla, o tecla
-  pulsada. Salen aunque el volcado crudo esté apagado.
+- `S` and `P` are START and STOP.
+- Every byte carries its ACK: `a` = acknowledged (line low), `-` = line high.
+- **On keyboard reads, the `-` on the second byte is normal**, not a fault: the
+  datasheet says that in a read the ninth bit of the command is 0 and that of
+  the data is 1. On writes both bytes should come out with `a`.
+- The `>>>` lines are events: a change in what the screen shows, or a key press.
+  They appear even with the raw dump off.
 
-### Comandos por el puerto serie
+### Serial commands
 
-| Tecla | Efecto |
+| Key | Effect |
 |---|---|
-| `r` | Enciende o apaga el volcado crudo de cada transacción |
-| `s` | Estadísticas: flancos, transacciones, velocidad del bus, descartes |
-| `c` | Reinicia las estadísticas |
-| `l` | Repite la comprobación de líneas |
-| `h` | Ayuda |
+| `r` | Toggles the raw dump of every transaction |
+| `s` | Statistics: edges, transactions, bus speed, discards |
+| `c` | Resets the statistics |
+| `l` | Repeats the line check |
+| `h` | Help |
 
-### Qué mirar en las estadísticas
+### What to look for in the statistics
 
-**`edges dropped`** significa que se llenó el buffer y se perdieron flancos.
-Ojo con la interpretación: **puede ser culpa nuestra**. Con el volcado crudo
-encendido, imprimir cada transacción puede saturar el puerto serie y bloquear
-el bucle mientras la interrupción sigue llenando la cola. Para saber si el bus
-de verdad va más rápido de lo que capturamos, **apaga el volcado con `r` y
-vuelve a mirar**. El propio mensaje de estadísticas te lo recuerda.
+**`edges dropped`** means the buffer filled and edges were lost. Careful with
+the interpretation: **it can be our own fault**. With the raw dump on, printing
+every transaction can saturate the serial port and block the loop while the
+interrupt keeps filling the queue. To find out whether the bus really runs
+faster than we capture, **turn the dump off with `r` and look again**. The
+statistics message itself says so.
 
-**`malformed`** cuenta transacciones que no traen exactamente dos bytes. El
-datasheet dice que todas son de 16 bits, así que cualquier otra cosa es un
-flanco perdido. Unas pocas al empezar a escuchar son normales —se entra a mitad
-de una transacción—; muchas y sostenidas, no.
+**`malformed`** counts transactions that do not carry exactly two bytes. The
+datasheet says all of them are 16 bits, so anything else is a lost edge. A few
+when starting to listen are normal, since you join mid-transaction; many and
+sustained are not.
 
-**`ended by repeated START`** cuenta transacciones que terminaron con otro
-START en vez de con un STOP. El datasheet no describe ese caso, así que si
-aparece de forma sistemática es que el maestro hace algo que no esperábamos y
-hay que mirarlo antes de fiarse de la decodificación.
+**`ended by repeated START`** counts transactions that ended with another START
+instead of a STOP. The datasheet does not describe that case, so if it shows up
+systematically the master is doing something unexpected and it needs looking at
+before trusting the decoding.
 
-**`fastest clock`** es el dato que decide si el divisor resistivo aguanta. La
-impedancia que manda es la del **flanco de subida**, que en la sonda de
-[ADR-016](../docs/DECISIONS.md) es de **10.9 kΩ**, no los 6.8 kΩ que decía este
-archivo — ese valor solo vale para el flanco de bajada
-([ADR-018](../docs/DECISIONS.md)). Sigue siendo mejor que las versiones
-anteriores de la sonda, pero con menos margen del que se creía.
+**`fastest clock`** is the figure that decides whether the resistive divider
+holds up. The impedance that governs is the one on the **rising edge**, which on
+the [ADR-016](../docs/DECISIONS.md) probe is **10.9 kΩ**, not the 6.8 kΩ this
+file used to claim. That value only applies to the falling edge
+([ADR-018](../docs/DECISIONS.md)). It is still better than earlier probe
+versions, but with less margin than was believed.
 
-No hay un umbral de kHz que se pueda dar por cálculo, porque depende de la
-capacidad parásita del montaje —longitud de los hilos, protoboard— que no se ha
-medido. **El criterio es empírico:** si `malformed` se mantiene en cero y los
-bytes decodifican, el divisor sirve a la velocidad que haya. Si aparecen bytes
-perdidos de forma sostenida con el volcado crudo apagado, el remedio es el
-buffer 74LVC2G17 declarado en [ADR-018](../docs/DECISIONS.md) — **nunca** bajar
-el valor de las resistencias, que carga el bus.
+There is no kHz threshold that can be given by calculation, because it depends
+on the parasitic capacitance of the build, meaning wire length and breadboard,
+which has not been measured. **The criterion is empirical:** if `malformed`
+stays at zero and the bytes decode, the divider works at whatever speed is
+present. If bytes go missing persistently with the raw dump off, the remedy is
+the 74LVC2G17 buffer declared in [ADR-018](../docs/DECISIONS.md), and **never**
+lowering the resistor values, which loads the bus.
 
-Se mide en ciclos de CPU, solo dentro de una transacción y reiniciando la cuenta
-en cada START, para que ni el tiempo muerto entre transacciones ni un
-desbordamiento del contador puedan falsearlo.
+It is measured in CPU cycles, only inside a transaction, and the count is reset
+at every START, so that neither the dead time between transactions nor a counter
+overflow can falsify it.
 
-### Revisión adversarial
+### Adversarial review
 
-El código pasó una revisión buscando fallos el 2026-08-02, que encontró ocho.
-Los dos serios: el contador de ciclos se desbordaba tras 17.9 s de silencio en
-el bus —justo el caso de [ADR-012](../docs/DECISIONS.md), cuando el mando se
-duerme— y la comprobación de líneas daba "OK" con un cable cortado. Ambos
-corregidos. Detalle en la [bitácora](../docs/BITACORA.md).
+The code went through a fault-hunting review on 2026-08-02, which found eight
+issues. The two serious ones: the cycle counter overflowed after 17.9 s of bus
+silence, which is exactly the [ADR-012](../docs/DECISIONS.md) case of the
+handset sleeping, and the line check reported "OK" with a cut cable. Both fixed.
+Detail in the [log](../docs/BITACORA.md).
 
-Una segunda revisión el 2026-08-03 encontró dos más, los dos herederos del
-mismo desbordamiento de 17.9 s que la primera creyó cerrado:
+A second review on 2026-08-03 found two more, both descendants of the same
+17.9 s overflow the first one thought closed:
 
-1. **El periodo de reloj mínimo se podía envenenar.** La cuenta se reiniciaba
-   por transacción según el comentario, pero no según el código: el primer
-   flanco de cada trama medía hacia atrás hasta la trama anterior, cruzando el
-   hueco muerto. Si ese hueco pasaba de 17.9 s —el chip dormido— la resta daba
-   la vuelta y dejaba un mínimo falso y minúsculo, en el único número que
-   decide si el divisor sirve.
-2. **La marca de tiempo podía saltar 17.9 s hacia adelante.** Si la
-   interrupción encolaba un evento justo después de que el bucle diera la cola
-   por vacía, el *keep-alive* adelantaba la base por delante de ese evento y la
-   resta sin signo lo convertía en un salto enorme, permanente a partir de ahí.
+1. **The minimum clock period could be poisoned.** The count was reset per
+   transaction according to the comment, but not according to the code: the
+   first edge of each frame measured backwards into the previous frame, across
+   the dead gap. If that gap exceeded 17.9 s, with the chip asleep, the
+   subtraction wrapped around and left a false, tiny minimum in the one number
+   that decides whether the divider works.
+2. **The timestamp could jump 17.9 s forward.** If the interrupt queued an event
+   just after the loop had declared the queue empty, the keep-alive advanced the
+   base past that event and the unsigned subtraction turned it into an enormous
+   jump, permanent from then on.
 
-Ambos corregidos. Ninguno de los dos podía dañar nada —el firmware sigue sin
-escribir jamás en el bus— pero los dos corrompían datos de captura en silencio,
-que es el modo de fallo que este proyecto menos se puede permitir.
+Both fixed. Neither could damage anything, since the firmware still never writes
+to the bus, but both corrupted capture data silently, which is the failure mode
+this project can least afford.
 
-### Qué está sin verificar
+### Verification status
 
-Todo. Este firmware está escrito contra el datasheet, no contra el bus real.
-Nunca se ha ejecutado con hardware conectado. Las siete preguntas abiertas de
-[PROTOCOLO.md](../docs/PROTOCOLO.md) siguen abiertas.
+⚠️ **Corrected on 2026-09-02.** This section used to read, in full: *"What is
+unverified: everything. This firmware is written against the datasheet, not
+against the real bus. It has never been run with hardware connected. The seven
+open questions in PROTOCOLO.md are still open."*
+
+**All of that stopped being true weeks ago** and nobody updated it. The firmware
+has been running against the real desk since 2026-08-06, the bus is decoded, and
+five of those questions are answered (see
+[PROTOCOLO.md](../docs/PROTOCOLO.md)). The paragraph survived because nothing
+forces a document to be re-read when the thing it describes changes.
+
+**Current status:** running in production on the real desk, reading height,
+driving all four channels, and reporting to Home Assistant over MQTT. What
+remains unverified is listed in [PLAN.md](../docs/PLAN.md) and in
+[SEGURIDAD.md](../docs/SEGURIDAD.md), the outstanding item being the 74HC14
+buffer, which is designed but has never been built.
 
 ---
 
-# test_output_channels — comprobación del accionamiento
+# test_output_channels: checking the actuation
 
-Prueba los cuatro canales de accionamiento **antes de soldar nada al mando**.
+Tests the four actuation channels **before anything is soldered to the
+handset**.
 
-**Nada de esto toca el escritorio.** Los optoacopladores van en la protoboard
-con su lado de salida **conectado a nada**, así que lo peor que puede hacer este
-sketch es encender un LED infrarrojo dentro de un chip.
+**None of this touches the desk.** The optocouplers sit on the breadboard with
+their output side **connected to nothing**, so the worst this sketch can do is
+light an infrared LED inside a chip.
 
-## Qué demuestra, por orden de importancia
+## What it proves, in order of importance
 
-1. **Que los pines están bajos en el reset y siguen bajos durante el arranque.**
-   Todo [ADR-024](../docs/DECISIONS.md) se apoya en esto: el watchdog nos
-   protege reiniciando el chip, y un reinicio solo sirve si deja los canales
-   abiertos. Si un pin se pusiera alto al arrancar, el watchdog **activaría** un
-   botón en vez de soltarlo — justo lo contrario de la protección.
-2. Que un pulso ordenado dura lo que debe y ni un milisegundo más.
-3. Que nunca hay dos canales activos a la vez.
+1. **That the pins are low at reset and stay low through boot.** All of
+   [ADR-024](../docs/DECISIONS.md) rests on this: the watchdog protects us by
+   rebooting the chip, and a reboot only helps if it leaves the channels open.
+   If a pin went high at boot, the watchdog would **press** a button instead of
+   releasing it, the exact opposite of the protection.
+2. That a commanded pulse lasts what it should and not a millisecond more.
+3. That two channels are never active at once.
 
-## Cableado, por canal
+## Wiring, per channel
 
-**Plano: [plano_canal_pc817.svg](../docs/hardware/plano_canal_pc817.svg).**
+**Schematic: [plano_canal_pc817.svg](../docs/hardware/plano_canal_pc817.svg).**
 
 ```
-GPIO --[330 ohm]--|>|-- PC817 pata 1 (anodo)
-                        PC817 pata 2 (catodo) -- GND
+GPIO --[330 ohm]--|>|-- PC817 pin 1 (anode)
+                        PC817 pin 2 (cathode) -- GND
   |
-[10k]      pull-down: sin el, un pull-up interno debil al arrancar (~45 kOhm)
-  |        metería ~47 uA por el LED, incomodamente cerca de los ~90 uA que el
- GND       mando necesita para ver una tecla. Con el, esa fuga se queda en
-           0.6 V, muy por debajo de los 1.2 V que el LED necesita para conducir.
+[10k]      pull-down: without it, a weak internal pull-up at boot (~45 kOhm)
+  |        would push ~47 uA through the LED, uncomfortably close to the ~90 uA
+ GND       the handset needs to see a key. With it, that leakage sits at 0.6 V,
+           well under the 1.2 V the LED needs to conduct.
 ```
 
-Multímetro **en las patas 3 y 4 del PC817** para vigilar el canal.
+Multimeter **on pins 3 and 4 of the PC817** to watch the channel.
 
-## Pines
+## Pins
 
-**GPIO 27, 26, 25 y 33**, cuatro seguidos en la bornera derecha. Ninguno es pin
-de arranque (0, 2, 5, 12, 15), ninguno es de la flash (6–11), y los cuatro
-pueden ser salida — al contrario que P34, P35, SVN y SVP de esa misma columna,
-que son **solo entrada**.
+**GPIO 27, 26, 25 and 33**, four in a row on the right-hand terminal block. None
+is a boot pin (0, 2, 5, 12, 15), none belongs to the flash (6 to 11), and all
+four can be outputs, unlike P34, P35, SVN and SVP in that same column, which are
+**input only**.
 
-## Qué debe salir
+## What should happen
 
-| Momento | Multímetro en las patas 3-4 |
+| Moment | Multimeter on pins 3-4 |
 |---|---|
-| EN apretado, chip en reset | **Abierto**, megaohmios |
-| Soltando EN, durante el arranque | **Sin pitido** en modo continuidad |
-| En reposo tras arrancar | **Abierto** |
-| Mientras pulsa (tecla `1`) | **Conduce** brevemente |
+| EN held down, chip in reset | **Open**, megohms |
+| Releasing EN, during boot | **No beep** in continuity mode |
+| Idle after boot | **Open** |
+| While pressing (key `1`) | **Conducts** briefly |
 
-Comandos: `1` `2` `3` `4` para pulsar un canal, `l` para ver el nivel de los
-cuatro pines, `h` para la ayuda.
+Commands: `1` `2` `3` `4` to press a channel, `l` to see the level of all four
+pins, `h` for help.
