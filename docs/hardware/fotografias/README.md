@@ -1,46 +1,46 @@
-# Fotografías del hardware
+# Hardware photographs
 
-Fotos de las que depende algún dato del proyecto. Misma razón que los datasheets
-(regla 4 de la [política](../../POLITICA_DOCUMENTACION.md)): un enlace a un
-anuncio de tienda caduca, y una foto que solo existió en una conversación no
-existe.
+Photos that some project fact depends on. Same reason as the datasheets (rule 4
+of the [policy](../../POLITICA_DOCUMENTACION.md)): a link to a shop listing
+expires, and a photo that only ever existed inside a conversation does not
+exist.
 
-**Nombre de archivo:** `descripcion-corta.jpg`, en minúsculas y sin acentos.
+**File naming:** `short-description.jpg`, lowercase, no accents.
 
 ---
 
-## Qué hay que guardar aquí
+## What belongs here
 
-### Pendientes — vinieron por conversación el 2026-08-03 y no se pudieron archivar
+### Pending: arrived by conversation on 2026-08-03 and could not be archived
 
-| Archivo esperado | Qué documenta | Estado |
+| Expected file | What it documents | Status |
 |---|---|---|
-| `bornera-terminal-adapter.jpg` | Placa `FOR ESP32 TERMINAL ADAPTER` con las dos columnas de tornillos legibles | **Falta** |
-| `devkit-modulo.jpg` | El DevKit con la serigrafía del blindaje: `ESP-32`, CE, `FCC ID: 28B77-ESP32-32X` | **Falta** |
-| `modulo-reles-songle.jpg` | Módulo de 4 relés `SRD-05VDC-SL-C` con optoacopladores y jumper JD-VCC | **Falta** |
-| `modulo-pc817-2ch.jpg` | Módulo optoacoplador PC817 de 2 canales, con los jumpers amarillos visibles | **Falta** |
+| `bornera-terminal-adapter.jpg` | `FOR ESP32 TERMINAL ADAPTER` board with both screw columns legible | **Missing** |
+| `devkit-modulo.jpg` | The DevKit with the shield silkscreen: `ESP-32`, CE, `FCC ID: 28B77-ESP32-32X` | **Missing** |
+| `modulo-reles-songle.jpg` | 4-relay `SRD-05VDC-SL-C` module with optocouplers and JD-VCC jumper | **Missing** |
+| `modulo-pc817-2ch.jpg` | 2-channel PC817 optocoupler module, yellow jumpers visible | **Missing** |
 
-### Pendientes de tomar
+### Still to be taken
 
-| Archivo esperado | Qué documenta |
+| Expected file | What it documents |
 |---|---|
-| `mando-chip-macro.jpg` | Macro del AiP650EO, marcado `19BT450`, con las patas contables |
-| `mando-serigrafia.jpg` | Serigrafía de la placa: `JK-CH506 Rev1.2`, `G0088-30-4137-202518` |
-| `mando-conector-jst.jpg` | El conector JST de 4 pines por el reverso, antes de soldar |
-| `derivaciones-soldadas.jpg` | Los tres hilos soldados con su alivio de tracción, antes de cerrar |
+| `mando-chip-macro.jpg` | Macro of the AiP650EO, marked `19BT450`, with countable pins |
+| `mando-serigrafia.jpg` | Board silkscreen: `JK-CH506 Rev1.2`, `G0088-30-4137-202518` |
+| `mando-conector-jst.jpg` | The 4-pin JST connector from the back, before soldering |
+| `derivaciones-soldadas.jpg` | The three wires soldered with strain relief, before closing up |
 
 ---
 
-## Importante: los datos ya no dependen de estas fotos
+## Important: the data no longer depends on these photos
 
-Todo lo que las fotos del 2026-08-03 demostraban **está transcrito** en
-[HARDWARE.md](../../HARDWARE.md) y marcado como verificado por fotografía:
+Everything the 2026-08-03 photos proved **has been transcribed** into
+[HARDWARE.md](../../HARDWARE.md) and marked as verified by photograph:
 
-- El mapa completo de las dos columnas de la bornera, incluidos los tornillos
-  `CLK`, `SD0`, `SD1`, `SD2` y `SD3` que son la flash interna y no se tocan.
-- Que **P18 y P4 están en la misma columna**, cuatro posiciones de separación, y
-  que hay un GND dos posiciones más allá de P18.
-- La serigrafía del módulo y que **no es un WROVER**.
+- The full map of both terminal columns, including the `CLK`, `SD0`, `SD1`,
+  `SD2` and `SD3` screws, which are the internal flash and are never touched.
+- That **P18 and P4 sit in the same column**, four positions apart, with a GND
+  two positions beyond P18.
+- The module silkscreen, and the fact that it is **not a WROVER**.
 
-Las fotos harían falta para *volver a comprobarlo* sin tener la placa delante,
-no para saberlo. Que falten es una molestia, no un agujero.
+The photos would be needed to *re-check* any of this without the board in hand,
+not to know it. Their absence is an annoyance, not a hole.

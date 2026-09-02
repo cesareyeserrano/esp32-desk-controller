@@ -133,6 +133,27 @@ previene. Reglas específicas:
 
 ## Idioma y formato
 
-Prosa en español. Nombres de archivo, identificadores de código y comentarios
-en el firmware, en inglés. Markdown plano, líneas de hasta ~80 columnas, sin
-dependencias ni herramientas de generación.
+**Cambiado el 2026-09-02.** Antes: toda la prosa en español. Ahora el
+repositorio es público y el idioma depende de para quién es cada documento:
+
+| Documento | Idioma | Por qué |
+|---|---|---|
+| README, PLAN, PROTOCOLO, HARDWARE, SEGURIDAD, INTEGRACION_HA, PCB, README de capturas y firmware | **Inglés** | Es lo que lee quien llega al repositorio desde fuera |
+| BITACORA y DECISIONS | **Español** | Ver abajo |
+| Nombres de archivo, identificadores y comentarios del firmware | **Inglés** | Sin cambio |
+
+**La bitácora y los ADR se quedan en español a propósito, y no es pereza.** Son
+un diario escrito *mientras* pasaban las cosas, con la distinción entre medido,
+supuesto y descartado incrustada en el modo de decirlo. Traducirlos a posteriori
+significa reescribir cientos de afirmaciones marcadas, y **la forma más fácil de
+estropear un supuesto es traducirlo con prisa hasta que suene a hecho** — que es
+exactamente contra lo que existe la regla 5. Los ADR además son inmutables: una
+traducción es una edición.
+
+Los nombres de archivo se mantienen como estaban (`SEGURIDAD.md`,
+`PROTOCOLO.md`, `INTEGRACION_HA.md`) aunque el contenido esté en inglés.
+Renombrarlos rompería los enlaces desde la bitácora y los ADR, que **no se
+tocan**.
+
+Formato: Markdown plano, líneas de hasta ~80 columnas, sin dependencias ni
+herramientas de generación.

@@ -1,32 +1,32 @@
-# Herramientas
+# Tools
 
-Scripts de apoyo. No forman parte del firmware.
+Support scripts. They are not part of the firmware.
 
 ## `serial_talk.py`
 
-Manda un comando a `desk_sniffer` y graba la respuesta del bus.
+Sends a command to `desk_sniffer` and records the bus response.
 
 ```
 tools/serial_talk.py -c 2 -o docs/capturas/2026-08-21-canal2.log
 ```
 
-**Existe porque las redirecciones de shell no funcionan para escribir.** macOS
-reinicia la configuración del puerto en cada `open()`, y la velocidad hay que
-fijarla con el ioctl nativo `IOSSIOSPEED` sobre el **mismo** descriptor que se
-usa para leer y escribir. Con `printf '2' > /dev/cu.usbserial-0001` los bytes no
-llegan nunca al sketch — comprobado el 2026-08-21 con tres herramientas
-distintas.
+**It exists because shell redirection does not work for writing.** macOS resets
+the port configuration on every `open()`, and the baud rate has to be set with
+the native `IOSSIOSPEED` ioctl on the **same** descriptor used to read and
+write. With `printf '2' > /dev/cu.usbserial-0001` the bytes never reach the
+sketch, as confirmed on 2026-08-21 with three different tools.
 
-Para **solo escuchar**, la receta de `stty` de
-[../docs/capturas/README.md](../docs/capturas/README.md) sigue valiendo.
+To **only listen**, the `stty` recipe in
+[../docs/capturas/README.md](../docs/capturas/README.md) still works.
 
-Velocidad por defecto **115200**, no 921600 ni 460800: ver
-[ADR-026](../docs/DECISIONS.md), que corrige al
+Default speed is **115200**, not 921600 or 460800. See
+[ADR-026](../docs/DECISIONS.md), which corrects
 [ADR-025](../docs/DECISIONS.md).
 
-⚠️ **Mandar `h` y comprobar que responde la ayuda antes de fiarse de cualquier
-prueba de canal.** El puerto dejó de recibir comandos sin causa identificada el
-2026-08-21, y eso hizo parecer muerto un canal que no se había llegado a probar.
+⚠️ **Send `h` and check that the help text comes back before trusting any
+channel test.** The port stopped accepting commands for no identified reason on
+2026-08-21, and that made a channel look dead when it had never actually been
+tested.
 
-**Cerrar el Arduino IDE antes.** Su Serial Monitor agarra el puerto y solo un
-proceso puede tenerlo. Se comprueba con `lsof /dev/cu.usbserial-0001`.
+**Close the Arduino IDE first.** Its Serial Monitor grabs the port and only one
+process can hold it. Check with `lsof /dev/cu.usbserial-0001`.

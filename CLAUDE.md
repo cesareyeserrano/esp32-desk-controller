@@ -49,5 +49,18 @@ la memoria de la conversación, ¿se puede retomar leyendo solo `docs/`?
 
 ## Idioma
 
-Prosa en español. Nombres de archivo, código y comentarios del firmware, en
-inglés.
+**Cambiado el 2026-09-02, con el repositorio ya público.**
+
+- **Documentación de cara al exterior, en inglés**: README, PLAN, PROTOCOLO,
+  HARDWARE, SEGURIDAD, INTEGRACION_HA, PCB y los README de `capturas/`,
+  `firmware/` y `tools/`.
+- **BITACORA.md y DECISIONS.md, en español.** Son un diario escrito mientras
+  pasaban las cosas; traducirlos arriesga convertir un supuesto marcado en un
+  hecho afirmado, y los ADR son inmutables (traducir es editar).
+- **Conversación con el propietario, en español.**
+- Nombres de archivo, código y comentarios del firmware, en inglés. Los nombres
+  en español que ya existen no se renombran: romperían enlaces desde documentos
+  que no se tocan.
+
+Detalle y razonamiento en
+[docs/POLITICA_DOCUMENTACION.md](docs/POLITICA_DOCUMENTACION.md).
