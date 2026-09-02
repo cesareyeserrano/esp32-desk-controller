@@ -1,552 +1,538 @@
-# Integración con Home Assistant
+# Home Assistant integration
 
-> Qué expone el escritorio a HA y por qué. Diseño de la fase 4, abierto el
-> 2026-08-22. Las decisiones firmes van a [DECISIONS.md](DECISIONS.md); esto es
-> el catálogo y el razonamiento.
+> What the desk exposes to HA and why. Phase 4 design, opened on 2026-08-22.
+> Firm decisions live in [DECISIONS.md](DECISIONS.md); this is the catalogue and
+> the reasoning.
+>
+> *Documento en inglés desde el 2026-09-02. La bitácora y los ADR siguen en
+> español; ver [POLITICA_DOCUMENTACION.md](POLITICA_DOCUMENTACION.md).*
 
-Destino: **HA sobre Ultron (Raspberry Pi 5)**.
-
----
-
-## El principio que ordena todo lo demás
-
-**El ESP32 publica hechos. Home Assistant deriva estadísticas.**
-
-El ESP32 publica lo que *observa* —altura, teclas, salud del bus— y HA se encarga
-de acumular, historizar y graficar. Los motivos:
-
-- **HA ya tiene base de datos, gráficas y estadísticas de largo plazo.**
-  Reimplementar eso en un microcontrolador es trabajo tirado.
-- **Lo que acumule el ESP32 se pierde al reiniciar.** "Tiempo de pie hoy"
-  guardado en RAM vuelve a cero con cada corte de USB.
-- **El firmware se mantiene pequeño**, y el firmware pequeño es el que sigue
-  funcionando. El sniffer es código con timing crítico; cuanto menos cargue,
-  mejor.
-
-**Excepción:** los contadores que necesitan muestreo más rápido de lo que se
-publica —la distancia total recorrida, que cambia a 0.68 cm/s— se acumulan en el
-ESP32 y se publican ya sumados.
+Target: **HA on Ultron (Raspberry Pi 5)**.
 
 ---
 
-## Lo que ya funciona — 2026-08-22
+## The principle everything else follows from
 
-**Trece entidades, creadas solas por discovery.** Verificado de punta a punta:
-Home Assistant → MQTT → ESP32 → optoacoplador → mando → caja de control, con la
-confirmación volviendo por el bus.
+**The ESP32 publishes facts. Home Assistant derives statistics.**
 
-| Tipo | Entidades |
+The ESP32 publishes what it *observes*, meaning height, keys and bus health, and
+HA takes care of accumulating, storing and graphing. The reasons:
+
+- **HA already has a database, graphs and long-term statistics.**
+  Reimplementing that on a microcontroller is wasted work.
+- **Anything the ESP32 accumulates is lost on reboot.** "Standing time today"
+  held in RAM goes back to zero with every USB interruption.
+- **The firmware stays small**, and small firmware is the firmware that keeps
+  working. The sniffer is timing-critical code; the less it carries, the better.
+
+**Exception:** counters that need sampling faster than the publish rate, such as
+total distance travelled which changes at 0.68 cm/s, are accumulated on the
+ESP32 and published already summed.
+
+---
+
+## What already works, 2026-08-22
+
+**Thirteen entities, created automatically through discovery.** Verified end to
+end: Home Assistant → MQTT → ESP32 → optocoupler → handset → control box, with
+the confirmation coming back over the bus.
+
+| Type | Entities |
 |---|---|
-| Sensores | altura, antigüedad de la altura, bus malformadas, bus transacciones, uptime, WiFi RSSI |
-| Binario | display despierto, **online** (testamento MQTT: el broker lo pone en `off` si el ESP32 muere, sin depender del firmware) |
-| Botones | subir, bajar, memoria 1, memoria 2, **parar**, refrescar altura |
+| Sensors | height, height age, bus malformed, bus transactions, uptime, WiFi RSSI |
+| Binary | display awake, **online** (MQTT last will: the broker sets it `off` if the ESP32 dies, without depending on the firmware) |
+| Buttons | up, down, preset 1, preset 2, **stop**, refresh height |
 
-⚠️ **Solo se exponen toques, nunca el pulso largo.** Nada pulsable desde un móvil
-puede arrancar movimiento continuo (2.2 s) ni sobrescribir un preset (3.0 s). Es
-una decisión, no una omisión: el movimiento continuo sigue necesitando
-supervisión ([ADR-028](DECISIONS.md)).
+⚠️ **Only taps are exposed, never the long pulse.** Nothing pressable from a
+phone can start continuous travel (2.2 s) or overwrite a preset (3.0 s). That is
+a decision, not an omission: continuous travel still needs supervision
+([ADR-028](DECISIONS.md)).
 
-⚠️ **Lo que sí puede pasar desde el móvil: pulsar M1 o M2 arranca un viaje de
-hasta 44 cm**, porque lo ejecuta la caja de control por su cuenta. El botón
-**parar** está en la misma pantalla precisamente por eso.
+⚠️ **What can happen from the phone: pressing M1 or M2 starts a trip of up to
+44 cm**, because the control box runs it on its own. The **stop** button is on
+the same screen precisely for that.
 
-Captura: [controles-mqtt](capturas/2026-08-22-controles-mqtt.log).
+Capture: [controles-mqtt](capturas/2026-08-22-controles-mqtt.log).
 
-**Falta:** el `number` para ir a una altura concreta, los presets con nombre y
-las estadísticas de uso — y antes que todo eso, **los límites por software**.
+**Missing:** the `number` for going to a specific height, named presets and
+usage statistics, and before any of that, **the software limits**.
 
-**Desde el 2026-08-23 el ESP32 corre en un cargador de pared**, independiente
-del Mac. El puerto serie deja de estar disponible salvo que se reconecte al Mac
-(y **reflashear requiere el Mac**: no hay OTA todavía). El monitoreo y los
-comandos van por MQTT.
+**Since 2026-08-23 the ESP32 runs from a wall charger**, independent of the Mac.
+The serial port is unavailable unless it is reconnected to the Mac. Monitoring
+and commands go over MQTT.
 
-⚠️ **Al cambiar la fuente de alimentación del ESP32**, el orden de siempre:
-escritorio desenchufado → cambiar el USB → esperar el arranque → escritorio a la
-corriente. El instante sin alimentación con los hilos puestos es la condición de
+⚠️ **When changing the ESP32's power supply**, the usual order: desk unplugged →
+swap the USB → wait for boot → desk back to mains. The instant without power
+while the wires are attached is the condition of
 [ADR-019](DECISIONS.md)/[ADR-031](DECISIONS.md).
 
-### Monitoreo automático — instalado el 2026-08-23
+### Automatic monitoring, installed 2026-08-23
 
-Cinco automatizaciones en HA (en `automations.yaml`, editables desde la
-interfaz), notificando al móvil **iCesar pro**:
+Five automations in HA (in `automations.yaml`, editable from the interface),
+notifying the phone **iCesar pro**:
 
-| Automatización | Cuándo avisa |
+| Automation | When it warns |
 |---|---|
-| ALERTA desconectado | El ESP32 lleva 2 min sin publicar (lo detecta **el broker**, no el firmware) |
-| Volvió | Al reconectar |
-| ALERTA bus degradado | Malformadas >2% sostenido 10 min — la sonda degradándose |
-| 🚨 Movimiento sostenido | Subiendo o bajando >3 min — ningún viaje legítimo dura tanto (el recorrido entero son ~65 s) |
-| Resumen cada 30 min | "Escritorio OK — altura, bus, WiFi, movimiento". **Solo si está online**; si cansa, se desactiva desde la interfaz y quedan solo las alertas |
+| ALERT disconnected | The ESP32 has not published for 2 min (detected by **the broker**, not the firmware) |
+| Back online | On reconnection |
+| ALERT bus degraded | Malformed >2% sustained for 10 min, meaning the probe is degrading |
+| 🚨 Sustained movement | Rising or falling >3 min. No legitimate trip lasts that long (the full range is ~65 s) |
+| Summary every 30 min | "Desk OK: height, bus, WiFi, movement". **Only if online**; if it gets tiring, it is disabled from the interface and only the alerts remain |
 
-**Los logs ya se guardan solos**: el recorder de HA conserva el historial de
-todas las entidades (por defecto ~10 días), consultable en el panel de historial.
-Para estudio de largo plazo está la integración InfluxDB ya presente — hoy
-configurada sin entidades incluidas; si se quiere histórico permanente del
-escritorio, se añaden ahí.
+**The logs already keep themselves**: the HA recorder holds the history of every
+entity (30 days as configured), viewable in the history panel. For long-term
+study there is the InfluxDB integration already present, currently configured
+with no entities included; if a permanent desk history is wanted, they get added
+there.
 
-**Nota**: `altura` publica `unknown` cuando el display duerme; el discovery lleva
-`value_template` para que HA lo trate como estado desconocido y no como error.
+**Note**: `altura` publishes `unknown` when the display sleeps; the discovery
+config carries a `value_template` so HA treats it as an unknown state rather
+than an error.
 
-## Estado del escritorio
+## Desk state
 
-Lo que hace falta para saber qué está pasando ahora mismo.
+What is needed to know what is happening right now.
 
-| Entidad | Tipo | Origen | Estado |
+| Entity | Type | Source | Status |
 |---|---|---|---|
-| `altura` | sensor, cm | Display del bus | ✅ **Ya se mide** |
-| `estado` | sensor: `quieto`/`subiendo`/`bajando` | Evolución de la altura + tecla vista | 🔶 Derivar |
-| `altura_objetivo` | sensor, cm | Del controlador, cuando hay viaje | 🔶 Implementar |
-| `display_despierto` | binary_sensor | Los 4 dígitos a `0x00` = dormido | ✅ **Ya se mide** |
-| `antiguedad_altura` | sensor, s | Segundos desde la última lectura válida | 🔶 Derivar |
+| `altura` | sensor, cm | Bus display | ✅ **Already measured** |
+| `estado` | sensor: `quieto`/`subiendo`/`bajando` | Height evolution + key seen | 🔶 Derive |
+| `altura_objetivo` | sensor, cm | From the controller, while travelling | 🔶 Implement |
+| `display_despierto` | binary_sensor | All 4 digits at `0x00` = asleep | ✅ **Already measured** |
+| `antiguedad_altura` | sensor, s | Seconds since the last valid reading | 🔶 Derive |
 
-⚠️ **`antiguedad_altura` no es un adorno de diagnóstico: es seguridad.**
-[ADR-012](DECISIONS.md) dice que con altura obsoleta no se inicia movimiento, y
-esta es la entidad que lo hace comprobable desde HA. **Si el display lleva
-dormido un rato, la altura que se muestra es la última conocida, no la actual.**
+⚠️ **`antiguedad_altura` is not diagnostic decoration: it is safety.**
+[ADR-012](DECISIONS.md) says no movement starts on a stale height, and this is
+the entity that makes that checkable from HA. **If the display has been asleep
+for a while, the height shown is the last known one, not the current one.**
 
 ---
 
-## Uso — lo que hace la integración interesante
+## Usage: what makes the integration interesting
 
-Aquí es donde deja de ser un mando a distancia y pasa a ser algo que sabe cosas.
+This is where it stops being a remote control and becomes something that knows
+things.
 
-| Entidad | Tipo | Cómo sale |
+| Entity | Type | How it comes about |
 |---|---|---|
-| `tiempo_de_pie_hoy` | sensor, min | HA acumula sobre `altura` y un umbral |
-| `tiempo_sentado_hoy` | sensor, min | Ídem |
-| `cambios_de_altura_hoy` | contador | HA, sobre eventos de movimiento |
-| `altura_min_hoy` / `altura_max_hoy` | sensor, cm | HA, estadísticas del día |
+| `tiempo_de_pie_hoy` | sensor, min | HA accumulates over `altura` and a threshold |
+| `tiempo_sentado_hoy` | sensor, min | Same |
+| `cambios_de_altura_hoy` | counter | HA, over movement events |
+| `altura_min_hoy` / `altura_max_hoy` | sensor, cm | HA, daily statistics |
 | `ultimo_movimiento` | timestamp | HA |
-| `distancia_recorrida_total` | sensor, m | **ESP32**, acumulando \|Δaltura\| |
-| `pulsaciones_por_boton` | 4 contadores | ESP32 o HA, sobre los eventos de tecla |
+| `distancia_recorrida_total` | sensor, m | **ESP32**, accumulating \|Δheight\| |
+| `pulsaciones_por_boton` | 4 counters | ESP32 or HA, over key events |
 
-**El umbral de pie/sentado hay que elegirlo**, y no hay un valor universal:
-depende de la estatura. El rango físico es 73–118 cm. Queda como
-[decisión pendiente](#decisiones-pendientes).
+**The standing/sitting threshold has to be chosen**, and there is no universal
+value: it depends on height. The physical range is 73 to 118 cm. Left as a
+[pending decision](#pending-decisions).
 
-**`distancia_recorrida_total` es el indicador de desgaste del motor.** Es el único
-número que dirá algo cuando el escritorio empiece a fallar dentro de unos años.
-
----
-
-## Eventos — lo que más juego da
-
-**El sniffer ve las teclas del mando físico, no solo las que manda el ESP32.**
-Eso significa que HA puede enterarse de que **una persona ha tocado el mando**, y
-eso abre automatizaciones que de otro modo no existen.
-
-| Evento | Cuándo | Para qué sirve |
-|---|---|---|
-| `boton_pulsado` | Cualquier tecla en el bus, con su código | Distinguir persona de automatización |
-| **`uso_manual`** ✅ | Segundos desde la última tecla humana en el mando | **Implementado 2026-08-23.** La automatización que no quiere pelearse con la persona consulta esto |
-| `movimiento_no_pedido` ✅ | El escritorio se mueve sin que el ESP32 lo pidiera | **Implementado 2026-08-23 como cesión automática**: una tecla no ordenada por el ESP32 cancela su viaje sin frenar (la persona ya frenó). Verificado en vivo: `ultimo_freno: mando manual` |
-| `preset_recuperado` | `0x67` o `0x6F` en el bus | Saber a qué altura se va antes de llegar |
-| `tope_alcanzado` | La altura deja de cambiar en 73 o 118 | Fin de recorrido |
-
-**Verificado**: los cuatro códigos de tecla se leen del bus y se distinguen sin
-ambigüedad —`0x47` subir, `0x57` bajar, `0x67` M1/80 cm, `0x6F` M2/117 cm— y el
-sniffer los ve **tanto si los provoca el ESP32 como una persona**.
-
-⚠️ **Lo que sí hay que resolver: distinguir quién pulsó.** El ESP32 sabe cuándo
-ha sido él porque acaba de mandarlo; cualquier otra tecla es humana. La lógica ya
-existe en `desk_sniffer` para atribuir un código a un canal — se extiende para
-marcar el resto como manuales.
+**`distancia_recorrida_total` is the motor wear indicator.** It is the one
+number that will say something when the desk starts failing years from now.
 
 ---
 
-## Arranque y recuperación de estado
+## Events: where most of the value is
 
-**Medido el 2026-08-22, incluso cortando la corriente con el escritorio en
-marcha:** conserva la altura, conserva las memorias, **no reanuda el movimiento**
-al volver la luz, y el bus revive solo. Lo que no sobrevive es el conocimiento
-del ESP32: el display **arranca apagado**, y con el display apagado **la altura
-no está en el bus**.
+**The sniffer sees the physical handset keys, not only the ones the ESP32
+sends.** That means HA can find out that **a person has touched the handset**,
+which opens up automations that otherwise would not exist.
 
-**El refresco no tiene coste:** trece toques de 300 ms medidos, cero deriva. Se
-puede usar tan a menudo como haga falta.
-
-**Secuencia de arranque, y el orden importa:**
-
-1. Publicar la última altura conocida, **marcada como no confirmada**, con
-   `antiguedad_altura` alto. Requiere guardarla en la flash del ESP32 (NVS), no
-   solo en RAM.
-2. Dar el **toque de refresco** (`w`, 300 ms): despierta el display **sin mover
-   el escritorio** — las dos mitades están verificadas.
-3. Publicar la altura real y poner `antiguedad_altura` a cero.
-
-⚠️ **El paso 1 no se puede saltar, y el 3 tampoco.** El caso feo es este: vuelve
-la luz, HA muestra 95 cm porque es lo último que vio, y resulta que alguien movió
-el escritorio a mano mientras no había corriente. **Una altura vieja presentada
-como actual es peor que no tener altura.**
-
-⚠️ **El refresco nunca sobre un canal de memoria.** Cualquier toque en M1 o M2
-arranca un viaje al preset. El comando `w` usa el canal de bajar, por eso.
-
-## El botón de reset — lo que no sabemos
-
-El mando tiene un botón de reset que **no está cableado a propósito**
-([ADR-008](DECISIONS.md)): baja hasta el tope inferior, sin confirmación y sin
-poder interrumpirse.
-
-**Que no esté cableado no significa que no pueda pulsarlo una persona.** Y ahí
-hay dos incógnitas que afectan a la integración:
-
-- **El ESP32 lo vería** como movimiento que él no pidió — el evento
-  `movimiento_no_pedido` de este catálogo lo cubre.
-- ⚠️ **No se sabe si el reset altera las memorias.** Si recalibra el cero, las
-  alturas de M1 y M2 podrían dejar de significar lo que significaban. **Supuesto,
-  no verificado**, y comprobarlo cuesta un recorrido completo del escritorio.
-
-  **Por eso [ADR-029](DECISIONS.md): el sistema no asocia M1 y M2 a ninguna
-  altura.** Si nunca afirma que M1 vale 80, no puede mentir cuando deje de
-  valerlo. Los presets por software **no dependen de las memorias del mando**, así
-  que tampoco quedarían desplazados.
-
-**Mientras no se compruebe:** si HA detecta un descenso largo no pedido que
-termina en el tope inferior, lo prudente es **marcar la altura como no fiable** y
-pedir confirmación antes de volver a usar presets.
-
-## Controles
-
-| Entidad | Tipo | Notas |
+| Event | When | What it is for |
 |---|---|---|
-| `ir_a_altura` | number, 73–118 | Lazo cerrado, ya probado el 2026-08-22 |
-| `subir` / `bajar` | button | Toque de 800 ms ([ADR-027](DECISIONS.md)) |
-| `parar` | button | Toque en cualquier canal: **es el freno** |
-| `preset` | select | Alturas con nombre, por software |
-| `permitir_movimiento` | switch | Bloqueo maestro |
-| `M1` / `M2` | button | Botones **opacos**: sin altura asociada ([ADR-029](DECISIONS.md)) |
-| `m1_altura_observada` | sensor + fecha | A dónde llevó **la última vez**. Observación, no configuración |
+| `boton_pulsado` | Any key on the bus, with its code | Telling a person from an automation |
+| **`uso_manual`** ✅ | Seconds since the last human key on the handset | **Implemented 2026-08-23.** The automation that does not want to fight the person checks this |
+| `movimiento_no_pedido` ✅ | The desk moves without the ESP32 asking | **Implemented 2026-08-23 as automatic give-way**: a key the ESP32 did not order cancels its trip without braking (the person already braked). Verified live: `ultimo_freno: mando manual` |
+| `preset_recuperado` | `0x67` or `0x6F` on the bus | Knowing the destination before arrival |
+| `tope_alcanzado` | The height stops changing at 73 or 118 | End of travel |
 
-⚠️ **`parar` no es opcional.** Con movimiento continuo, un toque es lo único que
-detiene el escritorio ([ADR-028](DECISIONS.md)). Tiene que estar en cualquier
-interfaz que pueda arrancar un viaje.
+**Verified**: all four key codes are read off the bus and told apart
+unambiguously, `0x47` up, `0x57` down, `0x67` M1/80 cm, `0x6F` M2/117 cm, and
+the sniffer sees them **whether the ESP32 or a person caused them**.
+
+## Boot and state recovery
+
+**Measured on 2026-08-22, including cutting the power mid-travel:** it keeps the
+height, keeps the presets, **does not resume movement** when power returns, and
+the bus revives on its own. What does not survive is the ESP32's knowledge: the
+display **starts off**, and with the display off **the height is not on the
+bus**.
+
+**Refreshing costs nothing:** thirteen 300 ms taps measured, zero drift. It can
+be used as often as needed.
+
+**Boot sequence, and the order matters:**
+
+1. Publish the last known height, **marked as unconfirmed**, with
+   `antiguedad_altura` high. This requires storing it in the ESP32 flash (NVS),
+   not just RAM.
+2. Give the **refresh tap** (`w`, 300 ms): it wakes the display **without moving
+   the desk**, and both halves of that are verified.
+3. Publish the real height and set `antiguedad_altura` to zero.
+
+⚠️ **Step 1 cannot be skipped, and neither can step 3.** The ugly case is this:
+power returns, HA shows 95 cm because that is the last thing it saw, and it
+turns out somebody moved the desk by hand while the power was out. **An old
+height presented as current is worse than no height at all.**
+
+⚠️ **Never refresh through a preset channel.** Any tap on M1 or M2 starts a trip
+to the preset. The `w` command uses the down channel for that reason.
+
+## The reset button: what we do not know
+
+The handset has a reset button that is **deliberately not wired**
+([ADR-008](DECISIONS.md)): it drives down to the bottom stop, with no
+confirmation and no way to interrupt.
+
+**Not being wired does not mean a person cannot press it.** And there are two
+unknowns there that affect the integration:
+
+- **The ESP32 would see it** as movement it did not request, which the
+  `movimiento_no_pedido` event in this catalogue covers.
+- ⚠️ **It is not known whether the reset alters the presets.** If it
+  recalibrates the zero, the heights of M1 and M2 could stop meaning what they
+  meant. **Assumed, not verified**, and checking it costs a full run of the
+  desk.
+
+  **Hence [ADR-029](DECISIONS.md): the system associates no height with M1 and
+  M2.** If it never claims M1 means 80, it cannot lie when that stops being
+  true. Software presets **do not depend on the handset's memories**, so they
+  would not be displaced either.
+
+**Until it is checked:** if HA detects a long unrequested descent ending at the
+bottom stop, the prudent move is to **mark the height as unreliable** and ask
+for confirmation before using presets again.
+
+## Controls
+
+| Entity | Type | Notes |
+|---|---|---|
+| `ir_a_altura` | number, 73 to 118 | Closed loop, tested on 2026-08-22 |
+| `subir` / `bajar` | button | 800 ms tap ([ADR-027](DECISIONS.md)) |
+| `parar` | button | A tap on any channel: **it is the brake** |
+| `preset` | select | Named heights, in software |
+| `permitir_movimiento` | switch | Master lock |
+| `M1` / `M2` | button | **Opaque** buttons: no associated height ([ADR-029](DECISIONS.md)) |
+| `m1_altura_observada` | sensor + date | Where it went **last time**. An observation, not configuration |
+
+⚠️ **`parar` is not optional.** With continuous travel, a tap is the only thing
+that stops the desk ([ADR-028](DECISIONS.md)). It has to be on any interface
+that can start a trip.
 
 ---
 
-## Diagnóstico — salud del enlace
+## Diagnostics: link health
 
-Sin esto, cuando algo falle dentro de tres meses no habrá forma de saber si es el
-bus, la radio o el firmware. Y esta sesión ya demostró lo caro que sale no poder
-distinguirlo.
+Without this, when something fails three months from now there will be no way to
+tell whether it is the bus, the radio or the firmware. And this session has
+already shown how expensive it is not to be able to tell them apart.
 
-| Entidad | Origen | Ya disponible |
+| Entity | Source | Available |
 |---|---|---|
-| `bus_transacciones_s` | Estadísticas del sniffer | ✅ |
-| `bus_malformadas_pct` | Ídem — **el indicador de salud de la captura** | ✅ |
-| `bus_reloj_khz` | Ídem | ✅ |
-| `muestras_tardias` | Ídem | ✅ |
+| `bus_transacciones_s` | Sniffer statistics | ✅ |
+| `bus_malformadas_pct` | Same, **the capture health indicator** | ✅ |
+| `bus_reloj_khz` | Same | ✅ |
+| `muestras_tardias` | Same | ✅ |
 | `wifi_rssi` | ESP32 | 🔶 |
 | `uptime` / `motivo_ultimo_reinicio` | ESP32 | 🔶 |
 | `memoria_libre` | ESP32 | 🔶 |
 
-**Referencia medida el 2026-08-22, bus en reposo, para saber qué es normal:**
-299 ráfagas y 1502 transacciones por minuto, **0.67% malformadas**, 137 kHz.
-Con la radio encendida: 0.93%. Ver
+**Reference measured on 2026-08-22, bus idle, to know what normal looks like:**
+299 bursts and 1502 transactions per minute, **0.67% malformed**, 137 kHz. With
+the radio on: 0.93%. See
 [capturas/2026-08-22-wifi-impacto.log](capturas/2026-08-22-wifi-impacto.log).
 
 ---
 
-## Automatizaciones que esto habilita
+## Posture reminders, installed 2026-08-23
 
-No es la lista de deseos: es lo que sale directamente del catálogo de arriba.
+**They only warn if you are there.** Presence sensor `SNZB-06P` (mmWave: it
+detects you even when still, not only movement).
 
-- **Recordatorio de postura.** Dos horas sentado → avisar. Con
-  `tiempo_sentado_hoy` es una automatización de cuatro líneas.
-- **Subir al empezar la jornada**, pero **solo si nadie ha tocado el mando en la
-  última hora** — `movimiento_no_pedido` evita pelearse con la persona.
-- **Bajar al detectar que no hay nadie**, encadenado a un sensor de presencia.
-- **Aviso de bus degradado**: si `bus_malformadas_pct` se dispara sobre el 1%,
-  algo va mal en la sonda. Se entera uno antes de que falle del todo.
-- **Gráfica de altura del día**, que es lo que convierte esto en datos de salud
-  y no en un juguete.
-
----
-
-## Recordatorios de postura — instalado el 2026-08-23
-
-**Solo avisan si estás delante.** Sensor de presencia `SNZB-06P` (mmWave: detecta
-aunque estés quieto, no solo movimiento).
-
-| Automatización | Dispara | Secuencia |
+| Automation | Fires on | Sequence |
 |---|---|---|
-| Llevas mucho sentado | **45 min** sentado, **presencia**, y **sin uso del mando en 5 min** | Avisa → espera 110 s → **vuelve a comprobar presencia** → sube a 117 → botón *"Déjalo en 80"* |
-| Llevas mucho de pie | **30 min** de pie, mismas condiciones | Igual, hacia 80 |
+| Sitting too long | **45 min** seated, **presence**, and **no handset use in 5 min** | Warns → waits 110 s → **re-checks presence** → raises to 117 → button *"Leave it at 80"* |
+| Standing too long | **30 min** standing, same conditions | Same, towards 80 |
 
-⚠️ **Dos fallos que impedían que dispararan, corregidos el 2026-08-24** — los
-detectó el propietario al ver que no saltaba nunca:
+⚠️ **Two faults that stopped them firing, corrected on 2026-08-24**, spotted by
+the owner when they never triggered:
 
-**1. El disparador esperaba un cambio que no ocurre.** Estaba como *"cuando la
-postura CAMBIE a sentado y siga 45 min"*. Si el escritorio ya estaba a 80 desde
-el día anterior, la postura **ya era** `sentado`: no hay transición que capturar
-y no salta jamás. Ahora se revisa **cada 5 min cuánto tiempo lleva** en esa
-postura (`last_changed`), que es lo que se quería medir desde el principio.
+**1. The trigger waited for a change that never happens.** It was written as
+*"when posture CHANGES to seated and stays 45 min"*. If the desk was already at
+80 from the previous day, the posture **already was** `sentado`: there is no
+transition to catch and it never fires. Now it checks **every 5 min how long it
+has been** in that posture, which is what was meant to be measured all along.
 
-**2. Una condición contra un sensor que no existía.** La cortesía *"no muevas si
-tocó el mando en 5 min"* usaba `uso_manual`, **que el firmware solo publica
-después de que alguien toque el mando por primera vez**. Sin haberlo tocado, el
-sensor no existe, la condición no se puede evaluar y **bloqueaba la
-automatización entera en silencio**. Ahora, si el sensor no existe se interpreta
-por lo que significa —nunca se usó el mando— y deja pasar.
+**2. A condition against a sensor that did not exist.** The courtesy rule *"do
+not move if the handset was touched in the last 5 min"* used `uso_manual`,
+**which the firmware only published after somebody touched the handset for the
+first time**. With it never touched, the sensor does not exist, the condition
+cannot be evaluated, and **it blocked the whole automation silently**. Now, if
+the sensor is missing it is read for what it means, that the handset was never
+used, and it lets through.
 
-**El segundo es el patrón traicionero**: una condición de seguridad que, al no
-poder evaluarse, impide funcionar en vez de dejar pasar. Y no deja rastro en el
-log: la automatización simplemente no salta.
+**The second one is the treacherous pattern**: a safety condition that, being
+unevaluable, prevents operation rather than allowing it. And it leaves no trace
+in the log: the automation simply does not fire.
 
-⚠️ **`last_changed` se reinicia con cada reinicio de HA**, así que el contador de
-postura vuelve a cero. Irrelevante en operación normal; relevante durante una
-sesión de cambios, donde puede parecer que nunca dispara.
+**Verified on 2026-08-24** by dropping the threshold to 60 s and leaving only
+the notification: it arrived on the phone.
 
-**Verificado el 2026-08-24** bajando el umbral a 60 s y dejando solo la
-notificación: llegó al móvil.
+### The time counters: how they are computed and what went wrong
 
-### Los contadores de tiempo: cómo se calculan y qué falló
-
-**Cadena completa**, de abajo arriba:
+**Full chain**, bottom up:
 
 ```
-altura (del bus)  →  altura estable  →  postura  →  postura efectiva  →  contadores del día
-                     (conserva la      (solo en    (solo si hay
-                      última real)      targets)    presencia)
+height (from bus)  →  stable height  →  posture  →  effective posture  →  daily counters
+                      (keeps the        (only at    (only if somebody
+                       last real one)    targets)    is present)
 ```
 
-| Eslabón | Qué resuelve |
+| Link | What it solves |
 |---|---|
-| `altura_estable` | La altura desaparece (`unknown`) cuando el display duerme |
-| `postura` | Traduce altura a postura — **solo en las alturas de trabajo** |
-| `presencia_sostenida` | Presencia con `delay_off` de 15 min: una escapada corta no descuenta |
-| `postura_efectiva` | `ausente` si no hay nadie: **el escritorio que se queda arriba de noche no suma horas "de pie"** |
-| `history_stats` | Tiempo de pie / sentado / veces, hoy y 7 días |
+| `altura_estable` | The height disappears (`unknown`) when the display sleeps |
+| `postura` | Translates height into posture, **only at the working heights** |
+| `presencia_sostenida` | Presence with a 15 min `delay_off`: a short trip away does not count against you |
+| `postura_efectiva` | `ausente` if nobody is there: **a desk left up overnight does not rack up "standing" hours** |
+| `history_stats` | Standing / sitting / count, today and over 7 days |
 
-⚠️ **Fallo corregido el 2026-08-28, señalado por el propietario:** *"si pauso una
-actividad de subir o bajar, igual cuenta como si hubiera subido"*.
+⚠️ **Fault corrected on 2026-08-28, pointed out by the owner:** *"if I pause a
+raise or lower, it still counts as if it had gone up"*.
 
-La postura usaba **un umbral único en 95 cm**, con dos consecuencias:
+Posture used **a single threshold at 95 cm**, with two consequences:
 
-1. **Cambiaba a mitad de viaje.** Subiendo de 80 a 117, al cruzar los 95 ya
-   contaba "de pie" — treinta segundos antes de llegar
-2. **Un viaje interrumpido mentía.** Parar en 96 dejaba la postura en "de pie"
-   de forma indefinida, y **los contadores del día sumaban esas horas**
+1. **It changed mid-trip.** Rising from 80 to 117, crossing 95 already counted as
+   "standing", thirty seconds before arriving
+2. **An interrupted trip lied.** Stopping at 96 left the posture as "standing"
+   indefinitely, and **the daily counters added up those hours**
 
-**Ahora la postura solo existe en las alturas de trabajo:**
+**Posture now only exists at the working heights:**
 
-| Altura | Postura |
+| Height | Posture |
 |---|---|
-| 77–83 (objetivo **80**) | `sentado` |
-| 114–120 (objetivo **117**) | `de pie` |
-| cualquier otra | **`intermedia`** — no cuenta para nada |
+| 77 to 83 (target **80**) | `sentado` |
+| 114 to 120 (target **117**) | `de pie` |
+| anything else | **`intermedia`**, counts for nothing |
 
-Los ±3 cm cubren ajustes a mano. **Si no estás en una postura de trabajo, no hay
-nada que cronometrar** — que es exactamente la propuesta del propietario y
-elimina el problema de raíz en vez de parchearlo.
+The ±3 cm covers manual adjustments. **If you are not in a working posture,
+there is nothing to time**, which is exactly the owner's proposal and removes
+the problem at the root instead of patching it.
 
-### El sensor `movimiento` distingue quién mueve el escritorio
+### The `movimiento` sensor tells who is moving the desk
 
-| Valor | Significa |
+| Value | Meaning |
 |---|---|
-| `quieto` | Parado |
-| `subiendo` / `bajando` | **El sistema** está ejecutando un viaje |
-| `frenando` | Freno emitido, verificando que se detiene |
-| `subiendo (mando)` / `bajando (mando)` | **Una persona** lo está moviendo con el mando |
+| `quieto` | Stopped |
+| `subiendo` / `bajando` | **The system** is running a trip |
+| `frenando` | Brake issued, verifying that it stops |
+| `subiendo (mando)` / `bajando (mando)` | **A person** is moving it with the handset |
 
-Los estados `(mando)` **no vienen de ninguna orden**: se deducen viendo cambiar
-la altura en el bus mientras el ESP32 está en reposo. Si la altura sube y nadie
-lo ha pedido, es que hay alguien con el dedo en el botón. Vuelve a `quieto` a
-los 4 s sin cambios — el escritorio informa su altura cada ~1.5 s mientras
-viaja.
+The `(mando)` states **come from no order at all**: they are inferred by watching
+the height change on the bus while the ESP32 is idle. If the height rises and
+nobody asked for it, somebody has a finger on the button. It returns to `quieto`
+after 4 s without changes, since the desk reports its height every ~1.5 s while
+travelling.
 
-**Importa más allá de la información**: la automatización que detiene el
-escritorio si desapareces mientras se mueve consulta este sensor, así que ahora
-cubre también **un movimiento continuo que arrancaste tú a mano y dejaste
-corriendo**.
+**It matters beyond information**: the automation that stops the desk if you
+disappear while it moves consults this sensor, so it now also covers **continuous
+travel you started by hand and left running**.
 
-### El contador mide TU postura, no la altura del escritorio
+### The counter measures YOUR posture, not the desk's height
 
-Planteado por el propietario como caso de uso: *"me voy al baño y no estoy, no
-sube. Cuando vuelva, ¿vuelve a contar de cero o entiende que recién volví? ¿Y si
-vuelvo en una hora?"*
+Raised by the owner as a use case: *"I go to the bathroom and I'm not there, so
+it doesn't rise. When I come back, does it count from zero or does it understand
+I just got back? And if I come back in an hour?"*
 
-**El diseño inicial lo hacía mal.** El contador era *"cuánto lleva el escritorio
-a esta altura"*, así que irse una hora no cambiaba nada: al volver te decía
-"llevas hora y media sentado" y subía la mesa **justo cuando acababas de
-sentarte**. Estaba midiendo el mueble, no a la persona.
+**The initial design got this wrong.** The counter was *"how long the desk has
+been at this height"*, so being away for an hour changed nothing: on your return
+it would say "you have been sitting for an hour and a half" and raise the desk
+**just as you had sat down**. It was measuring the furniture, not the person.
 
-**Ahora hay un `input_datetime` que marca el inicio del periodo de postura**, y
-lo mueven dos cosas:
+**There is now an `input_datetime` marking the start of the posture period**, and
+two things move it:
 
-| Situación | Qué pasa |
+| Situation | What happens |
 |---|---|
-| **Cambias de postura** | Periodo nuevo. Obvio |
-| **Ausencia < 15 min** (baño, café) | **No lo toca.** No perdiste la postura de verdad |
-| **Ausencia ≥ 15 min** (comida, reunión) | **Reinicia** y te avisa: estuviste de pie, eso cuenta como pausa |
+| **You change posture** | New period. Obvious |
+| **Absence < 15 min** (bathroom, coffee) | **It is left alone.** You did not really lose the posture |
+| **Absence ≥ 15 min** (lunch, a meeting) | **Resets** and tells you: you were on your feet, that counts as a break |
 
-El umbral de 15 minutos separa un recado de un descanso real. Se cambia en la
-automatización `escritorio_periodo_vuelta_larga`.
+The 15 minute threshold separates an errand from a real break. It is changed in
+the `escritorio_periodo_vuelta_larga` automation.
 
-### Tres capas contra "se fue justo entonces"
+### Three layers against "they left right then"
 
-El sensor no sabe al instante que te has ido, así que **ninguna comprobación
-puntual basta**. Lo señaló el propietario dos veces —*"podría creer que aún
-estoy"* y, cuando añadí la re-verificación, *"da igual, me puedo ir justo en la
-confirmación"*—. Tenía razón las dos veces: una comprobación reduce la ventana,
-no la cierra.
+The sensor does not know instantly that you have gone, so **no single check is
+enough**. The owner pointed this out twice, *"it might think I'm still here"*
+and, once the re-check was added, *"doesn't matter, I can leave right at the
+confirmation"*. Right both times: a check narrows the window, it does not close
+it.
 
-| Capa | Qué hace |
+| Layer | What it does |
 |---|---|
-| **1. Presencia sostenida** (`delay_off: 15 min`) | La capa real. ⚠️ **Reescrita el 2026-09-02:** antes esta capa se fiaba del retardo de 120 s del propio sensor, y **el dispositivo lo revierte a 30 s por su cuenta**. Peor aún, el sensor crudo **parpadea cada 1-2 minutos** con la persona sentada delante (medido, ver abajo). Solo el sensor sostenido, que vive en Home Assistant, aguanta ese parpadeo |
-| **2. Re-verificar tras 110 s** | Avisa, espera, y **vuelve a preguntar** antes de mover. ⚠️ Preguntaba al sensor **crudo** hasta el 2026-09-02, y por eso cancelaba movimientos con el propietario sentado delante; ahora pregunta al sostenido |
-| **3. Parar si te vas MIENTRAS se mueve** | Vigilancia continua: si la presencia cae con el escritorio en marcha, se manda `parar` y te avisa. **Depende del sensor `movimiento`** — estuvo inoperante hasta el 2026-08-24 porque ese sensor no se actualizaba durante el viaje |
+| **1. Sustained presence** (`delay_off: 15 min`) | The real layer. ⚠️ **Rewritten 2026-09-02:** this layer used to rely on the sensor's own 120 s delay, and **the device reverts it to 30 s on its own**. Worse, the raw sensor **flickers every 1 to 2 minutes** with the person sitting right there (measured, see below). Only the sustained sensor, which lives in Home Assistant, survives that flicker |
+| **2. Re-check after 110 s** | Warns, waits, and **asks again** before moving. ⚠️ It asked the **raw** sensor until 2026-09-02, which is why it cancelled movements with the owner sitting right there; it now asks the sustained one |
+| **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel |
 
-**La capa 3 es la que cierra el caso** que las otras dos no pueden: no predice,
-reacciona.
+**Layer 3 is the one that closes the case** the other two cannot: it does not
+predict, it reacts.
 
-⚠️ **Corrección de un error mío:** dije que bajar el retardo del sensor rompería
-el contador de postura. **Es falso** — el contador mide la ALTURA
-(`sensor.escritorio_postura`), no la presencia; la presencia solo se consulta en
-el instante del disparo. Bajarlo no rompe nada y mejora todo lo demás.
+⚠️ **Correction of a mistake of mine:** I said that lowering the sensor delay
+would break the posture counter. **That is false.** The counter measures HEIGHT
+(`sensor.escritorio_postura`), not presence; presence is only consulted at the
+moment of firing. Lowering it breaks nothing and improves everything else.
 
-**Mueven el escritorio.** La primera versión solo notificaba con un botón, y el
-propietario señaló lo evidente: *"si solo avisa para moverse, ¿qué sentido tiene
-el ESP32?"* — ninguno; eso lo hace una alarma.
+**They move the desk.** The first version only notified with a button, and the
+owner pointed out the obvious: *"if it only warns you to move, what is the ESP32
+for?"* Nothing; an alarm clock does that.
 
-**Y cumple [SEGURIDAD.md](SEGURIDAD.md)**, que pide *"confirmación de que hay
-alguien delante"*: **el sensor de presencia ES esa confirmación**. Exigir además
-una pulsación era una precaución de más que vaciaba el sistema de su utilidad.
+**And it satisfies [SEGURIDAD.md](SEGURIDAD.md)**, which asks for *"confirmation
+that somebody is in front of it"*: **the presence sensor IS that
+confirmation**. Requiring a button press on top was one precaution too many, and
+it emptied the system of its usefulness.
 
-Tres condiciones, y la tercera es la cortesía: **no mueve si tocaste el mando en
-los últimos 5 minutos** (`uso_manual`). Si acabas de ponerlo donde quieres, no te
-lo cambia.
+Three conditions, and the third is courtesy: **it does not move if you touched
+the handset in the last 5 minutes** (`uso_manual`). If you just put it where you
+want it, it does not change it on you.
 
-### El sensor derivado que hizo falta, y por qué
+### The derived sensor that turned out to be necessary
 
-`sensor.escritorio_jiecang_altura` publica **`unknown` cuando el display duerme**
-(con el display apagado, la altura no está en el bus). Medir "cuánto llevo en
-esta postura" con él es imposible: el dato desaparece cada pocos minutos.
+`sensor.escritorio_jiecang_altura` publishes **`unknown` when the display
+sleeps**, because with the display off the height is not on the bus. Measuring
+"how long have I been in this posture" with it is impossible: the value
+disappears every few minutes.
 
-Por eso hay dos sensores derivados en `configuration.yaml`:
+Hence two derived sensors in `configuration.yaml`:
 
-- **`sensor.escritorio_altura_estable`** — conserva la última altura real
-- **`sensor.escritorio_postura`** — `sentado` / `de pie`, con el **umbral en
-  95 cm**. Es el número a tocar si no encaja con tu postura
+- **`sensor.escritorio_altura_estable`**, which keeps the last real height
+- **`sensor.escritorio_postura`**, which gives `sentado` / `de pie` /
+  `intermedia`
 
-⚠️ **Y no se refresca dando toques periódicos.** Se probó a que el resumen
-despertara el display cada 30 min: es desgaste del pulsador y luz encendida para
-leer un número que casi nunca cambia. **No hace falta**: cuando alguien mueve el
-escritorio, el display se enciende solo y el sensor se actualiza.
+⚠️ **Corrected on 2026-09-02.** This paragraph used to say posture worked off a
+**single threshold at 95 cm** and that 95 was "the number to change if it does
+not match your posture". **That stopped being true on 2026-08-28**, when the
+single threshold was replaced by the two working ranges described above, exactly
+because a single threshold flipped mid-trip and lied about interrupted trips.
+The old text survived four days two sections below its own correction, which is
+what happens when a fix is written in one place and the document is not re-read
+whole.
 
-**Las alturas de trabajo son 80 (sentado) y 117 (de pie)**, indicadas por el
-propietario. El umbral de 95 las separa con holgura por los dos lados.
+⚠️ **And it is not refreshed with periodic taps.** Having the summary wake the
+display every 30 min was tried: that is button wear and a lit screen to read a
+number that hardly ever changes. **It is not needed**: when somebody moves the
+desk, the display comes on by itself and the sensor updates.
 
-⚠️ **Trampa que costó un rato:** el disparador del template escrito con la
-sintaxis nueva (`- trigger: state`) dentro de la clave antigua (`trigger:`)
-**pasa la validación de HA y no dispara nunca**. Los sensores se quedan en
-`unknown` sin un solo error en el log. Hay que usar `- platform: state`.
+**The working heights are 80 (sitting) and 117 (standing)**, given by the owner.
 
-### El sensor de presencia parpadea — medido, no supuesto
+⚠️ **A trap that cost a while:** a template trigger written in the new syntax
+(`- trigger: state`) inside the old key (`trigger:`) **passes HA validation and
+never fires**. The sensors sit at `unknown` without a single error in the log.
+It has to be `- platform: state`.
 
-**El propietario lo dijo dos veces antes de que yo lo comprobara:** *"pero si
-estaba, no me he movido de aquí"* y *"no es posible, me he estado moviendo mucho,
-el sensor no es"*. Las dos veces respondí culpando a que estuviera quieto. **Las
-dos veces se equivocaba yo.**
+### The presence sensor flickers: measured, not assumed
 
-La consulta a la base de datos del `recorder` lo zanjó. Seis horas del
-2026-09-02, misma persona, mismo sitio:
+**The owner said so twice before I checked:** *"but I was there, I haven't moved
+from here"* and *"not possible, I've been moving a lot, it isn't the sensor"*.
+Both times I answered by blaming him for sitting still. **Both times I was the
+one who was wrong.**
 
-| Entidad | Cambios en 6 h |
+Querying the `recorder` database settled it. Six hours of 2026-09-02, same
+person, same place:
+
+| Entity | Changes in 6 h |
 |---|---|
-| `binary_sensor.…_presencia` (crudo) | **decenas** — cae y vuelve cada 1-2 min |
+| `binary_sensor.…_presencia` (raw) | **dozens**, dropping and returning every 1 to 2 min |
 | `binary_sensor.escritorio_presencia_sostenida` | **4** |
 
-Ventana concreta del fallo de las 11:25, tal cual salió de la base de datos:
+The exact window of the 11:25 failure, straight out of the database:
 
 ```
 11:24:21 off   11:24:40 on   11:25:24 off   11:27:02 on   11:32:23 off …
 ```
 
-La re-verificación cayó en el hueco de `11:25:24`. **No fue mala suerte
-puntual: con ese parpadeo, cualquier comprobación instantánea es una moneda al
-aire.** De ahí que tanto el disparo como la re-verificación previa al movimiento
-usen ahora `presencia_sostenida`, nunca el sensor crudo.
+The re-check landed in the gap at `11:25:24`. **This was not a one-off piece of
+bad luck: with that flicker, any instantaneous check is a coin toss.** Hence
+both the trigger and the pre-movement re-check now use `presencia_sostenida`,
+never the raw sensor.
 
-#### El retardo del sensor lleva en 30 s desde el 31 de agosto
+#### The sensor delay has been at 30 s since 31 August
 
-Creí durante un rato que el dispositivo Zigbee *revertía su retardo solo* y lo
-anoté como misterio. **Los registros dicen otra cosa** y la mayor parte no tiene
-nada de misteriosa:
+For a while I believed the Zigbee device *reverted its delay on its own* and
+recorded it as a mystery. **The records say otherwise**, and most of it is not
+mysterious at all:
 
-| Fecha y hora | Retardo | Automatización que lo corrige |
+| Date and time | Delay | Automation that corrects it |
 |---|---|---|
 | 2026-08-31 10:03 → 10:21 | **120** | **on** |
-| 2026-08-31 20:58 | vuelve a **30** | on |
-| 2026-08-31 21:03 | — | **off** |
-| desde entonces | **30**, siempre | off |
+| 2026-08-31 20:58 | back to **30** | on |
+| 2026-08-31 21:03 | | **off** |
+| since then | **30**, always | off |
 
-La razón de que **siga** en 30 no es el cacharro: es que
-`automation.escritorio_retardo_del_sensor_de_presencia_a_30_s` —que pone 120 al
-arrancar Home Assistant— **está desactivada desde el 2026-08-31 a las 21:03**.
-Se desactivó y nadie volvió a ponerla.
+The reason it **stays** at 30 is not the device: it is that
+`automation.escritorio_retardo_del_sensor_de_presencia_a_30_s`, which sets 120
+when Home Assistant starts, **has been disabled since 2026-08-31 at 21:03**. It
+was turned off and nobody turned it back on.
 
-⚠️ **Su alias miente:** dice *"a 30 s"* y su código pone **120**. Es el nombre
-viejo, de antes de [la corrección del 2026-08-31](BITACORA.md). Un nombre que
-dice lo contrario que el código es exactamente el tipo de cosa que hace perder
-una tarde.
+⚠️ **Its alias lies:** it says *"a 30 s"* while its code sets **120**. That is
+the old name, from before [the correction of 2026-08-31](BITACORA.md). A name
+that says the opposite of its code is exactly the kind of thing that costs an
+afternoon.
 
-**Lo que sí queda sin explicar**, y es solo una línea de la tabla: por qué a las
-20:58 del 31 el valor pasó de 120 a 30 estando la automatización activa.
+**What does remain unexplained**, and it is only one row of the table: why the
+value went from 120 to 30 at 20:58 that day with the automation still enabled.
 
-#### 30 o 120: lo que dicen los registros, y lo que dice el propietario
+#### 30 or 120: what the records say, and what the owner says
 
-Iba a reactivar el 120 hasta que el propietario lo paró: *"la semana pasada el
-sensor funcionaba bien con la configuración que teníamos, antes de ayer le
-pusimos 120 y empezó a funcionar mal"*. **No se ha tocado: sigue en 30.**
+I was about to re-enable the 120 until the owner stopped me: *"last week the
+sensor worked fine with the configuration we had, the day before yesterday we
+set it to 120 and it started working badly"*. **Nothing was touched: it stays at
+30.**
 
-Medido sobre el `recorder`, cambios de estado del sensor **crudo** en horas de
-trabajo (09:00–19:00):
+Measured over the `recorder`, state changes of the **raw** sensor during working
+hours (09:00 to 19:00):
 
-| Día | Retardo | Cambios/h | Apagones de <3 min |
+| Day | Delay | Changes/h | Dropouts under 3 min |
 |---|---|---|---|
-| mié 26 ago | 30 | 9,1 | 37 |
-| jue 27 ago | 30 | 12,0 | 53 |
-| vie 28 ago | 30 | 4,7 | 17 |
-| **lun 31 ago** | **120** | **2,1** | **5** |
-| mar 1 sep | 30 | 19,6 | 84 |
-| mié 2 sep | 30 | 8,1 | 33 |
+| Wed 26 Aug | 30 | 9.1 | 37 |
+| Thu 27 Aug | 30 | 12.0 | 53 |
+| Fri 28 Aug | 30 | 4.7 | 17 |
+| **Mon 31 Aug** | **120** | **2.1** | **5** |
+| Tue 1 Sep | 30 | 19.6 | 84 |
+| Wed 2 Sep | 30 | 8.1 | 33 |
 
-**Los dos datos son ciertos y no se contradicen tanto como parece.** El 120
-reduce el parpadeo de forma clara —es el mejor día de los seis— pero *menos
-parpadeo no es lo mismo que "funciona bien"*: con 120 s el sensor tarda dos
-minutos en admitir una ausencia, y la re-verificación previa al movimiento
-ocurre a los 110 s. **Con 120, esa re-verificación puede decir "sigue ahí" de
-alguien que ya se ha ido**, y el escritorio se mueve solo. Esa es una hipótesis
-razonable de qué vio el propietario, y **está sin comprobar**.
+**Both facts are true and they contradict each other less than it looks.** The
+120 clearly reduces the flicker, giving the best of the six days, but *less
+flicker is not the same as "works well"*: at 120 s the sensor takes two minutes
+to admit an absence, and the pre-movement re-check happens at 110 s. **With 120,
+that re-check can say "still there" about somebody who has already left**, and
+the desk moves on its own. That is a reasonable hypothesis for what the owner
+saw, and **it is unverified**.
 
-⚠️ **Lo que sí está medido:** el retardo **no** causó ninguno de los dos fallos
-del 2026-09-02. El contador borrado en cada reinicio y la re-verificación contra
-el sensor crudo ocurren exactamente igual con 30 que con 120.
+⚠️ **What is measured:** the delay caused **neither** of the two faults of
+2026-09-02. The counter being wiped on every restart and the re-check against
+the raw sensor happen exactly the same at 30 as at 120.
 
-**Decisión: no se toca sin una medición del síntoma real** —recordatorios que no
-acaban en movimiento— y no del número de transiciones, que es lo que sé medir
-pero no es lo que le molesta a nadie.
+**Decision: it is not touched without a measurement of the real symptom**,
+meaning reminders that do not end in movement, rather than the number of
+transitions, which is what I know how to measure but is not what bothers anyone.
 
-En cualquier caso la conclusión operativa no cambia: **el retardo del dispositivo
-no es una capa en la que apoyarse.** La protección real es
-`presencia_sostenida`, que vive en Home Assistant y no depende del cacharro.
+Either way the operational conclusion does not change: **the device delay is not
+a layer to lean on.** The real protection is `presencia_sostenida`, which lives
+in Home Assistant and does not depend on the gadget.
 
-### Un reinicio de Home Assistant no es levantarse
+### A Home Assistant restart is not standing up
 
-**Fallo encontrado el 2026-09-02**, con el escritorio negándose a subir: *"no va
-a subir porque dice que llevo sentado 5 min"*.
+**Fault found on 2026-09-02**, with the desk refusing to rise: *"it won't rise
+because it says I've been sitting 5 min"*.
 
-`automation.escritorio_reiniciar_periodo_al_cambiar_de_postura` se disparaba con
-**cualquier** cambio de `sensor.escritorio_postura`. Al arrancar Home Assistant,
-ese sensor pasa de `unknown` a `sentado` — que no es un cambio de postura, es el
-sensor naciendo. La automatización lo contaba como postura nueva y **ponía el
-contador a cero**. Efecto: *cada reinicio de Home Assistant borraba las horas
-acumuladas*, y los recordatorios volvían a empezar de cero sin que nadie se
-hubiera movido de la silla.
+`automation.escritorio_reiniciar_periodo_al_cambiar_de_postura` fired on **any**
+change of `sensor.escritorio_postura`. When Home Assistant starts, that sensor
+goes from `unknown` to `sentado`, which is not a change of posture but the
+sensor being born. The automation counted it as a new posture and **set the
+counter to zero**. Effect: *every Home Assistant restart wiped the accumulated
+hours*, and the reminders started over without anybody leaving their chair.
 
-La condición ahora exige que la postura **de origen sea también una postura
-real**:
+The condition now requires the **origin posture to be a real posture too**:
 
 ```jinja
 {{ trigger.from_state is not none
@@ -555,21 +541,21 @@ real**:
    and trigger.from_state.state != trigger.to_state.state }}
 ```
 
-Verificado reiniciando Home Assistant a propósito: el contador **conservó** su
-valor.
+Verified by restarting Home Assistant on purpose: the counter **kept** its
+value.
 
-### Los registros: mirar en vez de suponer
+### The logs: look instead of guessing
 
-Petición del propietario —*"no sé si tenemos logs de todo el sistema, para no ir
-a ciegas con estas cosas"*— después de una sesión entera de diagnósticos míos
-plausibles y equivocados.
+Requested by the owner, *"I don't know if we have logs of the whole system, so
+we're not going in blind on this stuff"*, after a whole session of plausible and
+wrong diagnoses of mine.
 
-**Sí los hay**, y son la única fuente que ha decidido las discusiones de esta
-sesión. Home Assistant guarda 30 días en SQLite (`recorder`,
+**They do exist**, and they are the only source that settled any of this
+session's arguments. Home Assistant keeps 30 days in SQLite (`recorder`,
 `purge_keep_days: 30`).
 
 ```bash
-ssh <usuario>@<host-de-HA> 'docker exec homeassistant python3 -c "
+ssh <user>@<HA-host> 'docker exec homeassistant python3 -c "
 import sqlite3
 con = sqlite3.connect(\"file:/config/home-assistant_v2.db?mode=ro\", uri=True)
 for st, t in con.execute(
@@ -581,46 +567,47 @@ for st, t in con.execute(
 "'
 ```
 
-⚠️ **`last_triggered` no sirve para saber si un recordatorio funcionó.** Ese
-atributo se vuelca a la base de datos con retraso: el 2026-09-02 marcaba `None`
-con el escritorio ya subiendo por orden de esa misma automatización. **La fuente
-buena es el movimiento** — `sensor.escritorio_jiecang_movimiento` y la altura—,
-que además distingue si movió el ESP32 (`subiendo`) o una persona
+⚠️ **`last_triggered` is no use for knowing whether a reminder worked.** That
+attribute reaches the database late: on 2026-09-02 it read `None` with the desk
+already rising on that same automation's order. **The good source is the
+movement**, meaning `sensor.escritorio_jiecang_movimiento` and the height, which
+additionally tells apart the ESP32 (`subiendo`) from a person
 (`subiendo (mando)`).
 
-Tres cosas más que ahorran tiempo:
+Three more things that save time:
 
-- **Abrir siempre en `mode=ro`.** Home Assistant tiene la base abierta; escribir
-  en ella desde fuera la corrompe.
-- **Los `entity_id` no se adivinan.** En esta sesión inventé seis nombres
-  plausibles y los seis eran falsos, lo que produjo un informe entero de
-  "BLOQUEA" imaginarios. Sacarlos primero con
+- **Always open with `mode=ro`.** Home Assistant holds the database open;
+  writing to it from outside corrupts it.
+- **`entity_id`s cannot be guessed.** In this session I invented six plausible
+  names and all six were wrong, which produced an entire report of imaginary
+  "BLOCKED" verdicts. Get them first with
   `WHERE m.entity_id LIKE "%escritorio%"`.
-- **`last_changed` de la interfaz miente tras un reinicio**; la tabla `states`
-  no. Para "¿cuánto llevo sentado?", la fuente buena es
+- **The interface's `last_changed` lies after a restart**; the `states` table
+  does not. For "how long have I been sitting", the good source is
   `input_datetime.escritorio_inicio_postura`.
 
-## Panel
+## Dashboard
 
-En la sección **Estudio** del panel `Casa`: el campo **Ir a altura** (cm) y el
-**indicador de movimiento**. Solo eso, a propósito — el resto de entidades vive
-en la página del dispositivo, sin meter ruido en el panel diario.
+In the **Estudio** section of the `Casa` dashboard: the **Ir a altura** field
+(cm) and the **movement indicator**. Only that, on purpose. The rest of the
+entities live on the device page, without cluttering the daily dashboard.
 
-## Decisiones pendientes
+## Pending decisions
 
-Ninguna se puede cerrar sin información que no está en el repositorio.
+None can be closed without information that is not in the repository.
 
-1. ~~**Transporte: MQTT o ESPHome.**~~ **Cerrado el 2026-08-22:
-   [ADR-030](DECISIONS.md) fija MQTT.** El motivo decisivo es que el sniffer
-   bloquea hasta 2.8 s por pulso y ESPHome exige componentes que devuelvan
-   enseguida: portarlo obligaría a reescribir el código crítico.
+1. ~~**Transport: MQTT or ESPHome.**~~ **Closed on 2026-08-22:
+   [ADR-030](DECISIONS.md) fixes MQTT.** The deciding reason is that the sniffer
+   blocks for up to 2.8 s per pulse and ESPHome requires components that return
+   promptly: porting it would mean rewriting the critical code.
 
-   **Broker ya funcionando**, levantado y verificado ese mismo día:
-   `ultron:1883`, usuario `esp32`, contraseña en Ultron en
+   **Broker already running**, brought up and verified that same day:
+   `ultron:1883`, user `esp32`, password on Ultron at
    `~/mosquitto/config/.pass-esp32`.
-2. **Umbral de pie/sentado**, en cm. Depende de la estatura.
-3. **Credenciales WiFi**, para repetir la medición de impacto **en modo STA con
-   tráfico real** — lo medido hasta ahora es AP sin clientes, el caso más suave.
-4. **Los límites por software**, que es la condición que
-   [ADR-028](DECISIONS.md) pone para quitar la supervisión del movimiento
-   continuo. **Esto va antes que cualquier botón accesible desde el móvil.**
+2. **Standing/sitting threshold**, in cm. Depends on the person's height.
+3. **WiFi credentials**, to repeat the impact measurement **in STA mode with
+   real traffic**. What has been measured so far is AP with no clients, the
+   gentlest case.
+4. **The software limits**, which is the condition [ADR-028](DECISIONS.md) sets
+   for removing supervision from continuous travel. **This comes before any
+   button reachable from a phone.**
