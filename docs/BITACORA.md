@@ -72,10 +72,25 @@ sin problema.
 al vigilante lo hizo más sensible, así que la capa que frena cuando te vas empezó
 a frenar estando tú.
 
-Arreglado con **confirmación de 10 s** (`for`) en el disparador. Sigue mirando el
-sensor crudo, porque ahí la reacción rápida es el objetivo, pero ya no se cree un
-parpadeo de dos segundos. **Coste declarado:** si la ausencia es real, frena 10 s
-más tarde, unos 7 cm más de recorrido. Un viaje entero dura ~65 s.
+Arreglado con **confirmación** (`for`) en el disparador. Sigue mirando el sensor
+crudo, porque ahí la reacción rápida es el objetivo, pero ya no se cree un
+parpadeo de dos segundos.
+
+Se puso en 10 s y **el propietario pidió bajarlo**. En vez de discutir el número
+se midió: **484 ausencias del sensor crudo en 7 días**.
+
+| Duración | Cuántas |
+|---|---|
+| menos de 2 s | 9 |
+| 2 a 3 s | 6 |
+| 3 a 5 s | 11 |
+| 5 a 10 s | 37 |
+| más de 10 s | 421 |
+
+**Queda en 5 s**, y tenía razón: el parpadeo que falló duró 2 s, así que 5 da dos
+veces y media de margen, y 10 s se tragaba además parpadeos de hasta diez
+segundos, que ya parecen una ausencia de verdad. **Coste:** frena 5 s más tarde,
+unos 3.4 cm de recorrido extra sobre un viaje de ~65 s.
 
 ### Las tres capas, ya separadas
 
@@ -83,7 +98,7 @@ más tarde, unos 7 cm más de recorrido. Un viaje entero dura ~65 s.
 |---|---|---|---|
 | 1. Disparo | ¿Le toca cambiar de postura? | `presencia_sostenida` | 15 min |
 | 2. Antes de mover | ¿Puedo mover un mueble AHORA? | `presencia_reciente` | 3 min |
-| 3. Durante el viaje | ¿Se fue MIENTRAS se movía? | sensor crudo | 10 s |
+| 3. Durante el viaje | ¿Se fue MIENTRAS se movía? | sensor crudo | 5 s |
 
 **Tres preguntas, tres tolerancias, tres sensores.** Todos los fallos de esta
 zona vinieron de hacer que un sensor respondiera a dos de ellas.

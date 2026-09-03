@@ -399,14 +399,31 @@ without trouble.
 `unknown` to the watch made it more sensitive, so the layer that stops the desk
 when you leave started stopping it while you were there.
 
-**Fix: a 10 second confirmation (`for`) on the trigger.** The layer still watches
+**Fix: a confirmation window (`for`) on the trigger.** The layer still watches
 the raw sensor, because here reaction speed is the point, but it no longer
 believes a two-second blink.
 
-**The cost, stated plainly:** if the absence is real, braking now happens 10 s
-later, which at 0.68 cm/s is about **7 cm of extra travel**. A full trip lasts
-~65 s, so it still brakes well inside the journey, and the physical stop and the
-handset are still there underneath.
+**The window is 5 s, and the number is measured**, not guessed. Over 7 days the
+raw sensor produced **484 absences**:
+
+| Duration | Count |
+|---|---|
+| under 2 s | 9 |
+| 2 to 3 s | 6 |
+| 3 to 5 s | 11 |
+| 5 to 10 s | 37 |
+| over 10 s | 421 |
+
+The blink that aborted the trip lasted **2 s**, so 5 s gives two and a half times
+that margin while covering the 26 shortest absences (5.4%), which are the ones
+that are not real absences. It sat at 10 s for a few hours until the owner asked
+for something shorter, and he was right: 10 s also swallowed blinks of up to ten
+seconds, which start to look like somebody genuinely leaving.
+
+**The cost, stated plainly:** if the absence is real, braking happens 5 s later,
+which at 0.68 cm/s is about **3.4 cm of extra travel**. A full trip lasts ~65 s,
+so it still brakes well inside the journey, and the physical stop and the handset
+are still there underneath.
 
 #### The three layers as they stand
 
@@ -414,7 +431,7 @@ handset are still there underneath.
 |---|---|---|---|
 | 1. Trigger | Is it their turn to change posture? | `presencia_sostenida` | 15 min |
 | 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | 3 min |
-| 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **10 s** |
+| 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **5 s** |
 
 **Three questions, three tolerances, three sensors.** Every failure in this area
 came from making one sensor answer two of them.
