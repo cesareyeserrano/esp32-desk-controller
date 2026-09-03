@@ -455,6 +455,49 @@ bad luck: with that flicker, any instantaneous check is a coin toss.** Hence
 both the trigger and the pre-movement re-check now use `presencia_sostenida`,
 never the raw sensor.
 
+#### It is not the Zigbee link: measured 2026-09-02
+
+The owner moved the sensor to a USB port on the Pi and asked whether that was a
+problem. I answered that it was, on three counts: USB 3.0 noise at 2.4 GHz
+along the power cable, the magnet sticking the sensor to a metal rack, and the
+coordinator supposedly being inside that same rack.
+
+**He stopped me: I was conflating the presence sensor with the Zigbee
+coordinator**, and he was right. Where the coordinator sits was never
+established. I had assumed it and written the assumption as fact.
+
+**Measured instead of argued**, from `zigbee.db` (`neighbors_v15.lqi`, 0 to 255):
+
+| Who sees the sensor | LQI |
+|---|---|
+| Nearby router | **200** |
+| **The coordinator** (`00:12:4b…`, nwk=0) | **199** |
+| Another router | 121 |
+| Another | 112 |
+
+**199 direct to the coordinator is excellent**, and better than most other
+devices on this network, which sit between 110 and 170.
+
+⚠️ **Hypothesis ruled out.** Neither the metal rack nor the USB 3.0 port is
+degrading the radio. The message arrives fine. **Do not relocate the sensor**:
+it would be work for nothing.
+
+**What it leaves standing:** the flicker is in the **mmWave detection**, not in
+the transmission. The sensor decides you have left and reports that decision
+without trouble. The fault is in the decision, not in the delivery.
+
+**How to re-check** (open read-only, the coordinator holds the file):
+
+```bash
+docker exec homeassistant python3 -c "
+import sqlite3
+z = sqlite3.connect('file:/config/zigbee.db?mode=ro', uri=True)
+for dev, nei, lqi in z.execute(
+        'SELECT device_ieee, ieee, lqi FROM neighbors_v15 ORDER BY lqi DESC'):
+    print(nei, lqi, 'seen by', dev)
+"
+```
+
 #### The sensor delay has been at 30 s since 31 August
 
 For a while I believed the Zigbee device *reverted its delay on its own* and
