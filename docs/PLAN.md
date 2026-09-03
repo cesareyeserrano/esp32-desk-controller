@@ -49,9 +49,17 @@ times** (2026-08-24, 08-31 and 09-02), each time for a different reason and
 presence sensor flickering and the counter being wiped on every restart, are
 fixed and verified on 2026-09-02.
 
-What remains is to **watch a couple of days of real use**: one good cycle does
-not rule out intermittent faults, which is exactly what the previous three were.
-A warning that does not end in movement is this system's characteristic failure.
+⚠️ **A fourth failure on 2026-09-03, and the worst kind: the desk rose with
+nobody in the room.** It was caused by the previous day's fix, which moved the
+pre-movement check onto a sensor with 15 minutes of inertia. Fixed with a
+separate 3-minute sensor for that one question, plus covering `unavailable` in
+the mid-travel watch. Detail in [INTEGRACION_HA.md](INTEGRACION_HA.md).
+
+What remains is to **watch a couple of days of real use**, and to watch **both
+directions**: that reminders end in movement, *and* that no movement happens
+without somebody there. Every fix so far has been verified against the symptom
+that motivated it and not against what it broke the other way. That is how the
+2026-09-03 failure got in.
 
 ⚠️ **And there is a second open matter, a different one:** on 2026-09-02 **nine
 warnings fired** (07:15, 07:45, 08:20, 08:55, 09:30, 10:50, 11:25, 12:00 and

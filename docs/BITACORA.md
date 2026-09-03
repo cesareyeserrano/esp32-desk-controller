@@ -6,6 +6,73 @@
 
 ---
 
+## 2026-09-03 — El escritorio subió sin nadie delante, y fue por mi arreglo de ayer
+
+> *"el sistema no está siendo preciso, hoy se levantó sin que yo estuviera, y el
+> sensor marcaba que no había presencia"*
+
+**Fallo de seguridad real, y lo introduje yo el día anterior.**
+
+Reconstruido de los registros, sin margen de duda:
+
+```
+13:13:58  presencia CRUDA      off          <- deja de estar
+13:16:00  presencia CRUDA      unavailable  <- el sensor ni responde
+13:16:56  MOVIMIENTO           subiendo     <- el escritorio sube igual
+13:17:40  ALTURA               116
+13:28:58  presencia SOSTENIDA  off          <- doce minutos tarde
+```
+
+El 2026-09-02 moví la re-verificación previa al movimiento del sensor crudo a
+`presencia_sostenida`, porque el crudo parpadea y cancelaba movimientos con el
+propietario sentado delante. **Arreglé eso y abrí esto:** la sostenida tiene
+`delay_off` de 15 minutos, así que dio por buena una presencia de hacía tres.
+
+**Es peor que el fallo que sustituyó.** [SEGURIDAD.md](SEGURIDAD.md) exige
+confirmación de que hay alguien delante; esto aceptaba una confirmación caducada
+un cuarto de hora.
+
+### El error de fondo: un sensor para dos preguntas distintas
+
+| Pregunta | Tolerancia | Sensor |
+|---|---|---|
+| *¿Sigue siendo su turno de estar sentado?* | 15 min, un café no es un cambio de postura | `presencia_sostenida` |
+| *¿Puedo mover un mueble AHORA?* | **3 min**, ni uno más | **`presencia_reciente`** ← nuevo |
+
+Tres minutos siguen absorbiendo el parpadeo medido del mmWave (cae y vuelve cada
+1-2 min) sin autorizar nunca un movimiento con la silla vacía. Las dos
+automatizaciones de postura re-verifican ahora contra el nuevo sensor.
+
+### Un segundo agujero, del mismo evento
+
+El sensor pasó a **`unavailable`**, no a `off`. La automatización que frena el
+escritorio si desapareces **a mitad de un movimiento** solo vigilaba `off`, así
+que un sensor caído de la red le parecía "nada que hacer". Ahora vigila también
+`unavailable` y `unknown`.
+
+**Un sensor que no contesta no es prueba de que haya alguien.**
+
+### Lo que esto dice del método
+
+Los dos fallos de ayer y este son el mismo patrón: **un arreglo verificado
+contra el síntoma que lo motivó, sin comprobar qué rompía en la otra
+dirección.** Ayer verifiqué que el escritorio volviera a moverse; no verifiqué
+que siguiera negándose a moverse sin nadie.
+
+Aparte: el propietario cambió el sensor a un USB de la Pi y pregunté si eso
+interfería. **Descartado midiendo** `zigbee.db`: LQI **199 contra el
+coordinador** sobre 255, mejor que casi toda la red. No hay que recolocar nada.
+Detalle en [INTEGRACION_HA.md](INTEGRACION_HA.md).
+
+### Estado
+
+Escritorio operativo. Firmware sin tocar. Tres sensores de presencia con
+propósitos separados y escritos. Sin verificar todavía: que el nuevo sensor de 3
+minutos no vuelva a cancelar movimientos legítimos. **Eso hay que observarlo un
+par de días**, y es exactamente el error que acabo de cometer dos veces.
+
+---
+
 ## 2026-09-02 — Dos veces tenía razón él y no le creí
 
 > *"no es posible, me he estado moviendo mucho, el sensor no es"*

@@ -337,6 +337,47 @@ travelling.
 disappear while it moves consults this sensor, so it now also covers **continuous
 travel you started by hand and left running**.
 
+### One sensor cannot answer two different questions
+
+⚠️ **Real failure on 2026-09-03: the desk rose with nobody in the room.** The
+owner reported it, and the records confirmed it exactly:
+
+```
+13:13:58  raw presence        off          <- he is gone
+13:16:00  raw presence        unavailable  <- the sensor is not even answering
+13:16:56  MOVEMENT            rising       <- the desk goes up anyway
+13:17:40  HEIGHT              116
+13:28:58  sustained presence  off          <- twelve minutes late
+```
+
+**This was caused by the fix of the previous day.** On 2026-09-02 the
+pre-movement re-check was moved from the raw sensor to `presencia_sostenida`,
+because the raw one flickers and was cancelling movements with the owner sitting
+right there. That fixed the cancellations and **opened this**: the sustained
+sensor carries a 15 minute `delay_off`, so it kept saying "yes" for a quarter of
+an hour after he left.
+
+**It is worse than the fault it replaced.** [SEGURIDAD.md](SEGURIDAD.md) requires
+confirmation that somebody is in front of the desk, and this accepted a
+confirmation that was fifteen minutes stale.
+
+**The mistake was using one sensor for two different questions:**
+
+| Question | Tolerance | Sensor |
+|---|---|---|
+| *Is it still their turn to be sitting?* | 15 min. A trip to the bathroom is not a posture change | `escritorio_presencia_sostenida` |
+| *May I move a piece of furniture right now?* | **3 min**, and not one more | **`escritorio_presencia_reciente`** ← new |
+
+Three minutes still absorbs the measured mmWave flicker, which drops and returns
+every 1 to 2 minutes, without ever authorising a movement in front of an empty
+chair.
+
+⚠️ **And a second hole, from the same event:** the sensor went to `unavailable`,
+not to `off`. The watch that stops the desk mid-travel triggered only on `off`,
+so **a sensor that had fallen off the network read as "nothing to react to"**.
+It now triggers on `unavailable` and `unknown` too. A sensor that does not answer
+is not evidence that somebody is there.
+
 ### The counter measures YOUR posture, not the desk's height
 
 Raised by the owner as a use case: *"I go to the bathroom and I'm not there, so
@@ -371,8 +412,8 @@ it.
 | Layer | What it does |
 |---|---|
 | **1. Sustained presence** (`delay_off: 15 min`) | The real layer. ⚠️ **Rewritten 2026-09-02:** this layer used to rely on the sensor's own 120 s delay, and **the device reverts it to 30 s on its own**. Worse, the raw sensor **flickers every 1 to 2 minutes** with the person sitting right there (measured, see below). Only the sustained sensor, which lives in Home Assistant, survives that flicker |
-| **2. Re-check after 110 s** | Warns, waits, and **asks again** before moving. ⚠️ It asked the **raw** sensor until 2026-09-02, which is why it cancelled movements with the owner sitting right there; it now asks the sustained one |
-| **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel |
+| **2. Re-check after 110 s** | Warns, waits, and **asks again** before moving, against `presencia_reciente` (3 min). ⚠️ **Rewritten twice.** It asked the **raw** sensor until 2026-09-02, cancelling movements with the owner sitting right there. The fix pointed it at the **sustained** sensor, and that broke it the other way: on 2026-09-03 the desk rose with nobody there, see below |
+| **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel. Watches the **raw** sensor on purpose: here immediate reaction matters more than flicker tolerance. ⚠️ Since 2026-09-03 it also triggers on `unavailable` and `unknown`: the sensor dropped off the network and a trigger watching only `off` would not have fired |
 
 **Layer 3 is the one that closes the case** the other two cannot: it does not
 predict, it reacts.
