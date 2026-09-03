@@ -52,12 +52,50 @@ que un sensor caído de la red le parecía "nada que hacer". Ahora vigila tambi�
 
 **Un sensor que no contesta no es prueba de que haya alguien.**
 
+### Y el mismo día, el fallo contrario: frenó un viaje legítimo
+
+Dos horas después, el propietario pulsó memoria 1 en HA y **el escritorio paró
+en 111 en vez de llegar a 80**.
+
+```
+14:18:30  MEMORIA 1  -> la caja empieza a bajar de 117 hacia 80
+14:18:38  presencia CRUDA -> off, durante DOS segundos
+14:18:39  la automatizacion de parar dispara y publica `parar`
+14:18:42  el escritorio se detiene en 111
+14:18:40  el sensor vuelve a on, tarde
+```
+
+Estaba sentado delante todo el rato. Pulsó otra vez 45 s después y bajó los 29 cm
+sin problema.
+
+**Y lo agravó el arreglo de esa misma mañana:** añadir `unavailable` y `unknown`
+al vigilante lo hizo más sensible, así que la capa que frena cuando te vas empezó
+a frenar estando tú.
+
+Arreglado con **confirmación de 10 s** (`for`) en el disparador. Sigue mirando el
+sensor crudo, porque ahí la reacción rápida es el objetivo, pero ya no se cree un
+parpadeo de dos segundos. **Coste declarado:** si la ausencia es real, frena 10 s
+más tarde, unos 7 cm más de recorrido. Un viaje entero dura ~65 s.
+
+### Las tres capas, ya separadas
+
+| Capa | Pregunta | Sensor | Tolerancia |
+|---|---|---|---|
+| 1. Disparo | ¿Le toca cambiar de postura? | `presencia_sostenida` | 15 min |
+| 2. Antes de mover | ¿Puedo mover un mueble AHORA? | `presencia_reciente` | 3 min |
+| 3. Durante el viaje | ¿Se fue MIENTRAS se movía? | sensor crudo | 10 s |
+
+**Tres preguntas, tres tolerancias, tres sensores.** Todos los fallos de esta
+zona vinieron de hacer que un sensor respondiera a dos de ellas.
+
 ### Lo que esto dice del método
 
 Los dos fallos de ayer y este son el mismo patrón: **un arreglo verificado
 contra el síntoma que lo motivó, sin comprobar qué rompía en la otra
 dirección.** Ayer verifiqué que el escritorio volviera a moverse; no verifiqué
-que siguiera negándose a moverse sin nadie.
+que siguiera negándose a moverse sin nadie. Y esta mañana, arreglando eso, rompí
+lo primero otra vez: dos horas después frenaba viajes legítimos. **Tres arreglos
+seguidos, cada uno rompiendo la dirección que el anterior protegía.**
 
 Aparte: el propietario cambió el sensor a un USB de la Pi y pregunté si eso
 interfería. **Descartado midiendo** `zigbee.db`: LQI **199 contra el

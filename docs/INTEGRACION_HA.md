@@ -378,6 +378,47 @@ so **a sensor that had fallen off the network read as "nothing to react to"**.
 It now triggers on `unavailable` and `unknown` too. A sensor that does not answer
 is not evidence that somebody is there.
 
+#### And the same day, the opposite failure: it braked a legitimate trip
+
+Two hours after the fix above, the owner pressed preset 1 in HA and **the desk
+stopped at 111 cm instead of reaching 80**.
+
+```
+14:18:30  MEMORY 1 pressed  -> the box starts descending from 117 towards 80
+14:18:38  raw presence      -> off, for TWO seconds
+14:18:39  the stop-on-absence automation fires and publishes `parar`
+14:18:42  the desk stops at 111
+14:18:40  the sensor is back to on, too late
+```
+
+He was sitting there the whole time. **A two-second flicker aborted a legitimate
+trip**, and pressing preset 1 again 45 seconds later completed the full 29 cm
+without trouble.
+
+**And the fix from that same morning made it worse:** adding `unavailable` and
+`unknown` to the watch made it more sensitive, so the layer that stops the desk
+when you leave started stopping it while you were there.
+
+**Fix: a 10 second confirmation (`for`) on the trigger.** The layer still watches
+the raw sensor, because here reaction speed is the point, but it no longer
+believes a two-second blink.
+
+**The cost, stated plainly:** if the absence is real, braking now happens 10 s
+later, which at 0.68 cm/s is about **7 cm of extra travel**. A full trip lasts
+~65 s, so it still brakes well inside the journey, and the physical stop and the
+handset are still there underneath.
+
+#### The three layers as they stand
+
+| Layer | Question it answers | Sensor | Tolerance |
+|---|---|---|---|
+| 1. Trigger | Is it their turn to change posture? | `presencia_sostenida` | 15 min |
+| 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | 3 min |
+| 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **10 s** |
+
+**Three questions, three tolerances, three sensors.** Every failure in this area
+came from making one sensor answer two of them.
+
 ### The counter measures YOUR posture, not the desk's height
 
 Raised by the owner as a use case: *"I go to the bathroom and I'm not there, so
@@ -413,7 +454,7 @@ it.
 |---|---|
 | **1. Sustained presence** (`delay_off: 15 min`) | The real layer. ⚠️ **Rewritten 2026-09-02:** this layer used to rely on the sensor's own 120 s delay, and **the device reverts it to 30 s on its own**. Worse, the raw sensor **flickers every 1 to 2 minutes** with the person sitting right there (measured, see below). Only the sustained sensor, which lives in Home Assistant, survives that flicker |
 | **2. Re-check after 110 s** | Warns, waits, and **asks again** before moving, against `presencia_reciente` (3 min). ⚠️ **Rewritten twice.** It asked the **raw** sensor until 2026-09-02, cancelling movements with the owner sitting right there. The fix pointed it at the **sustained** sensor, and that broke it the other way: on 2026-09-03 the desk rose with nobody there, see below |
-| **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel. Watches the **raw** sensor on purpose: here immediate reaction matters more than flicker tolerance. ⚠️ Since 2026-09-03 it also triggers on `unavailable` and `unknown`: the sensor dropped off the network and a trigger watching only `off` would not have fired |
+| **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel. Watches the **raw** sensor with a **10 s confirmation** (`for`), and triggers on `off`, `unavailable` and `unknown` |
 
 **Layer 3 is the one that closes the case** the other two cannot: it does not
 predict, it reacts.
