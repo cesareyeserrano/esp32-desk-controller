@@ -425,10 +425,26 @@ which at 0.68 cm/s is about **3.4 cm of extra travel**. A full trip lasts ~65 s,
 so it still brakes well inside the journey, and the physical stop and the handset
 are still there underneath.
 
+#### Layer 0: the GPS, added 2026-09-03
+
+At the owner's request, both posture automations now carry **one more condition,
+evaluated first**: `person.cesar_augusto` must be `home`. That is the same
+criterion the rest of the house already uses, not a new one invented here.
+
+**Why it belongs first:** the mmWave can be argued with, the phone's GPS cannot.
+If the phone says the house is empty, there is nothing to discuss and the
+remaining six conditions do not even get evaluated.
+
+⚠️ **Deliberately NOT added to layer 3** (stop the desk mid-travel). That one is
+a safety layer: if the desk is moving while nobody is home, that is *more* reason
+to brake, not less. Gating it behind "only while he is home" would disable the
+protection in exactly the situation where it matters most.
+
 #### The three layers as they stand
 
 | Layer | Question it answers | Sensor | Tolerance |
 |---|---|---|---|
+| 0. Is he even home? | Is the house empty? | `person.cesar_augusto` (GPS) | on/off |
 | 1. Trigger | Is it their turn to change posture? | `presencia_sostenida` | 15 min |
 | 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | 3 min |
 | 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **5 s** |

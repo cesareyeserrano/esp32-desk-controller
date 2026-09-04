@@ -92,10 +92,25 @@ veces y media de margen, y 10 s se tragaba además parpadeos de hasta diez
 segundos, que ya parecen una ausencia de verdad. **Coste:** frena 5 s más tarde,
 unos 3.4 cm de recorrido extra sobre un viaje de ~65 s.
 
-### Las tres capas, ya separadas
+### Capa 0: el GPS
+
+A petición del propietario, las dos automatizaciones de postura llevan ahora una
+condición más, **evaluada la primera**: `person.cesar_augusto` en `home`. Es el
+mismo criterio que ya usan las demás automatizaciones de la casa.
+
+Va primero porque **al mmWave se le puede discutir, al GPS del móvil no**. Si el
+móvil dice que no está en casa, las otras seis condiciones ni se evalúan.
+
+⚠️ **A propósito NO se añade a la capa 3**, la que frena el escritorio en
+marcha. Esa es de seguridad: si el escritorio se mueve con la casa vacía, eso es
+**más** motivo para frenar, no menos. Condicionarla a "solo si está en casa"
+apagaría la protección justo en el caso donde más hace falta.
+
+### Las cuatro capas, ya separadas
 
 | Capa | Pregunta | Sensor | Tolerancia |
 |---|---|---|---|
+| 0. ¿Está en casa? | ¿La casa está vacía? | `person.cesar_augusto` (GPS) | sí/no |
 | 1. Disparo | ¿Le toca cambiar de postura? | `presencia_sostenida` | 15 min |
 | 2. Antes de mover | ¿Puedo mover un mueble AHORA? | `presencia_reciente` | 3 min |
 | 3. Durante el viaje | ¿Se fue MIENTRAS se movía? | sensor crudo | 5 s |
