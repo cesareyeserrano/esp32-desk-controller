@@ -92,6 +92,44 @@ veces y media de margen, y 10 s se tragaba además parpadeos de hasta diez
 segundos, que ya parecen una ausencia de verdad. **Coste:** frena 5 s más tarde,
 unos 3.4 cm de recorrido extra sobre un viaje de ~65 s.
 
+### Quinto fallo, y la conclusión honesta
+
+**17:31:54, el escritorio subió con el propietario fuera del estudio.**
+
+```
+17:29:56  el sensor le ve por ultima vez
+17:31:41  el sensor le pierde
+17:31:54  el escritorio sube      <- 118 s desde la ultima deteccion real
+17:34:41  "presencia reciente" admite por fin que no esta
+```
+
+La comprobación dijo que sí porque `presencia_reciente` toleraba 3 minutos y solo
+habían pasado dos. **El GPS no ayudó: estaba en casa, pero no en el estudio.**
+Casa no es habitación.
+
+Bajado a **60 s**, que habría bloqueado este caso. Pero el número no es el
+problema:
+
+⚠️ **Este umbral lleva cinco ajustes.** Si lo subo, el escritorio se mueve sin
+él; si lo bajo, le frena estando sentado. Cada cambio mueve el fallo de un lado
+al otro, porque **el mmWave no distingue "sentado quieto" de "se fue"** y toda
+la cadena cuelga de esa única señal.
+
+| Ajuste | Resultado |
+|---|---|
+| Crudo, instantáneo | Cancelaba movimientos con él sentado delante |
+| Sostenida, 15 min | Subió 12 minutos después de irse |
+| Reciente, 3 min | Subió 118 s después de irse |
+| Reciente, 60 s | Actual. Sin probar en la dirección contraria |
+
+**Ningún umbral arregla esto**, porque la señal de partida es ambigua. Lo arregla
+una **segunda señal independiente** que diga *en positivo* que está ahí en vez de
+deducirlo del movimiento. `binary_sensor.mac_m4_active` ya existe y está a un
+ajuste de reportar: mientras teclee, no hay umbral que discutir.
+
+**Mientras eso no exista, esto va a seguir oscilando**, y queda escrito para que
+nadie gaste otra tarde afinando el número.
+
 ### Capa 0: el GPS
 
 A petición del propietario, las dos automatizaciones de postura llevan ahora una
@@ -112,7 +150,7 @@ apagaría la protección justo en el caso donde más hace falta.
 |---|---|---|---|
 | 0. ¿Está en casa? | ¿La casa está vacía? | `person.cesar_augusto` (GPS) | sí/no |
 | 1. Disparo | ¿Le toca cambiar de postura? | `presencia_sostenida` | 15 min |
-| 2. Antes de mover | ¿Puedo mover un mueble AHORA? | `presencia_reciente` | 3 min |
+| 2. Antes de mover | ¿Puedo mover un mueble AHORA? | `presencia_reciente` | **60 s** |
 | 3. Durante el viaje | ¿Se fue MIENTRAS se movía? | sensor crudo | 5 s |
 
 **Tres preguntas, tres tolerancias, tres sensores.** Todos los fallos de esta

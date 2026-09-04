@@ -425,6 +425,46 @@ which at 0.68 cm/s is about **3.4 cm of extra travel**. A full trip lasts ~65 s,
 so it still brakes well inside the journey, and the physical stop and the handset
 are still there underneath.
 
+#### Fifth failure, and the honest conclusion: one signal is not enough
+
+**2026-09-03, 17:31:54, the desk rose with the owner out of the study.**
+
+```
+17:29:56  the sensor sees him for the last time
+17:31:41  the sensor loses him
+17:31:54  the desk rises          <- 118 s since the last real detection
+17:34:41  "recent presence" finally admits he is gone
+```
+
+The pre-movement check said yes because `presencia_reciente` tolerated 3 minutes
+and only two had passed. **The GPS did not help: he was home, just not in the
+study.** Home is not a room.
+
+Lowered to **60 s**, which would have blocked this one. But the number is not
+the point, and pretending otherwise would be dishonest:
+
+⚠️ **This threshold has now been adjusted five times.** Raise it and the desk
+moves without him; lower it and it brakes with him sitting there. Each change
+moves the failure from one side to the other, because **the mmWave cannot
+distinguish "sitting still" from "left the room"**, and the entire chain hangs
+off that one signal.
+
+| Adjustment | Result |
+|---|---|
+| Raw sensor, instant | Cancelled movements with him sitting there |
+| Sustained, 15 min | Desk rose 12 minutes after he left |
+| Recent, 3 min | Desk rose 118 s after he left |
+| Recent, 60 s | Current. Untested against the opposite direction |
+
+**No threshold fixes this**, because the underlying signal is ambiguous. What
+fixes it is a **second, independent signal** that says *positively* that he is
+there rather than inferring it from movement. `binary_sensor.mac_m4_active`
+already exists and is one setting away from reporting: while he is typing, no
+threshold discussion is needed at all.
+
+**Until that exists, this system will keep oscillating**, and that is recorded
+here so nobody spends another afternoon tuning the number.
+
 #### Layer 0: the GPS, added 2026-09-03
 
 At the owner's request, both posture automations now carry **one more condition,
@@ -446,7 +486,7 @@ protection in exactly the situation where it matters most.
 |---|---|---|---|
 | 0. Is he even home? | Is the house empty? | `person.cesar_augusto` (GPS) | on/off |
 | 1. Trigger | Is it their turn to change posture? | `presencia_sostenida` | 15 min |
-| 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | 3 min |
+| 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | **60 s** |
 | 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **5 s** |
 
 **Three questions, three tolerances, three sensors.** Every failure in this area
