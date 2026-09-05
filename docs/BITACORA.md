@@ -92,6 +92,37 @@ veces y media de margen, y 10 s se tragaba además parpadeos de hasta diez
 segundos, que ya parecen una ausencia de verdad. **Coste:** frena 5 s más tarde,
 unos 3.4 cm de recorrido extra sobre un viaje de ~65 s.
 
+### Revertido a como funcionaba, y un interruptor maestro
+
+> *"como lo temíamos hace una semana, justo antes de hacer todos estos ajustes
+> funcionaba perfecto, yo lo devolvería a eso"*
+
+**Tiene razón en el dato.** Cinco ajustes en dos días, cada uno moviendo el fallo
+al otro lado, y la semana anterior el sistema hacía su trabajo. Revertido:
+
+| | Vuelve a |
+|---|---|
+| Re-verificación previa a mover | el sensor **crudo**, como hasta el 2026-09-02 |
+| Vigilancia durante el viaje | solo `off`, sin ventana de confirmación |
+
+**Se conserva lo que no toca la cuestión de la presencia:** que el contador
+sobreviva a los reinicios, que la postura solo cuente en las alturas de trabajo,
+y la condición de GPS. `presencia_reciente` queda definido pero **sin usar**.
+
+### El interruptor maestro
+
+Pedido el mismo día, y llevaba en el catálogo como `permitir_movimiento` desde el
+2026-08-22 sin implementarse nunca.
+
+**Apagado, nada automático mueve el escritorio.** El mando físico y los botones
+de HA siguen funcionando: solo apaga lo automático. Es la primera condición de
+las dos automatizaciones de postura y está en el panel junto a Altura y
+Movimiento.
+
+⚠️ **A propósito no condiciona "parar si desaparece la presencia".** Esa no mueve
+el escritorio, lo **frena**, y tiene que seguir protegiendo aunque lo automático
+esté apagado.
+
 ### Quinto fallo, y la conclusión honesta
 
 **17:31:54, el escritorio subió con el propietario fuera del estudio.**

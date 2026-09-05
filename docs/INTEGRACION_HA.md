@@ -425,6 +425,42 @@ which at 0.68 cm/s is about **3.4 cm of extra travel**. A full trip lasts ~65 s,
 so it still brakes well inside the journey, and the physical stop and the handset
 are still there underneath.
 
+#### Reverted to how it worked, plus a master switch (2026-09-03)
+
+**The owner called it:** *"as we feared a week ago, right before making all these
+adjustments it worked perfectly, I would put it back to that."*
+
+He is right on the facts. Five adjustments in two days, each one moving the
+failure to the other side, and the week before any of them the system was doing
+its job. **Reverted:**
+
+| | Was reverted to |
+|---|---|
+| Pre-movement re-check | the **raw** sensor, as it was until 2026-09-02 |
+| Mid-travel watch | `off` only, no confirmation window |
+
+**Kept, because they are independent of the presence question and cost nothing:**
+the posture counter surviving HA restarts, posture only counting at the working
+heights, and the GPS condition below.
+
+`binary_sensor.escritorio_presencia_reciente` stays defined but **unused**. It
+costs nothing and the reasoning behind it is sound; it is there if this is ever
+revisited.
+
+#### The master switch, `input_boolean.escritorio_automatico`
+
+Requested by the owner the same day, and it had been sitting in this catalogue
+as `permitir_movimiento` since 2026-08-22 without ever being implemented.
+
+**Off, nothing automatic moves the desk.** Not the posture reminders, not
+anything added later. The physical handset and the HA buttons keep working: this
+only switches off the *automatic* behaviour. It is the first condition on both
+posture automations, and it is on the dashboard next to Height and Movement.
+
+⚠️ **It deliberately does NOT gate "stop if presence disappears".** That one does
+not move the desk, it **brakes** it, and it has to keep protecting even with the
+automatic side switched off.
+
 #### Fifth failure, and the honest conclusion: one signal is not enough
 
 **2026-09-03, 17:31:54, the desk rose with the owner out of the study.**
