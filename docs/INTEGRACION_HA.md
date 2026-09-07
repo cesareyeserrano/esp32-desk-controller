@@ -252,7 +252,32 @@ detects you even when still, not only movement).
 | Automation | Fires on | Sequence |
 |---|---|---|
 | Sitting too long | **45 min** seated, **presence**, and **no handset use in 5 min** | Warns → waits 110 s → **re-checks presence** → raises to 117 → button *"Leave it at 80"* |
-| Standing too long | **30 min** standing, same conditions | Same, towards 80 |
+| Standing too long | **45 min** standing, same conditions | Same, towards 80 |
+
+⚠️ **The standing threshold was 30 min until 2026-09-07**, and the owner noticed
+before the data did: *"the iterations feel short to me, I don't know how long I
+leave it at 117 before going back to 80"*.
+
+Measured over 7 days, every standing period he did not interrupt himself:
+
+```
+09-01   35, 35, 33 min
+09-02   35, 29, 37, 35, 35, 35, 35 min
+09-03   35, 35, 35 min
+09-07   37, 35, 35 min
+```
+
+**Median: 35 minutes, over and over.** That number is not a habit, it is
+arithmetic: the 30 minute threshold plus the 110 s courtesy wait. Sitting
+periods ran to **50 min** for the same reason, from the 45 minute threshold.
+
+So the desk was imposing **35 standing for every 50 sitting**, and nobody chose
+that ratio: it fell out of two thresholds picked separately. Now both are 45.
+
+⚠️ **A slip worth recording:** the script that raised the threshold replaced
+`1800` throughout the automation, and the "do not repeat the warning" condition
+happened to use the same number. It was silently changed to 45 min too. Caught
+in the verification output and put back to 30, matching the sitting one.
 
 ⚠️ **Two faults that stopped them firing, corrected on 2026-08-24**, spotted by
 the owner when they never triggered:

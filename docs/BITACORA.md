@@ -6,6 +6,36 @@
 
 ---
 
+## 2026-09-07 (tarde) — Los 35 minutos de pie no los elegía él
+
+> *"se me están haciendo cortas las iteraciones, no sé cuánto tiempo lo dejo en
+> 117 antes de volver a 80"*
+
+Buena intuición, y los datos la confirman. Midiendo los periodos de pie de 7 días:
+
+```
+09-01   35, 35, 33 min
+09-02   35, 29, 37, 35, 35, 35, 35 min
+09-03   35, 35, 35 min
+09-07   37, 35, 35 min
+```
+
+**Mediana: 35 minutos, una y otra vez.** Ese número no es una costumbre suya, es
+aritmética: el umbral de 30 min más los 110 s de cortesía. Y los periodos
+sentado daban **50 min** por lo mismo, con su umbral de 45.
+
+**El escritorio le imponía 35 de pie por cada 50 sentado**, y esa proporción no
+la eligió nadie: salió de poner dos umbrales por separado. Igualados a 45 y 45.
+
+⚠️ **Un descuido que conviene anotar:** el script que subió el umbral reemplazó
+`1800` en toda la automatización, y la condición de *no repetir el aviso* usaba
+ese mismo número. Se cambió también a 45 min sin querer. Lo delató la salida de
+verificación y se devolvió a 30, igual que en la de sentado. **Buscar por valor
+numérico en un fichero de configuración toca lo que comparte el número, no lo
+que comparte el significado.**
+
+---
+
 ## 2026-09-07 — Tres días encendiendo un interruptor que no encendía nada
 
 > *"no está funcionando, ¿puedes revisar?"*
