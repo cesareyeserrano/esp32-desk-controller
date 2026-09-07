@@ -461,6 +461,35 @@ posture automations, and it is on the dashboard next to Height and Movement.
 not move the desk, it **brakes** it, and it has to keep protecting even with the
 automatic side switched off.
 
+#### The switch that did not actually switch anything (2026-09-07)
+
+**Reported as "it isn't working".** It was not a sensor, a threshold or a
+condition:
+
+```
+04-09 21:05  automation "llevas mucho sentado" is DISABLED
+04-09 20:05  the Automatico switch -> on
+05-09 16:00  -> off
+06-09 13:23  -> on
+07-09 11:43  -> on     <- three days of using a switch that changed nothing
+```
+
+**A design fault of mine.** The master switch was implemented purely as a
+*condition* inside the automations, so it could sit at `on` while the automation
+itself was disabled underneath. Two independent ways to switch off the same
+thing, blind to each other, and the visible one was not the one in charge.
+
+**Fix: `escritorio_maestro_sincroniza`.** Turning the switch on now calls
+`automation.turn_on` for both posture automations; turning it off disables them.
+It also runs at Home Assistant start, so the switch and reality cannot drift
+apart again. Verified: both automations came back on their own on the next
+restart.
+
+**The lesson, and it is the same one as the presence sensors:** a control that
+*looks* authoritative but is only one of several inputs will eventually be
+believed over the thing that actually decides. Either the switch commands, or it
+should not be on the dashboard.
+
 #### Fifth failure, and the honest conclusion: one signal is not enough
 
 **2026-09-03, 17:31:54, the desk rose with the owner out of the study.**

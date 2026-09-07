@@ -6,6 +6,37 @@
 
 ---
 
+## 2026-09-07 — Tres días encendiendo un interruptor que no encendía nada
+
+> *"no está funcionando, ¿puedes revisar?"*
+
+No era un sensor, ni un umbral, ni una condición. **Las dos automatizaciones de
+recordatorio llevaban deshabilitadas desde el 2026-09-04 a las 21:05.**
+
+```
+04-09 21:05  se DESHABILITA "llevas mucho sentado"
+04-09 20:05  el interruptor Automatico -> on
+05-09 16:00  -> off
+06-09 13:23  -> on
+07-09 11:43  -> on      <- tres dias usando un interruptor que no hacia nada
+```
+
+**Fallo de diseño mío.** Implementé el interruptor maestro solo como
+**condición** dentro de las automatizaciones, así que podía estar en `on`
+mientras la automatización estaba apagada por debajo. Dos formas independientes
+de apagar lo mismo, ciegas entre sí, y **la visible no era la que mandaba**.
+
+Arreglado con `escritorio_maestro_sincroniza`: encender el interruptor llama a
+`automation.turn_on` de las dos; apagarlo las deshabilita. Y se ejecuta también
+al arrancar Home Assistant, para que interruptor y realidad no puedan volver a
+separarse. Verificado: al reiniciar, las dos volvieron solas.
+
+**La lección es la misma que con los sensores de presencia:** un control que
+*parece* mandar pero es solo una entrada más acabará creyéndose por encima de lo
+que de verdad decide. O el interruptor manda, o no debería estar en el panel.
+
+---
+
 ## 2026-09-03 — El escritorio subió sin nadie delante, y fue por mi arreglo de ayer
 
 > *"el sistema no está siendo preciso, hoy se levantó sin que yo estuviera, y el
