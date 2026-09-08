@@ -251,8 +251,39 @@ detects you even when still, not only movement).
 
 | Automation | Fires on | Sequence |
 |---|---|---|
-| Sitting too long | **45 min** seated, **presence**, and **no handset use in 5 min** | Warns → waits 110 s → **re-checks presence** → raises to 117 → button *"Leave it at 80"* |
+| Sitting too long | **30 min** seated, **presence**, and **no handset use in 5 min** | Warns → waits 110 s → **re-checks presence** → raises to 117 → button *"Leave it at 80"* |
 | Standing too long | **45 min** standing, same conditions | Same, towards 80 |
+
+#### Where those two numbers come from (2026-09-07)
+
+The owner asked for them to follow published guidance rather than his own guess.
+What the literature supports, and how firmly:
+
+| Source | What it says |
+|---|---|
+| Buckley et al., *Br J Sports Med*, 2015 (expert consensus for office workers) | Accumulate **2 h** of standing and light activity across the working day, progressing towards **4 h** |
+| Cornell ergonomics (Alan Hedge) | Break sitting roughly every **30 min**, and make part of that break **walking**, not just standing still |
+| Occupational literature on static standing | Beyond about an hour of continuous static standing, low-back and leg discomfort rise. Standing still is not the goal |
+
+**The consistent finding is that breaking up sitting matters more than piling up
+standing hours**, so the sitting threshold is the one that should be tight.
+
+| | Threshold | Reasoning |
+|---|---|---|
+| Sitting | **30 min** | The best-supported interval for interrupting sedentary time |
+| Standing | **45 min** | Comfortably under the hour of continuous static standing |
+
+At roughly 8 hours of work this lands near **4 h standing**, the upper end of
+the consensus target.
+
+⚠️ **This is general guidance, not medical advice**, and the precise ratios are
+far less settled than the "break up sitting" finding itself. Anyone with
+circulatory, back or joint conditions should take their clinician's numbers over
+these.
+
+⚠️ **What the desk cannot do**, and it is the part the sources stress most: it
+raises the surface, it does not make anyone **walk**. Standing still at 117 cm is
+better than sitting, but the recommendation is movement.
 
 ⚠️ **The standing threshold was 30 min until 2026-09-07**, and the owner noticed
 before the data did: *"the iterations feel short to me, I don't know how long I

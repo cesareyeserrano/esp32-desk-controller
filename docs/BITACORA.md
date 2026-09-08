@@ -27,6 +27,30 @@ sentado daban **50 min** por lo mismo, con su umbral de 45.
 **El escritorio le imponía 35 de pie por cada 50 sentado**, y esa proporción no
 la eligió nadie: salió de poner dos umbrales por separado. Igualados a 45 y 45.
 
+### Y los umbrales pasan a basarse en recomendaciones, no en intuición
+
+*"ajústalos basado en recomendaciones, no sé cuál será el tiempo específico para
+mí, pero algo más recomendado por fisios o médicos"*.
+
+Lo que sostiene la literatura, y con qué firmeza:
+
+| Fuente | Qué dice |
+|---|---|
+| Buckley et al., *Br J Sports Med*, 2015 (consenso para oficinas) | Acumular **2 h** de pie y actividad ligera por jornada, progresando a **4 h** |
+| Ergonomía de Cornell (Alan Hedge) | Romper el sedentarismo cada **~30 min**, y que parte de la pausa sea **caminar** |
+| Literatura ocupacional sobre bipedestación estática | Pasada la hora de pie inmóvil suben las molestias lumbares y de piernas |
+
+**Lo consistente es que romper el tiempo sentado importa más que acumular horas
+de pie**, así que el umbral que debe apretar es el de sentado.
+
+**Sentado 30 min, de pie 45 min.** En jornada de 8 h queda cerca de 4 h de pie,
+el extremo superior del consenso.
+
+⚠️ Es orientación general, no consejo médico, y las proporciones exactas están
+mucho menos asentadas que el hallazgo de "romper el sedentarismo". Y lo que el
+escritorio **no** puede hacer, que es lo que más subrayan las fuentes: levanta la
+mesa, no hace caminar a nadie.
+
 ⚠️ **Un descuido que conviene anotar:** el script que subió el umbral reemplazó
 `1800` en toda la automatización, y la condición de *no repetir el aviso* usaba
 ese mismo número. Se cambió también a 45 min sin querer. Lo delató la salida de
