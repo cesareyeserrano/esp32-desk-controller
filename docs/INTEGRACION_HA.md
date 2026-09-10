@@ -517,6 +517,57 @@ posture automations, and it is on the dashboard next to Height and Movement.
 not move the desk, it **brakes** it, and it has to keep protecting even with the
 automatic side switched off.
 
+#### What the master switch governs (2026-09-10)
+
+The owner's rule, and it is the right one: *"the off button should switch off
+the system and its notifications, whatever they are."*
+
+| Under the switch | Outside it | Why it is outside |
+|---|---|---|
+| llevas mucho sentado | **parar si desaparece la presencia** | It does not warn or move: it **brakes**. If somebody leaves the desk travelling and walks off, this is the only thing that stops it. Switching it off removes protection, not noise |
+| llevas mucho de pie | alerta desconectado | Off permanently, see below |
+| alerta bus degradado | volvió | Off permanently, see below |
+| alerta movimiento sostenido | resumen cada 30 min | A notification every half hour. Off, and kept out of the group |
+
+⚠️ **Connection alerts off for good.** A power cut on 2026-09-09 at 22:28 took
+the ESP32 down and it reconnected **12 times** between then and 01:36, firing an
+alert on each one while the owner slept. They are deliberately outside the group
+so that turning the switch back on does not resurrect them.
+
+⚠️ **A side effect caught during verification, the same day:** putting "resumen
+cada 30 min" inside the group made the switch **turn it on**, and it had been
+off on purpose. It sends a notification every thirty minutes, precisely the
+noise being removed. Pulled back out and switched off.
+
+#### The `default` that switched things off on its own (2026-09-10)
+
+**The 2026-09-07 sync automation carried a real fault**, found while
+investigating "it has been a good while without responding":
+
+```
+09-09 22:28:32  "llevas mucho sentado" -> OFF   (same second the ESP32 dropped)
+09-10 07:50:59  -> on                            (when the owner touched the switch)
+```
+
+**Nine and a half hours off, with the switch showing `on` the whole time.**
+
+The cause was the `choose` block's `default`:
+
+```yaml
+choose:
+  - conditions: [input_boolean == 'on']
+    sequence: turn_on
+default: turn_off        # fires on unknown and unavailable too
+```
+
+`default` runs for **any** state that is not `on`, including the `unknown` an
+`input_boolean` shows briefly while Home Assistant starts. So a restart, or
+anything that made that state unreadable, silently disabled the reminders.
+
+**Fixed:** two explicit branches, `on` and `off`, and **no `default`**. If the
+switch cannot be read, nothing is touched. **An unreadable state is not an
+instruction to switch off.**
+
 #### The switch that did not actually switch anything (2026-09-07)
 
 **Reported as "it isn't working".** It was not a sensor, a threshold or a

@@ -6,6 +6,75 @@
 
 ---
 
+## 2026-09-10 — Un corte de luz, doce avisos de madrugada y un `default` de más
+
+> *"lleva un buen rato sin responder, no lo muevas, solo revisa"*
+
+**El sistema llevaba nueve horas y media con los recordatorios apagados**, y el
+interruptor del panel decía `on` todo ese rato.
+
+```
+09-09 22:28:32  "llevas mucho sentado" -> OFF   (el mismo segundo que cayo el ESP32)
+09-10 07:50:59  -> on                            (al tocar el interruptor)
+```
+
+### La causa: el `default` del sincronizador que puse el 2026-09-07
+
+```yaml
+choose:
+  - conditions: [input_boolean == 'on']
+    sequence: turn_on
+default: turn_off        # se ejecuta tambien con unknown y unavailable
+```
+
+`default` corre ante **cualquier** estado que no sea `on`, incluido el `unknown`
+que muestra un `input_boolean` mientras Home Assistant arranca. Un reinicio, o
+cualquier cosa que dejara ese estado ilegible, **deshabilitaba los recordatorios
+en silencio**.
+
+**Arreglado:** dos ramas explícitas, `on` y `off`, y **sin `default`**. Si el
+interruptor no se puede leer, no se toca nada. **Un estado ilegible no es una
+orden de apagar.**
+
+Verificado reiniciando: los recordatorios siguieron en `on`.
+
+### El corte de luz, y los avisos que le despertaron
+
+Lo aportó el propietario: *"hubo un corte de energía a esa hora, y como estaba
+durmiendo"*. El ESP32 se cayó y **se reconectó 12 veces entre las 22:28 y la
+01:36**, disparando un aviso en cada una.
+
+**Las alertas de conexión quedan apagadas de forma permanente**, y fuera del
+grupo del interruptor, para que volver a encenderlo no las resucite.
+
+De paso, medido: el ESP32 **cambió de IP** el 2026-09-07, de `192.168.1.23` a
+`192.168.1.16`. Responde en la nueva. Y `uptime`, `WiFi RSSI` y
+`bus_transacciones` **llevan congelados desde el 2026-08-26** aunque el resto de
+temas sí publica. **Sin explicar.**
+
+### El interruptor pasa a mandar sobre todo lo que avisa o mueve
+
+Propuesta del propietario, y es la correcta: *"el botón de apagado debe apagar el
+sistema y sus notificaciones, cualquiera que sea"*. Que apagara los
+recordatorios pero siguieran llegando alertas era la incoherencia que veníamos
+arrastrando.
+
+**Fuera del grupo a propósito: `parar si desaparece la presencia`.** No avisa ni
+mueve, **frena**. Si alguien deja el escritorio subiendo y se va, es lo único que
+lo para. Apagarla no quita ruido, quita protección.
+
+⚠️ **Efecto secundario detectado al verificar, el mismo día:** meter el `resumen
+cada 30 min` en el grupo hizo que el interruptor **lo encendiera**, y estaba
+apagado a propósito. Es un aviso cada media hora, justo el ruido que se estaba
+quitando. Sacado del grupo y apagado.
+
+### Estado
+
+Escritorio operativo, firmware sin tocar. Ayer (09-09) el sistema funcionó
+perfecto: dieciséis ciclos entre las 08:21 y las 21:27.
+
+---
+
 ## 2026-09-07 (tarde) — Los 35 minutos de pie no los elegía él
 
 > *"se me están haciendo cortas las iteraciones, no sé cuánto tiempo lo dejo en
