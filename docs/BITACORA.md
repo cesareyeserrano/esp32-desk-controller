@@ -6,6 +6,43 @@
 
 ---
 
+## 2026-09-11 — La tarjeta Postura dice a qué hora se moverá el escritorio
+
+> *"me gustaría agregar un texto de en qué hora exacta se espera la próxima
+> postura, es decir, estás sentado, te elevarás a las 9:35 am, algo así"*
+
+Sesión sin hardware, solo Home Assistant (SSH a `192.168.1.29`).
+
+- **Sensor nuevo** `sensor.escritorio_proximo_cambio`: la hora a la que el
+  recordatorio moverá el escritorio, o por qué no lo hará (`en pausa`,
+  `automático apagado`…). Con el escritorio en marcha dice `en movimiento`, y en los
+  segundos antes de arrancar mantiene la hora del recordatorio en curso.
+- **Tarjeta Postura** del panel Estudio: *"De pie por 11 min · bajarás a las
+  4:27 pm"*. El "por X min" cuenta ahora desde `inicio_postura`, no desde el
+  último reinicio de HA, que era lo que la desincronizaba.
+- **Verificado en vivo:** predijo 12:07 y el escritorio empezó a bajar a las
+  12:06:54.
+
+⚠️ **Los umbrales quedan duplicados** entre `automations.yaml` y el sensor. Si
+se cambia uno, hay que cambiar el otro.
+
+⚠️ **Reiniciar HA solo con el escritorio quieto y lejos de un recordatorio**,
+calculado en el momento de reiniciar. Un reinicio de hoy usó una ventana
+calculada dos horas antes: no pasó nada, pero por suerte.
+
+⚠️ **`docker restart` no deja a HA apagarse limpio** (10 s de margen): a las 16:12
+devolvió `inicio_postura` de 16:07:35 a 15:36:42, y el recordatorio **bajó el
+escritorio a las 16:26:54**, tras ~20 min de pie. Reiniciar con `docker restart -t 120`. Supuesto,
+sin verificar: un corte de luz produciría lo mismo.
+
+**Corregido en INTEGRACION_HA.md:** decía que los dos umbrales eran 45 min (son
+30 y 45), y las tablas de capas de presencia describían el estado anterior a la
+reversión del 2026-09-03.
+
+Escritorio y firmware sin tocar.
+
+---
+
 ## 2026-09-10 — Un corte de luz, doce avisos de madrugada y un `default` de más
 
 > *"lleva un buen rato sin responder, no lo muevas, solo revisa"*

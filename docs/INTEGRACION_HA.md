@@ -303,7 +303,13 @@ arithmetic: the 30 minute threshold plus the 110 s courtesy wait. Sitting
 periods ran to **50 min** for the same reason, from the 45 minute threshold.
 
 So the desk was imposing **35 standing for every 50 sitting**, and nobody chose
-that ratio: it fell out of two thresholds picked separately. Now both are 45.
+that ratio: it fell out of two thresholds picked separately. Both were then set
+to 45.
+
+⚠️ **Corrected on 2026-09-11.** This paragraph used to end *"Now both are 45"*,
+which was true for only a few hours on 2026-09-07: that same evening sitting went
+down to 30, as the table above says. Verified against `automations.yaml` on
+2026-09-11: **1800 s sitting, 2700 s standing**.
 
 ⚠️ **A slip worth recording:** the script that raised the threshold replaced
 `1800` throughout the automation, and the "do not repeat the warning" condition
@@ -658,11 +664,14 @@ protection in exactly the situation where it matters most.
 |---|---|---|---|
 | 0. Is he even home? | Is the house empty? | `person.cesar_augusto` (GPS) | on/off |
 | 1. Trigger | Is it their turn to change posture? | `presencia_sostenida` | 15 min |
-| 2. Re-check before moving | May I move furniture right now? | `presencia_reciente` | **60 s** |
-| 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **5 s** |
+| 2. Re-check before moving | May I move furniture right now? | raw sensor | **instant**, at 110 s |
+| 3. Stop mid-travel | Did they leave *while it moves*? | raw sensor | **instant**, `off` only |
 
-**Three questions, three tolerances, three sensors.** Every failure in this area
-came from making one sensor answer two of them.
+⚠️ **Corrected on 2026-09-11.** This table described the state before the
+revert of 2026-09-03 (`presencia_reciente` at 60 s, a 5 s window). Verified
+against `automations.yaml`: layers 2 and 3 both read the raw sensor, with no
+window. One question per sensor remains the reasoning; layers 2 and 3 no longer
+follow it.
 
 ### The counter measures YOUR posture, not the desk's height
 
@@ -700,6 +709,10 @@ it.
 | **1. Sustained presence** (`delay_off: 15 min`) | The real layer. ⚠️ **Rewritten 2026-09-02:** this layer used to rely on the sensor's own 120 s delay, and **the device reverts it to 30 s on its own**. Worse, the raw sensor **flickers every 1 to 2 minutes** with the person sitting right there (measured, see below). Only the sustained sensor, which lives in Home Assistant, survives that flicker |
 | **2. Re-check after 110 s** | Warns, waits, and **asks again** before moving, against `presencia_reciente` (3 min). ⚠️ **Rewritten twice.** It asked the **raw** sensor until 2026-09-02, cancelling movements with the owner sitting right there. The fix pointed it at the **sustained** sensor, and that broke it the other way: on 2026-09-03 the desk rose with nobody there, see below |
 | **3. Stop if you leave WHILE it moves** | Continuous watch: if presence drops with the desk in motion, `parar` is sent and you are told. **It depends on the `movimiento` sensor**, which was inoperative until 2026-08-24 because that sensor did not update during travel. Watches the **raw** sensor with a **10 s confirmation** (`for`), and triggers on `off`, `unavailable` and `unknown` |
+
+⚠️ **Corrected on 2026-09-11:** rows 2 and 3 describe the state before the
+revert of 2026-09-03. Current state in
+[the three layers as they stand](#the-three-layers-as-they-stand).
 
 **Layer 3 is the one that closes the case** the other two cannot: it does not
 predict, it reacts.
@@ -961,6 +974,42 @@ Three more things that save time:
 In the **Estudio** section of the `Casa` dashboard: the **Ir a altura** field
 (cm) and the **movement indicator**. Only that, on purpose. The rest of the
 entities live on the device page, without cluttering the daily dashboard.
+
+There is also a separate **Estudio** dashboard (`lovelace.panel_estudio`,
+verified 2026-09-11), whose first section holds the desk height tile and three
+Mushroom template cards: **Postura**, **Presencia** and **Luz**.
+
+### When the desk will move next, on the Postura card (2026-09-11)
+
+The card's second line reads, for example, *"De pie por 11 min · bajarás a las
+4:27 pm"*.
+
+`sensor.escritorio_proximo_cambio` (template, `configuration.yaml`) replicates
+the reminder conditions: posture start plus threshold, no repeat within 30 min,
+the first `/5` tick after that, plus the 110 s wait. The time shown is when the
+desk **moves**, rounded to the minute. While travelling it shows `en
+movimiento`; in the 3 to 5 s before the desk starts it keeps the current
+reminder's time; and when nothing is scheduled it says why (`en pausa`, `automático
+apagado`…). "Por X min" counts from `input_datetime.escritorio_inicio_postura`,
+the same start the reminders use. Verified live: predicted 12:07, the desk
+started at 12:06:54.
+
+⚠️ **The numbers are duplicated.** If a threshold, the no-repeat window or the
+110 s wait changes in `automations.yaml`, change the sensor too, or the card
+will show a confident, wrong time.
+
+It is an estimate: handset use or the presence re-check can cancel a move.
+
+⚠️ **Restarting Home Assistant:** only with the desk `quieto` and outside a
+reminder window (more than 140 s after a `/5` tick, more than 15 s before the
+next), worked out at the moment of restarting. A restart cancels a reminder in
+its wait, and while HA boots nothing brakes the desk.
+
+⚠️ **Use `docker restart -t 120 homeassistant`.** With docker's default 10 s, HA
+is killed before saving its state: on 2026-09-11 that restored
+`input_datetime.escritorio_inicio_postura` to a value 31 min old, so a reminder
+would have moved the desk early. **Assumed, not verified:** a power cut would
+do the same.
 
 ## Pending decisions
 
