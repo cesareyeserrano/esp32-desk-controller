@@ -93,9 +93,11 @@ and the handset.
 its bottom stop.** When the firmware mistakes a later reading of its *own* key
 press for a human one, it gives way and deliberately does not brake, on the
 assumption that the person already stopped the desk. If that happens just as the
-long pulse starts continuous travel, nothing brakes it. **Automatic posture
-reminders are switched off** until the firmware is fixed. The physical stop and
-the handset are what caught it. See [BITACORA.md](docs/BITACORA.md).
+long pulse starts continuous travel, nothing brakes it. The physical stop and the
+handset are what caught it. **Fixed on 2026-09-29**
+([ADR-035](docs/DECISIONS.md)): a press is claimed by key code for the whole
+window, and giving way during a trip now brakes. ⚠️ **Not yet tested in the
+field.** See [BITACORA.md](docs/BITACORA.md).
 
 ⚠ **Known and not yet evaluated.** The long pulse holds a contact closed for
 2800 ms and cannot be aborted. Press the opposite key during that window and the

@@ -69,10 +69,13 @@ own press already stopped the desk. But the press was the firmware's own: it
 attributes only the FIRST reading of its own key, and it often misses that
 reading, because it decodes just the last 2-3 ms burst of the pulse against a
 ~40 ms keyboard scan. When the give-way lands right as the long pulse starts
-continuous travel, **nothing brakes it**: only the physical stop. Automatic
-reminders are off since 2026-09-29. The fix needs an ADR replacing the no-brake
-give-way, plus requiring the key to be **released** before a press counts as
-human. Detail in [BITACORA.md](BITACORA.md).
+continuous travel, **nothing brakes it**: only the physical stop.
+
+**Fixed the same day, [ADR-035](DECISIONS.md)**: a press is claimed by key code
+for the whole window, and giving way during a trip now brakes, which `stopTravel`
+verifies and retries. ⚠️ **Not yet tested in the field**, and the cost is
+deliberate: a person HOLDING a key has their travel braked once. Detail in
+[BITACORA.md](BITACORA.md).
 
 Rules for whenever actuation exists:
 

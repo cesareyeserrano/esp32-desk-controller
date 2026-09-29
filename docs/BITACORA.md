@@ -41,10 +41,52 @@ la capa equivocada: HA ve la altura cada 5 s y del objetivo al tope hay 8 s, as�
 que salvaría 4-5 cm, y además puede dispararse en bajadas normales y cancelar el
 ajuste fino. No se implementó.
 
-**Estado:** el propietario apagó `input_boolean.escritorio_automatico` a las
-16:43:10. Verificado: las dos automatizaciones de recordatorio quedaron
-deshabilitadas y *parar si desaparece la presencia* sigue activa. Sin
-recordatorios automáticos el fallo no se da.
+### Arreglado el mismo día ([ADR-035](DECISIONS.md))
+
+Dos cambios en `desk_sniffer.ino`:
+
+1. **La atribución compara el código de tecla** (`CH_KEY[]`) **y dura toda la
+   ventana**, en vez de cerrarse con la primera lectura.
+2. **Ceder el paso con un viaje en curso frena** (`stopTravel`), que verifica el
+   freno y lo reintenta. Si ya se estaba verificando un freno, no se toca.
+
+**La revisión adversarial encontró que yo había dejado el mismo agujero un
+estado más allá:** mi primera versión forzaba `MOTION_IDLE` también en
+`MOTION_BRAKING`, cancelando la verificación del freno y su reintento. Un toque
+de freno que no registrara más un byte mal leído, y nadie comprobando: el mismo
+115→73 entrando por otro estado. Corregido y re-revisado.
+
+Compila al 74% de flash. **Aplicado por OTA a las 16:56:56** a `192.168.1.11`;
+el ESP32 volvió a las 16:57:25 con el bus en 0.4-0.9% de malformadas, su rango
+normal. **Falta probarlo en campo**: un viaje 117→80 con el propietario delante.
+
+### El interruptor maestro se vuelve a encender solo en cada reinicio
+
+El propietario apagó `input_boolean.escritorio_automatico` a las 16:43:10.
+**Cincuenta y ocho segundos después volvió a `on`.**
+
+```
+16:43:10  automatico -> off   (lo apaga el propietario)
+16:44:08  automatico -> on
+16:44:13  las entidades pasan por unknown  <- Home Assistant se reinicio
+16:44:23  el sincronizador reactiva los dos recordatorios
+```
+
+**La causa está en `configuration.yaml`: `escritorio_automatico` lleva
+`initial: true`**, así que cualquier reinicio de HA vuelve a armar lo
+automático. Es la tercera vez que este interruptor no manda lo que parece
+mandar (ver 2026-09-07 y 2026-09-10). **Sin arreglar**: quitar `initial` haría
+que el estado se restaure, y es un cambio en HA aún sin aplicar.
+
+⚠️ **Por qué HA se reinició a las 16:44 no está explicado.** No lo reinicié yo.
+
+### Correcciones de documentación
+
+- `INTEGRACION_HA.md` decía que la cesión de paso *"cancela el viaje sin
+  frenar"*, con `ultimo_freno: mando manual` como verificación. Las dos mitades
+  dejaron de ser ciertas con el ADR-035.
+- El README del firmware daba la IP de OTA como `192.168.1.23`; hoy responde en
+  `192.168.1.11`, y ya había cambiado el 2026-09-07. Ahora remite a la entidad.
 
 ---
 

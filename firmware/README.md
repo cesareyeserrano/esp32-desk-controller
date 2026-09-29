@@ -174,12 +174,17 @@ errors but not mismatches against the real core signatures.*
 ### Over-the-air updates, since 2026-08-23
 
 **The ESP32 lives in a wall charger, so the cable is not needed.** The IP is
-published as the `IP` entity in Home Assistant (currently `192.168.1.23`), and
-the password lives in `secrets.h`.
+published as the `IP` entity in Home Assistant, and the password lives in
+`secrets.h`.
+
+⚠️ **Read the IP from that entity, do not copy it from here.** This paragraph
+said `192.168.1.23` until 2026-09-29, when the device answered on
+`192.168.1.11`; it had already moved to `192.168.1.16` on 2026-09-07. The
+address changes on its own.
 
 ```
 CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/arduino-cli"
-"$CLI" upload -p 192.168.1.23 --fqbn esp32:esp32:esp32 \
+"$CLI" upload -p <IP from the entity> --fqbn esp32:esp32:esp32 \
   --upload-field password=<OTA_PASSWORD> firmware/desk_sniffer
 ```
 

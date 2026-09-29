@@ -41,15 +41,19 @@ cannot be lost. A copy of the previous firmware is in `firmware/backups/`.
 
 ## Next concrete steps
 
-⚠️ **Step 0, and it comes before everything: the give-way can run the desk into
-the bottom stop.** Measured twice, 2026-09-25 and 2026-09-29, descending from
-115 to 73 cm with nobody braking. The firmware attributes only the FIRST reading
-of its own key, so a later reading of the same press looks human and the give-way
-drops the trip **without braking**. **Automatic reminders are switched off since
-2026-09-29** (`input_boolean.escritorio_automatico`). Fixing it needs an ADR
-replacing the no-brake give-way, plus two firmware changes: require the key to be
-**released** before calling a press human, and **brake** when giving way during
-continuous travel. Detail in [BITACORA.md](BITACORA.md).
+⚠️ **Step 0, fixed on 2026-09-29 but NOT yet tested in the field: the give-way
+used to run the desk into its bottom stop.** Measured twice, 2026-09-25 and
+2026-09-29, descending from 115 to 73 cm with nobody braking
+([ADR-035](DECISIONS.md)). The fix is flashed over the air: a press is claimed by
+key code for the whole window, and giving way during a trip now **brakes**, which
+`stopTravel` verifies and retries. **What is missing is one supervised trip
+117 → 80**, to watch a normal descent brake at the target.
+
+⚠️ **And a second matter, found the same day: the master switch re-arms itself.**
+`input_boolean.escritorio_automatico` carries `initial: true`, so every Home
+Assistant restart switches automatic mode back on — it did at 16:44, 58 s after
+the owner had switched it off. Removing `initial` makes the state restore
+instead. **Not applied.**
 
 **Step 5, trusting the reminders end to end. ⬜ IN PROGRESS since 2026-09-02.**
 

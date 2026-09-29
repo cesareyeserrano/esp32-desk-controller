@@ -1936,3 +1936,69 @@ decir, **el rechazo ejecutaba exactamente la fuga que decía evitar**: reiniciar
 abre los canales y abrir no frena. Desde la corrección, una OTA durante un viaje
 **frena primero** (un toque real, el mismo del `parar`) y deja pasar la
 actualización sobre un escritorio que ya se está deteniendo.
+
+---
+
+## ADR-035 — Ceder el paso al mando frena, si hay un viaje en curso
+
+**Fecha:** 2026-09-29
+**Estado:** Aceptado
+
+No reemplaza ningún ADR. Corrige la **cesión de paso** implementada el
+2026-08-23 (revisión adversarial, "movimiento no pedido") y **restablece la
+premisa del [ADR-028](DECISIONS.md)**: la marcha continua se admite *porque
+nuestro propio canal la frena*.
+
+### Contexto
+
+Medido en el `recorder` de Home Assistant: el 2026-09-25 a las 11:41 y el
+2026-09-29 a las 15:41 el escritorio **bajó desde 115 hasta 73 cm, su tope
+físico**, sin que nadie frenara. Las dos veces, un segundo después de arrancar
+el pulso largo, el firmware anotó `motivo_del_ultimo_freno = "mando manual"`.
+
+Dos defectos encadenados:
+
+1. **La atribución se cerraba con la primera lectura.** `pulseChannelFor` armaba
+   la ventana y el decodificador daba por nuestra la primera tecla pulsada que
+   veía, desarmando la atribución (`g_lastPulsedCh = -1`). **Una segunda lectura
+   de la misma pulsación nuestra pasaba por humana.**
+2. **La cesión de paso no frenaba**, por diseño: soltaba la intención dando por
+   hecho que la pulsación de la persona ya había detenido el escritorio. Cuando
+   la pulsación es un error de atribución, **nadie ha detenido nada**, y abrir un
+   contacto no para la marcha continua.
+
+De 33 cesiones entre el 14 y el 29 de septiembre, 29 ocurrieron a 82-88 cm, ya
+tras el freno, y fueron inofensivas; una a 115 dejó la mesa parada en 114; dos a
+115 acabaron en el tope.
+
+### Decisión
+
+1. **La atribución compara el código de tecla** (`CH_KEY[] = {0x47, 0x57, 0x67,
+   0x6F}`, verificados en el bus el 2026-08-22) **y dura toda la ventana**, no
+   hasta la primera lectura.
+2. **Ceder el paso con un viaje en curso (`MOTION_UP`/`MOTION_DOWN`) frena**, con
+   `stopTravel("mando manual")`, que verifica el freno y lo reintenta. Si ya se
+   está **verificando un freno**, no se toca; si solo había ajuste fino o un
+   objetivo pendiente, se suelta la intención sin tocar el escritorio, como
+   antes.
+
+### Qué se pierde
+
+- **A quien MANTENGA pulsada una tecla, le frenamos su marcha una vez.** Es el
+  coste directo de invertir la premisa: antes no se le estorbaba nunca, y a
+  cambio nadie frenaba cuando la premisa era falsa. El freno son 300 ms en el
+  canal medido que no mueve el escritorio, y puede volver a pulsar.
+- **Una persona que pulse el MISMO botón que acabamos de pulsar, dentro de la
+  ventana de 1.5 s, ya no provoca cesión**: se la detecta después por atasco
+  (9 s) o por inversión (±2 cm), con un toque de más.
+- **Un byte corrupto del bus** (0.7-0.9% de tramas malformadas, medido) ahora
+  cuesta **un toque físico y un viaje abortado**, donde antes solo soltaba la
+  intención en silencio. Es el lado seguro del error, y debería verse en el
+  `recorder`.
+
+### Alternativa descartada
+
+**Un freno en Home Assistant** (publicar `parar` al pasarse del objetivo).
+Rechazado: HA ve la altura cada 5 s y del objetivo al tope físico hay 8 s, así
+que habría salvado 4-5 cm; además puede dispararse en bajadas normales y
+cancelar el ajuste fino. Es una red de seguridad en la capa que menos ve.

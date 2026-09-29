@@ -132,6 +132,9 @@ static uint32_t g_ledNextMs = 0;
 static bool     g_ledLit = false;
 
 static const uint8_t CH_PIN[4] = {27, 26, 25, 33};
+// The key code the control box reports for each channel, verified on the bus
+// on 2026-08-22 (PROTOCOLO.md). Used to tell OUR press from a person's.
+static const uint8_t CH_KEY[4] = {0x47, 0x57, 0x67, 0x6F};
 static const uint32_t PULSE_MS = 800;  // ADR-027: 300 ms does not move the desk
 
 // Long pulse: deliberately CROSSES the 2.2-2.6 s threshold to start continuous
@@ -313,10 +316,13 @@ static void pulseChannelFor(uint8_t idx, uint32_t widthMs) {
 
   if (lastN) decodeBurst(lastN);      // printing may block freely now
 
-  // If our own key read was not in that burst, shrink the attribution window:
-  // with the full 1.5 s open, a HUMAN press right after our tap would be
-  // claimed as "CHANNEL n answered" and the give-way path skipped.
-  if (g_lastPulsedCh >= 0) g_watchKeyUntilMs = millis() + 400;
+  // CORRECTED 2026-09-29 (ADR-035). This used to shrink the window to 400 ms
+  // when our own key had not been claimed yet, because a claim was "first
+  // pressed byte wins" and could steal a HUMAN press made right after our tap.
+  // The claim now matches by key CODE, so stealing a human press requires them
+  // to press the SAME button inside the window; in exchange the window may stay
+  // open for the whole press, which is what stops a second reading of OUR press
+  // from looking human. The window is set before the pulse: pulse + 1500 ms.
 
   // The width is a safety bound, not a wish: measure it, and say so loudly if
   // it was exceeded. 2.2 s starts continuous travel; 3.0 s overwrites a preset.
@@ -704,13 +710,22 @@ static void emitTransaction(bool repeatedStart) {
           // byte is idle. Checked on 2026-08-21 before widening this test to
           // "anything but idle" — that would have blamed a channel for every
           // resting poll. 0x17 and 0x27 are both idle, not unknown keys.
+          // CORRECTED 2026-09-29 (ADR-035): this used to disarm on the FIRST
+          // claimed reading (g_lastPulsedCh = -1), so a second reading of the
+          // SAME press of ours fell through to the give-way below as if a
+          // person had pressed it. Measured: 33 give-ways in 15 days, and on
+          // 2026-09-25 and 2026-09-29 one landed just as the long pulse started
+          // continuous travel, so nobody braked and the desk ran down to its
+          // stop at 73 cm. The claim now lasts the whole window and matches by
+          // CODE: while the window is open, the code of the channel we pulsed is
+          // ours however many times it is read.
           if (g_lastPulsedCh >= 0 && (dat & 0x40) &&
+              dat == CH_KEY[g_lastPulsedCh] &&
               (int32_t)(millis() - g_watchKeyUntilMs) < 0) {
             char b2[72];
             snprintf(b2, sizeof(b2), "   <== CHANNEL %u answered with 0x%02X",
                      (unsigned)(g_lastPulsedCh + 1), dat);
             Serial.print(b2);
-            g_lastPulsedCh = -1;
           } else if (dat & 0x40) {
             // A pressed key with nobody claiming it: the person is using the
             // handset. Their press has already braked whatever we had running,
@@ -1751,12 +1766,33 @@ void loop() {
     uint8_t k = g_manualKeyByte;
     if (g_motion != MOTION_IDLE || g_fineTarget >= 0 || g_retargetCm >= 0) {
       Serial.printf("\n[mando manual (0x%02X): cedo el paso]\n", (unsigned)k);
-      g_motion     = MOTION_IDLE;   // no brake tap: the person already stopped it
-      g_target     = -1;
-      g_fineTarget = -1;
-      g_retargetCm = -1;
+      g_target        = -1;
+      g_fineTarget    = -1;
+      g_retargetCm    = -1;
       g_pendingCmd[0] = 0;
-      snprintf(g_stopReason, sizeof(g_stopReason), "mando manual");
+      // CORRECTED 2026-09-29 (ADR-035). This used to set MOTION_IDLE with no
+      // brake tap, on the premise that the person's own press had already
+      // stopped the desk. When the "press" is a misread of ours, nobody stopped
+      // anything: with continuous travel running, dropping the trip leaves the
+      // desk to reach its stop. Measured twice, 115 -> 73 cm. A trip in progress
+      // is now braked, and stopTravel verifies the brake and retries it. The
+      // cost, stated in the ADR: a person HOLDING a key has their travel
+      // stopped once. A tap of theirs already stopped the box, and our brake is
+      // the 300 ms channel measured not to move the desk.
+      if (g_motion == MOTION_UP || g_motion == MOTION_DOWN) {
+        stopTravel("mando manual");
+      } else if (g_motion == MOTION_BRAKING) {
+        // Review of this very patch: forcing IDLE here would cancel the brake
+        // verification, its retry and "FRENO FALLIDO" -- which is the same hole
+        // this ADR closes, entered one state later: a brake tap that did not
+        // register plus one misread key byte inside the 4 s window and nobody
+        // is left checking. The brake in progress is left alone; only our
+        // intent was dropped above. It also stops the give-way from tapping
+        // again and again against somebody HOLDING a key.
+      } else {
+        g_motion = MOTION_IDLE;
+        snprintf(g_stopReason, sizeof(g_stopReason), "mando manual");
+      }
     }
     g_lastManualMs = uptimeMs64();
   }

@@ -142,7 +142,7 @@ which opens up automations that otherwise would not exist.
 |---|---|---|
 | `boton_pulsado` | Any key on the bus, with its code | Telling a person from an automation |
 | **`uso_manual`** ✅ | Seconds since the last human key on the handset | **Implemented 2026-08-23.** The automation that does not want to fight the person checks this |
-| `movimiento_no_pedido` ✅ | The desk moves without the ESP32 asking | **Implemented 2026-08-23 as automatic give-way**: a key the ESP32 did not order cancels its trip without braking (the person already braked). Verified live: `ultimo_freno: mando manual` |
+| `movimiento_no_pedido` ✅ | The desk moves without the ESP32 asking | **Implemented 2026-08-23 as automatic give-way**, ⚠️ **corrected 2026-09-29 ([ADR-035](DECISIONS.md)): it now BRAKES a trip in progress.** This row used to end "cancels its trip without braking (the person already braked). Verified live: `ultimo_freno: mando manual`", and both halves stopped being true: not braking is what ran the desk into its bottom stop twice, and a give-way while a brake is being verified now leaves the real brake reason in place instead of stamping `mando manual` |
 | `preset_recuperado` | `0x67` or `0x6F` on the bus | Knowing the destination before arrival |
 | `tope_alcanzado` | The height stops changing at 73 or 118 | End of travel |
 
