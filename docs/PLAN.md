@@ -41,6 +41,16 @@ cannot be lost. A copy of the previous firmware is in `firmware/backups/`.
 
 ## Next concrete steps
 
+⚠️ **Step 0, and it comes before everything: the give-way can run the desk into
+the bottom stop.** Measured twice, 2026-09-25 and 2026-09-29, descending from
+115 to 73 cm with nobody braking. The firmware attributes only the FIRST reading
+of its own key, so a later reading of the same press looks human and the give-way
+drops the trip **without braking**. **Automatic reminders are switched off since
+2026-09-29** (`input_boolean.escritorio_automatico`). Fixing it needs an ADR
+replacing the no-brake give-way, plus two firmware changes: require the key to be
+**released** before calling a press human, and **brake** when giving way during
+continuous travel. Detail in [BITACORA.md](BITACORA.md).
+
 **Step 5, trusting the reminders end to end. ⬜ IN PROGRESS since 2026-09-02.**
 
 Phase 4 is built and running, but **the reminders have failed silently three

@@ -6,6 +6,48 @@
 
 ---
 
+## 2026-09-29 — Bajó dos veces hasta el tope: la cesión de paso no frena
+
+> *"ha pasado dos veces que se baja todo a tope"*
+
+Sesión de diagnóstico, sin tocar hardware.
+
+**Verificado en el `recorder`:** el 2026-09-25 a las 11:41 y el 2026-09-29 a las
+15:41, las dos veces bajando desde 115 hasta **73 cm, el tope físico**.
+
+```
+15:41:51  el recordatorio publica objetivo 80
+15:41:54  movimiento = bajando
+15:41:55  motivo_del_ultimo_freno = "mando manual"   <- cede el paso
+15:41:56  bajando (mando), ya sin supervisión
+15:42:36  pasa por 80 sin frenar
+15:42:47  73 cm. El propietario la paró con el mando (confirmado por él)
+```
+
+**Causa, leída en el código.** `pulseChannelFor` descodifica **solo la última
+ráfaga** del pulso (2-3 ms, contra un barrido de teclado de ~40 ms), así que a
+menudo no llega a ver su propia tecla; y la atribución se cierra con la primera
+lectura (`desk_sniffer.ino:707-721`). Una lectura posterior de **la misma**
+pulsación pasa por humana, y entonces la cesión de paso **no frena**
+(`:1749-1761`), porque supone que la persona ya frenó. Si eso cae al arrancar el
+pulso largo, la marcha continua se queda sin nadie que la pare.
+
+**Frecuencia medida:** 33 cesiones desde el 14-sep. 29 a 82-88 cm, inofensivas
+porque ocurren tras el freno; una a 115 que dejó la mesa parada en 114; dos a
+115 que acabaron en el tope.
+
+**Descartado: un freno en Home Assistant.** La revisión adversarial lo situó en
+la capa equivocada: HA ve la altura cada 5 s y del objetivo al tope hay 8 s, así
+que salvaría 4-5 cm, y además puede dispararse en bajadas normales y cancelar el
+ajuste fino. No se implementó.
+
+**Estado:** el propietario apagó `input_boolean.escritorio_automatico` a las
+16:43:10. Verificado: las dos automatizaciones de recordatorio quedaron
+deshabilitadas y *parar si desaparece la presencia* sigue activa. Sin
+recordatorios automáticos el fallo no se da.
+
+---
+
 ## 2026-09-11 — La tarjeta Postura dice a qué hora se moverá el escritorio
 
 > *"me gustaría agregar un texto de en qué hora exacta se espera la próxima

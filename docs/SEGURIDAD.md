@@ -62,6 +62,18 @@ disconnect. Full procedure in [HARDWARE.md](HARDWARE.md), reasoning in
 A desk that moves on its own can trap hands, cables or pets. The surface lifts
 with enough force to raise a monitor, which is enough force to hurt someone.
 
+⚠️ **A real failure, twice: the desk ran into its bottom stop** (2026-09-25
+11:41 and 2026-09-29 15:41, both descending from 115 to 73 cm). The give-way to
+the handset drops the trip **without braking**, because it assumes the person's
+own press already stopped the desk. But the press was the firmware's own: it
+attributes only the FIRST reading of its own key, and it often misses that
+reading, because it decodes just the last 2-3 ms burst of the pulse against a
+~40 ms keyboard scan. When the give-way lands right as the long pulse starts
+continuous travel, **nothing brakes it**: only the physical stop. Automatic
+reminders are off since 2026-09-29. The fix needs an ADR replacing the no-brake
+give-way, plus requiring the key to be **released** before a press counts as
+human. Detail in [BITACORA.md](BITACORA.md).
+
 Rules for whenever actuation exists:
 
 - **Software height limits**, minimum and maximum, checked against the height
