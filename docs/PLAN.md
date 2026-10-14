@@ -41,13 +41,14 @@ cannot be lost. A copy of the previous firmware is in `firmware/backups/`.
 
 ## Next concrete steps
 
-⚠️ **Step 0, fixed on 2026-09-29 but NOT yet tested in the field: the give-way
-used to run the desk into its bottom stop.** Measured twice, 2026-09-25 and
+✅ **Step 0, fixed and verified in the field on 2026-09-30: the give-way used to
+run the desk into its bottom stop.** Measured twice, 2026-09-25 and
 2026-09-29, descending from 115 to 73 cm with nobody braking
 ([ADR-035](DECISIONS.md)). The fix is flashed over the air: a press is claimed by
 key code for the whole window, and giving way during a trip now **brakes**, which
-`stopTravel` verifies and retries. **What is missing is one supervised trip
-117 → 80**, to watch a normal descent brake at the target.
+`stopTravel` verifies and retries. **Verified on 2026-09-30, 18:26:54 → 18:27:38**:
+a reminder descent braked at the target on its own, 81 then 80, with no undue
+give-way.
 
 ⚠️ **And a second matter, found the same day: the master switch re-arms itself.**
 `input_boolean.escritorio_automatico` carries `initial: true`, so every Home

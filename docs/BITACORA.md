@@ -6,6 +6,43 @@
 
 ---
 
+## 2026-09-30 — El arreglo, verificado en campo; y 80 minutos de pie por el sensor
+
+**Verificado el [ADR-035](DECISIONS.md) en un viaje real**, con el firmware
+nuevo corriendo:
+
+```
+18:25:00  "llevas mucho de pie" dispara
+18:26:50  publica objetivo 80
+18:26:54  bajando
+18:27:34  FRENANDO          <- frena en el objetivo, solo
+18:27:38  quieto en 81, postura sentado
+18:27:43  ajusta a 80
+```
+
+Sin cesión de paso indebida y sin pasarse del objetivo. **Step 0 cerrado.**
+
+### Lo que el propietario notó: 80 minutos de pie
+
+*"por qué está demorando en bajar?"*. No era el arreglo: **dos recordatorios
+seguidos se cancelaron en la comprobación previa**, porque el mmWave le pierde
+estando ahí.
+
+```
+29-09 18:05:00 dispara -> 18:06:38 el sensor le pierde -> 18:06:50 cancela
+30-09 17:50:00 dispara -> 17:51:32 el sensor le pierde -> 17:51:50 cancela
+```
+
+Cada cancelación cuesta 30 min, porque el aviso no se repite antes. De pie desde
+las 17:02:41 hasta las 18:27:38: **85 minutos**, con umbral de 45.
+
+**El sistema hizo lo programado** —ante la duda no mueve el mueble— y aun así el
+resultado no sirve. Es la oscilación ya documentada: con una sola señal, unas
+veces cancela de más y otras mueve cuando no debe. La salida sigue siendo una
+segunda señal independiente (`binary_sensor.mac_m4_active`).
+
+---
+
 ## 2026-09-29 — Bajó dos veces hasta el tope: la cesión de paso no frena
 
 > *"ha pasado dos veces que se baja todo a tope"*

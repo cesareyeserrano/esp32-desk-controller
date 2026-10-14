@@ -73,8 +73,9 @@ continuous travel, **nothing brakes it**: only the physical stop.
 
 **Fixed the same day, [ADR-035](DECISIONS.md)**: a press is claimed by key code
 for the whole window, and giving way during a trip now brakes, which `stopTravel`
-verifies and retries. ⚠️ **Not yet tested in the field**, and the cost is
-deliberate: a person HOLDING a key has their travel braked once. Detail in
+verifies and retries. **Verified in the field on 2026-09-30**: a reminder descent
+braked at the target by itself, 81 then 80. The cost is deliberate: a person
+HOLDING a key has their travel braked once. Detail in
 [BITACORA.md](BITACORA.md).
 
 Rules for whenever actuation exists:

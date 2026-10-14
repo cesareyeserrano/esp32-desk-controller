@@ -96,8 +96,8 @@ assumption that the person already stopped the desk. If that happens just as the
 long pulse starts continuous travel, nothing brakes it. The physical stop and the
 handset are what caught it. **Fixed on 2026-09-29**
 ([ADR-035](docs/DECISIONS.md)): a press is claimed by key code for the whole
-window, and giving way during a trip now brakes. ⚠️ **Not yet tested in the
-field.** See [BITACORA.md](docs/BITACORA.md).
+window, and giving way during a trip now brakes. **Verified in the field on
+2026-09-30.** See [BITACORA.md](docs/BITACORA.md).
 
 ⚠ **Known and not yet evaluated.** The long pulse holds a contact closed for
 2800 ms and cannot be aborted. Press the opposite key during that window and the
